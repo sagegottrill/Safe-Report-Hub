@@ -85,7 +85,6 @@ const Sidebar: React.FC = () => {
         {user && (
           <div className="mb-4 p-3 bg-gray-50 rounded-lg">
             <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
-            <p className="text-xs text-gray-500 truncate">{user.email}</p>
             <p className="text-xs text-blue-600 capitalize">{t(user.role)}</p>
           </div>
         )}

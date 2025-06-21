@@ -65,6 +65,19 @@ function extractFirstName(email: string, name?: string) {
   // Split on separators and take the first non-empty part
   const parts = base.split(/[ ._\-]/).filter(Boolean);
   let first = parts[0] || 'User';
+  
+  // If the first part is too long (like "danielnicholasdibal"), try to split it
+  if (first.length > 12) {
+    // Try to find a natural break point (camelCase, etc.)
+    const camelCaseSplit = first.match(/[A-Z][a-z]*/g);
+    if (camelCaseSplit && camelCaseSplit.length > 1) {
+      first = camelCaseSplit[0];
+    } else {
+      // Just take the first 8 characters for very long names
+      first = first.substring(0, 8);
+    }
+  }
+  
   // Capitalize first letter
   return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
 }
