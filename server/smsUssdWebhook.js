@@ -10,6 +10,19 @@ const africastalking = require('africastalking')({
 });
 const sms = africastalking.SMS;
 
+// Add Vercel Edge Config import
+const { get } = require('@vercel/edge-config');
+
+// --- Greeting Endpoint ---
+app.get('/greeting', async (req, res) => {
+  try {
+    const greeting = await get('greeting');
+    res.json({ greeting });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch greeting from Edge Config.' });
+  }
+});
+
 // --- SMS Webhook ---
 app.post('/sms', (req, res) => {
   const { text, from } = req.body;

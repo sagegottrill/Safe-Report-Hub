@@ -36,8 +36,8 @@ const Dashboard: React.FC = () => {
     <div className="p-3 md:p-6 space-y-4 md:space-y-6">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
         <div>
-          <h1 className="text-lg md:text-3xl font-bold text-gray-900">Welcome back, {user?.name}</h1>
-          <p className="text-sm md:text-base text-gray-600">Manage your reports and access support resources</p>
+          <h1 className="text-lg md:text-3xl font-bold text-gray-900">Welcome back</h1>
+          <p className="text-sm md:text-base text-gray-600">Manage your reports here and access support resources</p>
         </div>
         <Button onClick={() => setCurrentView('report')} className="bg-gradient-to-r from-blue-600 to-purple-600 text-sm md:text-base h-8 md:h-10">
           <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
