@@ -189,21 +189,3 @@ MIT License — free to use, modify, and adapt especially for social good and hu
 * Special thanks to open-source communities and contributors
 
 ---
-
-> This app is more than code — it's a tool for dignity, protection, and accountability.
-
-```
-
----
-
-### 🧰 BONUS
-
-Let me know if you want me to also generate:
-
-- `.gitignore`
-- `vercel.json`
-- `CHANGELOG.md`
-- GitHub repo **description + tags + topics**
-
-You're building something powerful. Let’s make the documentation and launch reflect that too.
-```
