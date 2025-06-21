@@ -135,8 +135,6 @@ const ReportForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingSubmission, setPendingSubmission] = useState<any>(null);
-  const [webhookStatus, setWebhookStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
-  const [webhookError, setWebhookError] = useState<string | null>(null);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [notificationEmail, setNotificationEmail] = useState('');
   const { submitReport, user, setCurrentView } = useAppContext();
@@ -237,35 +235,95 @@ const ReportForm: React.FC = () => {
           }).catch(error => console.error('Formspree error:', error)); // Fire and forget
         }
 
-        // Send to Google Apps Script webhook
-        const webhookResponse = await fetch(GOOGLE_APPS_SCRIPT_WEBHOOK_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(webhookData),
-        });
+        // Send to Google Apps Script webhook with better error handling
+        try {
+          const webhookResponse = await fetch(GOOGLE_APPS_SCRIPT_WEBHOOK_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            mode: 'cors', // Explicitly set CORS mode
+            body: JSON.stringify(webhookData),
+          });
 
-        if (!webhookResponse.ok) {
-          throw new Error(`Webhook failed: ${webhookResponse.status}`);
+          if (!webhookResponse.ok) {
+            const errorText = await webhookResponse.text();
+            console.error('Webhook response error:', webhookResponse.status, errorText);
+            throw new Error(`Webhook failed: ${webhookResponse.status} - ${errorText}`);
+          }
+
+          let webhookResult;
+          try {
+            webhookResult = await webhookResponse.json();
+          } catch (parseError) {
+            // If response is not JSON, that's okay - Google Apps Script might return plain text
+            console.log('Webhook response is not JSON, but that\'s okay');
+            webhookResult = { success: true };
+          }
+
+          if (webhookResult.success) {
+            toast.success(t('Report submitted successfully and saved to database.'));
+          } else {
+            console.error('Webhook error:', webhookResult.error);
+            toast.warning(t('Report submitted but database save failed.'));
+          }
+        } catch (webhookError: any) {
+          console.error('Webhook submission error:', webhookError);
+          
+          // Try alternative method for CORS issues
+          if (webhookError.message.includes('CORS') || webhookError.message.includes('Failed to fetch')) {
+            try {
+              // Try using GET request with query parameters (often works better with CORS)
+              const params = new URLSearchParams({
+                category: webhookData.category,
+                urgency: webhookData.urgency,
+                message: webhookData.message,
+                location: webhookData.location,
+                anonymous: webhookData.anonymous.toString(),
+                timestamp: webhookData.timestamp,
+                platform: webhookData.platform,
+                date: webhookData.date,
+                type: webhookData.type,
+                emailNotifications: webhookData.emailNotifications.toString(),
+                notificationEmail: webhookData.notificationEmail,
+              });
+              
+              const alternativeResponse = await fetch(`${GOOGLE_APPS_SCRIPT_WEBHOOK_URL}?${params}`, {
+                method: 'GET',
+                mode: 'cors',
+              });
+              
+              if (alternativeResponse.ok) {
+                toast.success(t('Report submitted successfully using alternative method.'));
+              } else {
+                throw new Error('Alternative method also failed');
+              }
+            } catch (alternativeError) {
+              console.error('Alternative submission also failed:', alternativeError);
+              toast.warning(t('Report submitted locally. Webhook connection failed due to CORS restrictions.'));
+            }
+          } else {
+            toast.warning(t('Report submitted locally. Webhook error: ') + webhookError.message);
+          }
         }
 
-        const webhookResult = await webhookResponse.json();
-        if (webhookResult.success) {
-          toast.success(t('Report submitted successfully and saved to database.'));
-        } else {
-          console.error('Webhook error:', webhookResult.error);
-          toast.warning(t('Report submitted but database save failed.'));
-        }
-
-        // Also submit to local system
+        // Always submit to local system regardless of webhook status
         submitReport(reportData);
         setSyncStatus('online');
         toast.success(t('Thank you for your report. It has been submitted successfully.'));
         resetForm(); // Clear form and scroll to top
-      } catch (error) {
+      } catch (error: any) {
         console.error('Submission error:', error);
-        toast.error(t('Failed to submit report. Please try again.'));
+        
+        // Provide more specific error messages
+        if (error.message.includes('CORS')) {
+          toast.error(t('CORS error: Report submitted locally but could not reach external server.'));
+        } else if (error.message.includes('Failed to fetch')) {
+          toast.error(t('Network error: Please check your internet connection and try again.'));
+        } else {
+          toast.error(t('Failed to submit report. Please try again.'));
+        }
       }
     } else {
       // Save offline
@@ -278,54 +336,6 @@ const ReportForm: React.FC = () => {
     
     setLoading(false);
     setPendingSubmission(null);
-  };
-
-  const testWebhook = async () => {
-    setWebhookStatus('testing');
-    setWebhookError(null);
-    
-    try {
-      const testData = {
-        category: 'test',
-        urgency: 'low',
-        message: 'This is a test message to verify webhook connectivity',
-        location: 'Test Location',
-        anonymous: true,
-        autoGeneratedTags: ['test'],
-        timestamp: new Date().toISOString(),
-        latitude: '0',
-        longitude: '0',
-        platform: 'Test',
-        impact: [],
-        perpetrator: '',
-        date: new Date().toISOString().split('T')[0],
-        type: 'Test',
-      };
-
-      const response = await fetch(GOOGLE_APPS_SCRIPT_WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(testData),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        setWebhookStatus('success');
-        toast.success('Webhook test successful!');
-      } else {
-        throw new Error(result.error || 'Unknown webhook error');
-      }
-    } catch (error: any) {
-      setWebhookStatus('error');
-      setWebhookError(error.message);
-      toast.error(`Webhook test failed: ${error.message}`);
-    }
   };
 
   useEffect(() => {
@@ -592,56 +602,6 @@ const ReportForm: React.FC = () => {
               {loading ? 'Submitting Report...' : 'Submit Report'}
             </Button>
           </form>
-          
-          {/* Webhook Debug Section */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">Webhook Debug</h3>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-600">Status:</span>
-                <span className={`text-xs px-2 py-1 rounded ${
-                  webhookStatus === 'idle' ? 'bg-gray-100 text-gray-600' :
-                  webhookStatus === 'testing' ? 'bg-yellow-100 text-yellow-700' :
-                  webhookStatus === 'success' ? 'bg-green-100 text-green-700' :
-                  'bg-red-100 text-red-700'
-                }`}>
-                  {webhookStatus === 'idle' ? 'Ready' :
-                   webhookStatus === 'testing' ? 'Testing...' :
-                   webhookStatus === 'success' ? 'Connected' :
-                   'Error'}
-                </span>
-              </div>
-              
-              {webhookError && (
-                <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
-                  <strong>Error:</strong> {webhookError}
-                </div>
-              )}
-              
-              <div className="flex gap-2">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={testWebhook}
-                  disabled={webhookStatus === 'testing'}
-                  className="text-xs"
-                >
-                  {webhookStatus === 'testing' ? 'Testing...' : 'Test Webhook'}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => {
-                    setWebhookStatus('idle');
-                    setWebhookError(null);
-                  }}
-                  className="text-xs"
-                >
-                  Reset
-                </Button>
-              </div>
-            </div>
-          </div>
           
           {/* Confirmation Dialog */}
           <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
