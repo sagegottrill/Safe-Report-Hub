@@ -22,8 +22,8 @@ The platform prioritizes **anonymity, offline access, multilingual support, geol
 
 ## 🌐 Live Demo
 
-🔗 [https://your-vercel-app-url.vercel.app](https://your-vercel-app-url.vercel.app)  
-_Replace with your actual deployed Vercel URL_
+🔗 https://safe-report-hub-nqm3.vercel.app/  
+
 
 ---
 
