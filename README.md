@@ -1,22 +1,3 @@
-Perfect — here is a **complete, professional, copy-paste-ready `README.md` file** for your GitHub repository that explains **everything in one go**:
-
----
-
-### ✅ Features included:
-
-* Project summary
-* Humanitarian purpose
-* Full feature list
-* Tech stack
-* Live demo (with placeholder)
-* How to install and deploy
-* Roadmap
-* Contribution guidelines
-* License
-
----
-
-````markdown
 # 🛡️ Humanitarian Crisis Reporting App
 
 > A secure, multilingual platform for reporting abuse and emergencies in humanitarian and crisis contexts — designed for use in refugee camps, disaster zones, and vulnerable communities.
