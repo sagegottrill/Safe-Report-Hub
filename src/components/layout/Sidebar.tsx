@@ -82,12 +82,6 @@ const Sidebar: React.FC = () => {
         </nav>
       </div>
       <div className="p-4 border-t border-gray-200">
-        {user && (
-          <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-            <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
-            <p className="text-xs text-blue-600 capitalize">{t(user.role)}</p>
-          </div>
-        )}
         <div className="space-y-2">
           <Button
             variant="ghost"

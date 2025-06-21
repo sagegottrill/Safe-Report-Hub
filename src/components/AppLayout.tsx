@@ -107,11 +107,6 @@ const AppLayout: React.FC = () => {
                 ))}
               </select>
             </div>
-            {/* User info (optional, can be hidden or styled differently on desktop) */}
-            <div className="text-xs text-gray-600 text-right">
-              <div className="font-medium truncate max-w-20">{user.name}</div>
-              <div className="text-blue-600 capitalize">{user.role}</div>
-            </div>
           </div>
         </header>
         

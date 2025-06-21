@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppContext } from '@/contexts/AppContext';
-import { Search, AlertTriangle, TrendingUp, Users, FileText } from 'lucide-react';
+import { Search, AlertTriangle, TrendingUp, Users, FileText, Shield, Activity, MapPin, Clock, CheckCircle } from 'lucide-react';
 import ReportReviewModal from './ReportReviewModal';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { saveAs } from 'file-saver';
@@ -207,79 +207,98 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
   };
 
   return (
-    <div className="p-2 md:p-6 space-y-3 md:space-y-6">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg md:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-xs md:text-base text-gray-600">Monitor and manage incident reports</p>
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-1">Monitor and manage incident reports</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-sm">
+            <Shield className="h-3 w-3 mr-1" />
+            {user.role.replace('_', ' ')}
+          </Badge>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-6">
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-2 md:p-6">
-            <CardTitle className="text-xs md:text-sm font-medium">Total Reports</CardTitle>
-            <FileText className="h-3 w-3 md:h-4 md:w-4 text-blue-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-blue-700">Total Reports</CardTitle>
+            <FileText className="h-4 w-4 text-blue-600" />
           </CardHeader>
-          <CardContent className="p-2 md:p-6 pt-0">
-            <div className="text-lg md:text-2xl font-bold text-blue-700">{reports.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-2 md:p-6">
-            <CardTitle className="text-xs md:text-sm font-medium">New Reports</CardTitle>
-            <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent className="p-2 md:p-6 pt-0">
-            <div className="text-lg md:text-2xl font-bold text-yellow-700">{newReports.length}</div>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-900">{filteredReports.length}</div>
+            <p className="text-xs text-blue-600 mt-1">
+              {reports.length} total in system
+            </p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-2 md:p-6">
-            <CardTitle className="text-xs md:text-sm font-medium">High Risk / Flagged</CardTitle>
-            <TrendingUp className="h-3 w-3 md:h-4 md:w-4 text-red-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-red-700">High Risk</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
-          <CardContent className="p-2 md:p-6 pt-0">
-            <div className="text-lg md:text-2xl font-bold text-red-700">{highRiskReports.length} / {flaggedReports.length}</div>
-            <div className="text-xs text-red-700">Flagged: {flaggedReports.length}</div>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-900">{highRiskReports.length}</div>
+            <p className="text-xs text-red-600 mt-1">
+              Requires immediate attention
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-2 md:p-6">
-            <CardTitle className="text-xs md:text-sm font-medium">Anonymous</CardTitle>
-            <Users className="h-3 w-3 md:h-4 md:w-4 text-purple-600" />
+        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-yellow-700">New Reports</CardTitle>
+            <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
-          <CardContent className="p-2 md:p-6 pt-0">
-            <div className="text-lg md:text-2xl font-bold text-purple-700">
-              {reports.filter(r => r.isAnonymous).length}
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-900">{newReports.length}</div>
+            <p className="text-xs text-yellow-600 mt-1">
+              Awaiting review
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-green-700">Resolved</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-900">
+              {reports.filter(r => r.status === 'resolved').length}
             </div>
+            <p className="text-xs text-green-600 mt-1">
+              Successfully handled
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="p-2 md:p-6">
-          <CardTitle className="text-sm md:text-base">Report Management</CardTitle>
-          <CardDescription className="text-xs md:text-sm">Filter and manage incident reports</CardDescription>
+      {/* Filters and Search */}
+      <Card className="bg-white shadow-sm border-gray-200">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold text-gray-900">Filters & Search</CardTitle>
+          <CardDescription>Filter reports by various criteria</CardDescription>
         </CardHeader>
-        <CardContent className="p-2 md:p-6 pt-0">
-          <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-3 md:mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-2 md:left-3 top-2 md:top-3 h-3 w-3 md:h-4 md:w-4 text-gray-400" />
-                <Input
-                  placeholder="Search reports..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 md:pl-10 h-8 md:h-10 text-xs md:text-sm"
-                />
-              </div>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search reports..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
+            
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-40 h-8 md:h-10 text-xs md:text-sm">
+              <SelectTrigger>
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -289,11 +308,11 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
                 <SelectItem value="resolved">Resolved</SelectItem>
               </SelectContent>
             </Select>
-          </div>
 
-          <div className="flex flex-wrap gap-2 mb-4" aria-label="Report filters and export options">
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-32 h-8 text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="gender_based_violence">Gender-Based Violence</SelectItem>
@@ -305,8 +324,11 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
                 <SelectItem value="health_emergencies">Health Emergencies</SelectItem>
               </SelectContent>
             </Select>
+
             <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
-              <SelectTrigger className="w-28 h-8 text-xs"><SelectValue placeholder="Urgency" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Urgency" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Urgency</SelectItem>
                 <SelectItem value="low">Low</SelectItem>
@@ -314,8 +336,11 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
                 <SelectItem value="critical">Critical</SelectItem>
               </SelectContent>
             </Select>
+
             <Select value={regionFilter} onValueChange={setRegionFilter}>
-              <SelectTrigger className="w-32 h-8 text-xs"><SelectValue placeholder="Region" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Region" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Regions</SelectItem>
                 {Array.from(new Set(reports.map(r => r.region || 'Unknown'))).map(region => (
@@ -323,12 +348,25 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
                 ))}
               </SelectContent>
             </Select>
-            <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={!filteredReports.length}>Export CSV</Button>
-            <Button size="sm" variant="outline" onClick={handleExportPDF}>Export PDF</Button>
-            <Button size="sm" variant="outline" onClick={handleSecureEmail}>Secure Email</Button>
-            <Button size="sm" variant="outline" onClick={handleOpenExportModal} disabled={!filteredReports.length}>Submit to Humanitarian Hub</Button>
-          </div>
 
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={!filteredReports.length}>
+                Export CSV
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleExportPDF}>
+                Export PDF
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="p-2 md:p-6">
+          <CardTitle className="text-sm md:text-base">Report Management</CardTitle>
+          <CardDescription className="text-xs md:text-sm">Filter and manage incident reports</CardDescription>
+        </CardHeader>
+        <CardContent className="p-2 md:p-6 pt-0">
           <div className="space-y-2 md:space-y-4">
             {filteredReports.length === 0 ? (
               <div className="text-center text-gray-500 text-sm py-8" aria-live="polite">
