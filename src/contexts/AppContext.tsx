@@ -181,7 +181,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const displayName = extractFirstName(email, name);
       const mockUser: User = { id: '1', email, name: displayName, role: 'user' };
       setUser(mockUser);
+      localStorage.setItem('user', JSON.stringify(mockUser));
       setCurrentView('dashboard');
+      localStorage.setItem('currentView', 'dashboard');
       toast({ title: 'Registration successful', description: 'Account created!' });
       return true;
     }

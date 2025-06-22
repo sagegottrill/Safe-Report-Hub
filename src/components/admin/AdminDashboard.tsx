@@ -354,69 +354,54 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
       </Card>
 
       <Card>
-        <CardHeader className="p-2 md:p-6">
-          <CardTitle className="text-xs sm:text-sm md:text-base">Report Management</CardTitle>
-          <CardDescription className="text-xs sm:text-sm md:text-sm">Filter and manage incident reports</CardDescription>
+        <CardHeader>
+          <CardTitle>All Reports</CardTitle>
+          <CardDescription>Review and manage all submitted incident reports.</CardDescription>
         </CardHeader>
-        <CardContent className="p-2 md:p-6 pt-0">
-          <div className="space-y-2 md:space-y-4">
-            {filteredReports.length === 0 ? (
-              <div className="text-center text-gray-500 text-xs sm:text-sm py-8" aria-live="polite">
-                No reports match the current filters.
-              </div>
-            ) : (
-              filteredReports.map(report => (
-                <div key={report.id} className={`border rounded-lg p-2 md:p-4 hover:bg-gray-50 transition-colors ${report.flagged ? 'border-red-400 bg-red-50' : ''}`}>
-                  <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-2 md:mb-3 gap-2">
-                    <div className="flex flex-wrap items-center gap-1 md:gap-3">
-                      <h4 className="font-medium text-xs sm:text-sm md:text-sm">{report.type}</h4>
-                      <Badge className={`${getStatusColor(report.status)} text-xs`}>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Urgency</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Region</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Anonymous</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Flagged</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredReports.map(report => (
+                  <tr key={report.id} className={`${report.flagged ? 'bg-red-50' : ''}`}>
+                    <td className="px-4 py-3 text-xs text-gray-500">{report.id}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{report.type}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{new Date(report.date).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{report.platform}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{report.description.substring(0, 100)}...</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">
+                      <Badge className={`${getStatusColor(report.status)}`}>
                         {report.status.replace('-', ' ')}
                       </Badge>
-                      {report.riskScore && (
-                        <Badge className={`${getRiskColor(report.riskScore)} text-xs`}>
-                          Risk: {report.riskScore}/10
-                        </Badge>
-                      )}
-                      {report.urgency && (
-                        <Badge className="bg-yellow-100 text-yellow-800 text-xs">{report.urgency}</Badge>
-                      )}
-                      {report.flagged && (
-                        <Badge className="bg-red-600 text-white text-xs">Flagged</Badge>
-                      )}
-                      {report.isAnonymous && (
-                        <Badge variant="outline" className="text-xs">Anonymous</Badge>
-                      )}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {new Date(report.date).toLocaleDateString()} | {report.region || 'N/A'}
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm md:text-sm text-gray-600 mb-2 md:mb-3">
-                    {report.description.substring(0, 100)}...
-                  </p>
-                  <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
-                    <div className="flex flex-wrap gap-2 md:gap-4 text-xs text-gray-500">
-                      <span>Platform: {report.platform}</span>
-                      <span>ID: {report.id.substring(0, 6)}</span>
-                      {report.caseId && (
-                        <span>Case ID: {report.caseId}</span>
-                      )}
-                    </div>
-                    <div className="flex gap-1 md:gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs h-6 md:h-8"
-                        onClick={() => handleReviewReport(report)}
-                      >
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{report.urgency || 'N/A'}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{report.region || 'N/A'}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{report.isAnonymous ? 'Yes' : 'No'}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{report.flagged ? 'Yes' : 'No'}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">
+                      <Button size="sm" variant="outline" onClick={() => handleReviewReport(report)}>
                         Review
                       </Button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>
