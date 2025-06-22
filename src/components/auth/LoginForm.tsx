@@ -6,33 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAppContext } from '@/contexts/AppContext';
 import { toast } from '@/components/ui/sonner';
 import { useTranslation } from 'react-i18next';
-import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { initializeApp } from 'firebase/app';
+import { signInWithGoogle } from '@/lib/firebase';
 
 interface LoginFormProps {
   onToggleMode: () => void;
-}
-
-// Add this before firebaseConfig
-// Fix for window._firebaseInitialized property
-declare global {
-  interface Window {
-    _firebaseInitialized?: boolean;
-  }
-}
-
-// Add your Firebase config here (replace with your own)
-const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_AUTH_DOMAIN',
-  projectId: 'YOUR_PROJECT_ID',
-  appId: 'YOUR_APP_ID',
-};
-
-// Initialize Firebase if not already initialized
-if (!window._firebaseInitialized) {
-  initializeApp(firebaseConfig);
-  window._firebaseInitialized = true;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
@@ -58,22 +35,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
     }
   };
 
-  // Add Google sign-in handler
+  // Google sign-in handler using Firebase
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     setError(null);
     try {
-      const auth = getAuth();
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      // You may want to call your backend here to create/check user
-      // For now, just set user in context
-      await login(user.email, user.uid); // Use UID as password for demo
+      const user = await signInWithGoogle();
+      // Update the AppContext to handle Firebase user
+      await login(user.email, user.id); // Use user ID as password for compatibility
       toast.success('Signed in with Google!');
     } catch (err: any) {
-      setError('Google sign-in failed.');
-      toast.error('Google sign-in failed.');
+      console.error('Google sign-in error:', err);
+      setError('Google sign-in failed. Please try again.');
+      toast.error('Google sign-in failed. Please try again.');
     } finally {
       setGoogleLoading(false);
     }

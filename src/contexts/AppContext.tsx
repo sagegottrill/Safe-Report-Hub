@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
+import { onAuthStateChange, signOutUser } from '@/lib/firebase';
 
 interface User {
   id: string;
@@ -8,6 +9,7 @@ interface User {
   role: 'field_officer' | 'case_worker' | 'country_admin' | 'super_admin' | 'admin' | 'user';
   region?: string;
   allowedCategories?: string[];
+  photoURL?: string;
 }
 
 interface Report {
@@ -77,29 +79,6 @@ function generatePin() {
 }
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Clear any existing user data to ensure fresh start for new visitors
-  useEffect(() => {
-    // Only clear if this is a new session (no user data)
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) {
-      localStorage.removeItem('user');
-      localStorage.removeItem('currentView');
-    }
-  }, []);
-
-  // Session check effect
-  useEffect(() => {
-    const checkSession = () => {
-      const storedUser = localStorage.getItem('user');
-      if (!storedUser) {
-        // Ensure we're showing auth page for new visitors
-        setCurrentView('auth');
-      }
-    };
-    
-    checkSession();
-  }, []);
-
   const [user, setUser] = useState<User | null>(() => {
     const stored = localStorage.getItem('user');
     return stored ? JSON.parse(stored) : null;
@@ -140,10 +119,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!storedUser) {
       return 'auth';
     }
-    return stored ? stored as any : 'auth';
+    return stored ? stored as any : 'dashboard';
   });
 
+  // Firebase auth state listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChange((firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        localStorage.setItem('user', JSON.stringify(firebaseUser));
+        const view = (firebaseUser.role === 'admin' || firebaseUser.role === 'super_admin' || firebaseUser.role === 'country_admin') ? 'admin' : 'dashboard';
+        setCurrentView(view);
+        localStorage.setItem('currentView', view);
+      } else {
+        setUser(null);
+        setCurrentView('auth');
+        localStorage.removeItem('user');
+        localStorage.removeItem('currentView');
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const login = async (email: string, password: string): Promise<boolean> => {
+    // This is now handled by Firebase auth state listener
+    // For demo purposes, we'll keep the mock login for non-Google users
     if (email && password.length >= 6) {
       // Demo role assignment by email prefix
       let role: User['role'] = 'user';
@@ -187,13 +188,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return false;
   };
 
-  const logout = () => {
-    setUser(null);
-    setCurrentView('auth');
-    setSidebarOpen(false);
-    localStorage.removeItem('user');
-    localStorage.removeItem('currentView');
-    toast({ title: 'Logged out', description: 'See you next time!' });
+  const logout = async () => {
+    try {
+      await signOutUser();
+      setUser(null);
+      setCurrentView('auth');
+      setSidebarOpen(false);
+      localStorage.removeItem('user');
+      localStorage.removeItem('currentView');
+      toast({ title: 'Logged out', description: 'See you next time!' });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Fallback to local logout
+      setUser(null);
+      setCurrentView('auth');
+      setSidebarOpen(false);
+      localStorage.removeItem('user');
+      localStorage.removeItem('currentView');
+      toast({ title: 'Logged out', description: 'See you next time!' });
+    }
   };
 
   const submitReport = (reportData: Omit<Report, 'id' | 'status'>): string => {

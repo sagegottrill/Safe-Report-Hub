@@ -1,9 +1,10 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { google } from 'googleapis';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const DEFAULT_PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
@@ -68,9 +69,21 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.listen(PORT, () => {
-  console.log(`API Server running on port ${PORT}`);
-  console.log('Environment check:');
-  console.log('- GOOGLE_SERVICE_ACCOUNT_KEY:', process.env.GOOGLE_SERVICE_ACCOUNT_KEY ? 'Set' : 'Not set');
-  console.log('- SHEET_ID:', process.env.SHEET_ID ? 'Set' : 'Not set');
-}); 
+// Function to start server with port fallback
+const startServer = (port) => {
+  const server = app.listen(port, () => {
+    console.log(`API Server running on port ${port}`);
+    console.log('Environment check:');
+    console.log('- GOOGLE_SERVICE_ACCOUNT_KEY:', process.env.GOOGLE_SERVICE_ACCOUNT_KEY ? 'Set' : 'Not set');
+    console.log('- SHEET_ID:', process.env.SHEET_ID ? 'Set' : 'Not set');
+  }).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`Port ${port} is in use, trying port ${port + 1}...`);
+      startServer(port + 1);
+    } else {
+      console.error('Server error:', err);
+    }
+  });
+};
+
+startServer(DEFAULT_PORT); 
