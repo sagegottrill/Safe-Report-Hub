@@ -30,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: process.env.SHEET_ID,
-      range: 'Sheet1!A1',
+      range: 'ID!A1',
       valueInputOption: 'RAW',
       requestBody: {
         values: [[

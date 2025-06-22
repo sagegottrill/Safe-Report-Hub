@@ -207,15 +207,15 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4 md:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-1">Monitor and manage incident reports</p>
+          <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-xs sm:text-sm md:text-base text-gray-600 mt-1">Monitor and manage incident reports</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-sm">
+          <Badge variant="outline" className="text-xs sm:text-sm">
             <Shield className="h-3 w-3 mr-1" />
             {user.role.replace('_', ' ')}
           </Badge>
@@ -223,53 +223,50 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-700">Total Reports</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium text-blue-700">Total Reports</CardTitle>
             <FileText className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-900">{filteredReports.length}</div>
+            <div className="text-lg sm:text-2xl font-bold text-blue-900">{filteredReports.length}</div>
             <p className="text-xs text-blue-600 mt-1">
               {reports.length} total in system
             </p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-red-700">High Risk</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium text-red-700">High Risk</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-900">{highRiskReports.length}</div>
+            <div className="text-lg sm:text-2xl font-bold text-red-900">{highRiskReports.length}</div>
             <p className="text-xs text-red-600 mt-1">
               Requires immediate attention
             </p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-yellow-700">New Reports</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium text-yellow-700">New Reports</CardTitle>
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-900">{newReports.length}</div>
+            <div className="text-lg sm:text-2xl font-bold text-yellow-900">{newReports.length}</div>
             <p className="text-xs text-yellow-600 mt-1">
               Awaiting review
             </p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-700">Resolved</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium text-green-700">Resolved</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-900">
+            <div className="text-lg sm:text-2xl font-bold text-green-900">
               {reports.filter(r => r.status === 'resolved').length}
             </div>
             <p className="text-xs text-green-600 mt-1">
@@ -282,23 +279,22 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
       {/* Filters and Search */}
       <Card className="bg-white shadow-sm border-gray-200">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">Filters & Search</CardTitle>
-          <CardDescription>Filter reports by various criteria</CardDescription>
+          <CardTitle className="text-base sm:text-lg font-semibold text-gray-900">Filters & Search</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">Filter reports by various criteria</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search reports..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 w-full"
               />
             </div>
-            
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -308,9 +304,8 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
                 <SelectItem value="resolved">Resolved</SelectItem>
               </SelectContent>
             </Select>
-
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -324,9 +319,8 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
                 <SelectItem value="health_emergencies">Health Emergencies</SelectItem>
               </SelectContent>
             </Select>
-
             <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Urgency" />
               </SelectTrigger>
               <SelectContent>
@@ -336,9 +330,8 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
                 <SelectItem value="critical">Critical</SelectItem>
               </SelectContent>
             </Select>
-
             <Select value={regionFilter} onValueChange={setRegionFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Region" />
               </SelectTrigger>
               <SelectContent>
@@ -348,12 +341,11 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
                 ))}
               </SelectContent>
             </Select>
-
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={!filteredReports.length}>
+            <div className="flex gap-2 w-full">
+              <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={!filteredReports.length} className="w-full">
                 Export CSV
               </Button>
-              <Button size="sm" variant="outline" onClick={handleExportPDF}>
+              <Button size="sm" variant="outline" onClick={handleExportPDF} className="w-full">
                 Export PDF
               </Button>
             </div>
@@ -363,13 +355,13 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
 
       <Card>
         <CardHeader className="p-2 md:p-6">
-          <CardTitle className="text-sm md:text-base">Report Management</CardTitle>
-          <CardDescription className="text-xs md:text-sm">Filter and manage incident reports</CardDescription>
+          <CardTitle className="text-xs sm:text-sm md:text-base">Report Management</CardTitle>
+          <CardDescription className="text-xs sm:text-sm md:text-sm">Filter and manage incident reports</CardDescription>
         </CardHeader>
         <CardContent className="p-2 md:p-6 pt-0">
           <div className="space-y-2 md:space-y-4">
             {filteredReports.length === 0 ? (
-              <div className="text-center text-gray-500 text-sm py-8" aria-live="polite">
+              <div className="text-center text-gray-500 text-xs sm:text-sm py-8" aria-live="polite">
                 No reports match the current filters.
               </div>
             ) : (
@@ -377,7 +369,7 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
                 <div key={report.id} className={`border rounded-lg p-2 md:p-4 hover:bg-gray-50 transition-colors ${report.flagged ? 'border-red-400 bg-red-50' : ''}`}>
                   <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-2 md:mb-3 gap-2">
                     <div className="flex flex-wrap items-center gap-1 md:gap-3">
-                      <h4 className="font-medium text-xs md:text-sm">{report.type}</h4>
+                      <h4 className="font-medium text-xs sm:text-sm md:text-sm">{report.type}</h4>
                       <Badge className={`${getStatusColor(report.status)} text-xs`}>
                         {report.status.replace('-', ' ')}
                       </Badge>
@@ -400,11 +392,9 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
                       {new Date(report.date).toLocaleDateString()} | {report.region || 'N/A'}
                     </div>
                   </div>
-                  
-                  <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3">
+                  <p className="text-xs sm:text-sm md:text-sm text-gray-600 mb-2 md:mb-3">
                     {report.description.substring(0, 100)}...
                   </p>
-                  
                   <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
                     <div className="flex flex-wrap gap-2 md:gap-4 text-xs text-gray-500">
                       <span>Platform: {report.platform}</span>
@@ -431,8 +421,8 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow p-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6 mb-6">
+        <div className="bg-white rounded-lg shadow p-2 sm:p-4">
           <h3 className="font-semibold text-xs mb-2">Reports Per Day</h3>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={reportsPerDay}>
@@ -443,7 +433,7 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="bg-white rounded-lg shadow p-2 sm:p-4">
           <h3 className="font-semibold text-xs mb-2">Category Distribution</h3>
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
@@ -457,7 +447,7 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="bg-white rounded-lg shadow p-2 sm:p-4">
           <h3 className="font-semibold text-xs mb-2">Location Heatmap</h3>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={regionDist}>
