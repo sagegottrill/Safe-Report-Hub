@@ -87,56 +87,72 @@ const AppLayout: React.FC = () => {
       
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Header with logo, NGO name, About link */}
-        <header className="bg-white border-b border-gray-200 px-3 md:px-6 py-2 md:py-4 sticky top-0 z-30 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <header className="bg-white border-b border-gray-200 px-2 sm:px-3 md:px-6 py-2 md:py-4 sticky top-0 z-30 flex flex-wrap items-center justify-between gap-2 md:gap-0">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             {/* Sidebar toggle button */}
             <button
-              className="mr-2 p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="mr-1 sm:mr-2 p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
               onClick={toggleSidebar}
               aria-label="Open navigation menu"
             >
               <Menu className="h-6 w-6 text-blue-700" />
             </button>
-            <img src="/shield.svg" alt="NGO Logo" className="h-8 w-8" />
-            <span className="font-bold text-lg text-blue-700">{t('ngoName')}</span>
-            {/* Language selector */}
+            <button
+              className="flex items-center gap-1 sm:gap-2 focus:outline-none min-w-0"
+              onClick={() => navigate('/')}
+              aria-label="Go to Home"
+            >
+              <img src="/shield.svg" alt="NGO Logo" className="h-7 w-7 sm:h-8 sm:w-8" />
+              <span className="font-bold text-base sm:text-lg text-blue-700 truncate">{t('ngoName')}</span>
+            </button>
+          </div>
+          {/* Desktop actions */}
+          <div className="hidden sm:flex items-center gap-2 md:gap-4">
+            {/* Language selector moved here */}
             <label htmlFor="lang-select" className="sr-only">{t('language')}</label>
             <select
               id="lang-select"
               value={i18n.language}
               onChange={handleLanguageChange}
-              className="border rounded px-2 py-1 text-sm focus:outline-none focus:ring focus:border-blue-300 ml-2"
+              className="border rounded px-1 py-1 text-xs sm:text-sm focus:outline-none focus:ring focus:border-blue-300 ml-1 sm:ml-2"
               aria-label="Language"
             >
               {languages.map((lang) => (
                 <option key={lang.code} value={lang.code}>{lang.label}</option>
               ))}
             </select>
-          </div>
-          <div className="flex items-center gap-4">
             <button
-              className="text-sm text-blue-700 hover:text-blue-900 px-3 py-1 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="text-xs sm:text-sm text-blue-700 hover:text-blue-900 px-2 sm:px-3 py-1 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
               onClick={() => setAboutOpen(true)}
             >
               {t('aboutProject')}
             </button>
             <button
-              className="text-sm text-blue-700 hover:text-blue-900 px-3 py-1 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="text-xs sm:text-sm text-blue-700 hover:text-blue-900 px-2 sm:px-3 py-1 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
               onClick={() => setPrivacyOpen(true)}
             >
               {t('yourPrivacy')}
             </button>
-            <button className="text-sm px-3 py-1 rounded bg-red-600 text-white font-semibold shadow hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400" onClick={() => setEmergencyOpen(true)}>
+            <button className="text-xs sm:text-sm px-2 sm:px-3 py-1 rounded bg-red-600 text-white font-semibold shadow hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400" onClick={() => setEmergencyOpen(true)}>
               {t('needHelpNow')}
             </button>
           </div>
+          {/* Mobile actions: hamburger menu for About/Privacy/Emergency */}
+          <div className="flex sm:hidden items-center">
+            <Menu
+              className="h-6 w-6 text-blue-700 cursor-pointer"
+              aria-label="Open more menu"
+              onClick={() => setAboutOpen(true)}
+            />
+            {/* Optionally, use a Drawer or Popover for About/Privacy/Emergency on mobile */}
+          </div>
         </header>
         
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto px-1 sm:px-0">
           {renderCurrentView()}
         </main>
         {/* Footer with attribution */}
-        <footer className="w-full bg-white border-t border-gray-200 text-xs text-gray-500 text-center py-2 sticky bottom-0 z-20">
+        <footer className="w-full bg-white border-t border-gray-200 text-xs text-gray-500 text-center py-2 sticky bottom-0 z-20 px-1 sm:px-0">
           {t('footerAttribution')}
         </footer>
         {/* About Modal */}

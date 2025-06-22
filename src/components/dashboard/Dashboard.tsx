@@ -36,50 +36,50 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="p-3 md:p-6 space-y-4 md:space-y-6">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+    <div className="p-2 sm:p-3 md:p-6 space-y-4 md:space-y-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 md:gap-3">
         <div>
-          <h1 className="text-lg md:text-3xl font-bold text-gray-900">{t('Welcome back')}</h1>
-          <p className="text-sm md:text-base text-gray-600">{t('Manage your reports here and access support resources')}</p>
+          <h1 className="text-base sm:text-lg md:text-3xl font-bold text-gray-900">{t('Welcome back')}</h1>
+          <p className="text-xs sm:text-sm md:text-base text-gray-600">{t('Manage your reports here and access support resources')}</p>
         </div>
-        <Button onClick={() => setCurrentView('report')} className="bg-gradient-to-r from-blue-600 to-purple-600 text-sm md:text-base h-8 md:h-10">
-          <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+        <Button onClick={() => setCurrentView('report')} className="bg-gradient-to-r from-blue-600 to-purple-600 text-xs sm:text-sm md:text-base h-10 w-full md:w-auto mt-2 md:mt-0">
+          <Plus className="h-4 w-4 md:h-4 md:w-4 mr-1 md:mr-2" />
           {t('New Report')}
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-3 md:p-6">
-            <CardTitle className="text-xs md:text-sm font-medium">{t('Total Reports')}</CardTitle>
-            <FileText className="h-3 w-3 md:h-4 md:w-4 text-blue-600" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 w-full">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-2 sm:p-3 md:p-6">
+            <CardTitle className="text-xs sm:text-sm md:text-sm font-medium">{t('Total Reports')}</CardTitle>
+            <FileText className="h-4 w-4 md:h-4 md:w-4 text-blue-600" />
           </CardHeader>
-          <CardContent className="p-3 md:p-6 pt-0">
-            <div className="text-lg md:text-2xl font-bold text-blue-700">{userReports.length}</div>
+          <CardContent className="p-2 sm:p-3 md:p-6 pt-0">
+            <div className="text-base sm:text-lg md:text-2xl font-bold text-blue-700">{userReports.length}</div>
             <p className="text-xs text-blue-600">{t('Your submitted reports')}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-3 md:p-6">
-            <CardTitle className="text-xs md:text-sm font-medium">{t('underReview')}</CardTitle>
-            <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 text-yellow-600" />
+        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 w-full">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-2 sm:p-3 md:p-6">
+            <CardTitle className="text-xs sm:text-sm md:text-sm font-medium">{t('underReview')}</CardTitle>
+            <AlertTriangle className="h-4 w-4 md:h-4 md:w-4 text-yellow-600" />
           </CardHeader>
-          <CardContent className="p-3 md:p-6 pt-0">
-            <div className="text-lg md:text-2xl font-bold text-yellow-700">
+          <CardContent className="p-2 sm:p-3 md:p-6 pt-0">
+            <div className="text-base sm:text-lg md:text-2xl font-bold text-yellow-700">
               {userReports.filter(r => r.status === 'under-review').length}
             </div>
             <p className="text-xs text-yellow-600">{t('Being processed')}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-3 md:p-6">
-            <CardTitle className="text-xs md:text-sm font-medium">{t('resolved')}</CardTitle>
-            <CheckCircle className="h-3 w-3 md:h-4 md:w-4 text-green-600" />
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 w-full">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-2 sm:p-3 md:p-6">
+            <CardTitle className="text-xs sm:text-sm md:text-sm font-medium">{t('resolved')}</CardTitle>
+            <CheckCircle className="h-4 w-4 md:h-4 md:w-4 text-green-600" />
           </CardHeader>
-          <CardContent className="p-3 md:p-6 pt-0">
-            <div className="text-lg md:text-2xl font-bold text-green-700">
+          <CardContent className="p-2 sm:p-3 md:p-6 pt-0">
+            <div className="text-base sm:text-lg md:text-2xl font-bold text-green-700">
               {userReports.filter(r => r.status === 'resolved').length}
             </div>
             <p className="text-xs text-green-600">{t('Completed cases')}</p>
@@ -88,18 +88,18 @@ const Dashboard: React.FC = () => {
       </div>
 
       <Card>
-        <CardHeader className="p-3 md:p-6">
-          <CardTitle className="flex items-center gap-2 text-sm md:text-base">
+        <CardHeader className="p-2 sm:p-3 md:p-6">
+          <CardTitle className="flex items-center gap-2 text-xs sm:text-sm md:text-base">
             <Shield className="h-4 w-4 md:h-5 md:w-5" />
             {t('Your Reports')}
           </CardTitle>
-          <CardDescription className="text-xs md:text-sm">
+          <CardDescription className="text-xs sm:text-xs md:text-sm">
             {t('Track the status of your submitted incident reports')}
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-3 md:p-6 pt-0">
+        <CardContent className="p-2 sm:p-3 md:p-6 pt-0">
           {userReports.length === 0 ? (
-            <div className="text-center py-4 md:py-8 text-gray-500 text-sm" aria-live="polite">
+            <div className="text-center py-4 md:py-8 text-gray-500 text-xs sm:text-sm" aria-live="polite">
               {t('No reports yet')}
               <br />
               {t('Submit your first incident report to get started')}
@@ -111,16 +111,16 @@ const Dashboard: React.FC = () => {
                   <div className="flex justify-between items-start mb-1 md:mb-2">
                     <div className="flex items-center gap-1 md:gap-2">
                       {getStatusIcon(report.status)}
-                      <h4 className="font-medium text-xs md:text-sm">{report.type}</h4>
+                      <h4 className="font-medium text-xs sm:text-sm md:text-sm">{report.type}</h4>
                     </div>
-                    <Badge className={`${getStatusColor(report.status)} text-xs`}>
+                    <Badge className={`${getStatusColor(report.status)} text-xs sm:text-xs md:text-xs`}>
                       {report.status ? t(report.status === 'under-review' ? 'underReview' : report.status) : t('unknown')}
                     </Badge>
                   </div>
-                  <p className="text-xs md:text-sm text-gray-600 mb-1 md:mb-2">
+                  <p className="text-xs sm:text-xs md:text-sm text-gray-600 mb-1 md:mb-2">
                     {report.description ? report.description.substring(0, 60) : t('noDescription')}...
                   </p>
-                  <div className="flex justify-between items-center text-xs text-gray-500">
+                  <div className="flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 gap-1 sm:gap-0">
                     <span className="truncate">{report.platform || t('unknownPlatform')}</span>
                     <span className="text-xs">{report.id ? report.id.substring(0, 6) : t('na')}</span>
                     <span className="text-xs">{report.date ? new Date(report.date).toLocaleDateString() : t('na')}</span>
@@ -132,14 +132,14 @@ const Dashboard: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
-        <CardHeader className="p-3 md:p-6">
-          <CardTitle className="text-purple-800 text-sm md:text-base">{t('Support Resources')}</CardTitle>
-          <CardDescription className="text-purple-600 text-xs md:text-sm">
+      <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 w-full">
+        <CardHeader className="p-2 sm:p-3 md:p-6">
+          <CardTitle className="text-purple-800 text-xs sm:text-sm md:text-base">{t('Support Resources')}</CardTitle>
+          <CardDescription className="text-purple-600 text-xs sm:text-xs md:text-sm">
             {t('Get help and support when you need it most')}
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-3 md:p-6 pt-0">
+        <CardContent className="p-2 sm:p-3 md:p-6 pt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
             <div className="space-y-1 md:space-y-2">
               <h4 className="font-medium text-purple-800 text-xs md:text-sm">{t('Crisis Support')}</h4>

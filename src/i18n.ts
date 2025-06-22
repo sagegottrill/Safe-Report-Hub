@@ -178,7 +178,13 @@ const resources = {
       emergencyFooter: 'If you are in immediate danger, leave this site and call emergency services.',
       footerAttribution: 'Built by BICDTA for humanitarian use — v1.0.0',
       safeReport: 'SafeReport',
-      SecurePlatform: 'A secure platform for reporting incidents and getting help'
+      SecurePlatform: 'A secure platform for reporting incidents and getting help',
+      incidentCategory: 'Incident Category',
+      selectIncidentCategory: 'Select Incident Category',
+      dateOfIncident: 'Date of Incident',
+      descriptionOfIncident: 'Description of Incident',
+      yes: 'Yes',
+      no: 'No'
     },
   },
   fr: {

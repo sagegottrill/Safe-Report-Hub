@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { 
   Home, FileText, Shield, LogOut, 
-  Users, HelpCircle, ExternalLink 
+  Users, HelpCircle, ExternalLink, X 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
@@ -29,20 +29,31 @@ const Sidebar: React.FC = () => {
     <aside
       className={cn(
         'fixed inset-y-0 left-0 z-50 flex flex-col bg-white border-r border-gray-200 w-64 transition-transform duration-300',
+        'sm:w-64 w-full max-w-xs',
+        'shadow-lg sm:shadow-none'
       )}
-      style={{ width: 256 }}
+      style={{ width: undefined }}
       aria-label={t('Sidebar navigation')}
     >
-      <div className="flex items-center gap-2 p-4 border-b border-gray-200">
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
-          <Shield className="h-5 w-5 text-white" />
+      <div className="flex items-center justify-between gap-2 p-3 sm:p-4 border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
+            <Shield className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h2 className="font-bold text-gray-900 text-base sm:text-base truncate">{t('safeReport')}</h2>
+            <p className="text-xs text-gray-500 hidden sm:block">{t('SecurePlatform')}</p>
+          </div>
         </div>
-        <div>
-          <h2 className="font-bold text-gray-900 text-base">{t('safeReport')}</h2>
-          <p className="text-xs text-gray-500">{t('SecurePlatform')}</p>
-        </div>
+        <button
+          className="sm:hidden p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          onClick={toggleSidebar}
+          aria-label="Close sidebar"
+        >
+          <X className="h-5 w-5 text-gray-700" />
+        </button>
       </div>
-      <div className="flex-1 p-4 overflow-y-auto">
+      <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
         <nav className="space-y-2" aria-label={t('mainMenu')}>
           {filteredItems.length === 0 ? (
             <div className="text-gray-400 text-xs text-center py-8" aria-live="polite">{t('noMenuItems')}</div>
@@ -55,14 +66,14 @@ const Sidebar: React.FC = () => {
                   key={item.id}
                   variant={isActive ? 'default' : 'ghost'}
                   className={cn(
-                    'w-full justify-start gap-3 text-sm h-10',
+                    'w-full justify-start gap-3 text-xs sm:text-sm h-10',
                     isActive && 'bg-gradient-to-r from-blue-600 to-purple-600'
                   )}
                   onClick={() => setCurrentView(item.id as any)}
                   aria-label={t(item.label)}
                 >
                   <Icon className="h-4 w-4" />
-                  <span className="text-sm">{t(item.label)}</span>
+                  <span className="text-xs sm:text-sm truncate">{t(item.label)}</span>
                 </Button>
               );
             })
@@ -70,12 +81,12 @@ const Sidebar: React.FC = () => {
           {user?.role === 'admin' && (
             <Button
               variant="ghost"
-              className="w-full justify-start gap-3 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+              className="w-full justify-start gap-3 text-purple-600 hover:text-purple-700 hover:bg-purple-50 text-xs sm:text-sm h-10"
               onClick={() => window.open('/admin', '_blank')}
               aria-label={t('adminDashboard')}
             >
               <Users className="h-4 w-4" />
-              <span className="text-sm flex items-center gap-1">
+              <span className="text-xs sm:text-sm flex items-center gap-1 truncate">
                 {t('adminDashboard')}
                 <ExternalLink className="h-3 w-3" />
               </span>
@@ -83,35 +94,35 @@ const Sidebar: React.FC = () => {
           )}
         </nav>
       </div>
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-3 sm:p-4 border-t border-gray-200">
         <div className="space-y-2">
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3 text-purple-700 hover:text-purple-900 hover:bg-purple-50 text-sm h-10 font-semibold"
+            className="w-full justify-start gap-3 text-purple-700 hover:text-purple-900 hover:bg-purple-50 text-xs sm:text-sm h-10 font-semibold"
             aria-label={t('helpSupport', 'Help & Support')}
             onClick={() => window.open('mailto:support@safereport.org', '_blank')}
           >
             <HelpCircle className="h-4 w-4" />
-            <span className="text-sm font-semibold">{t('helpSupport', 'Help & Support')}</span>
+            <span className="text-xs sm:text-sm font-semibold truncate">{t('helpSupport', 'Help & Support')}</span>
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3 text-indigo-700 hover:text-indigo-900 hover:bg-indigo-50 text-sm h-10 font-semibold"
+            className="w-full justify-start gap-3 text-indigo-700 hover:text-indigo-900 hover:bg-indigo-50 text-xs sm:text-sm h-10 font-semibold"
             aria-label="FAQ"
             onClick={() => navigate('/faq')}
           >
             <HelpCircle className="h-4 w-4" />
-            <span className="text-sm font-semibold">FAQ</span>
+            <span className="text-xs sm:text-sm font-semibold truncate">FAQ</span>
           </Button>
           <div className="border-t border-gray-200 my-3" />
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3 text-red-600 hover:text-red-700 hover:bg-red-50 text-sm h-10"
+            className="w-full justify-start gap-3 text-red-600 hover:text-red-700 hover:bg-red-50 text-xs sm:text-sm h-10"
             onClick={logout}
             aria-label={t('logout')}
           >
             <LogOut className="h-4 w-4" />
-            <span className="text-sm">{t('logout')}</span>
+            <span className="text-xs sm:text-sm truncate">{t('logout')}</span>
           </Button>
         </div>
       </div>
