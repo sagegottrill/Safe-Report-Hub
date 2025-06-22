@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { AlertTriangle, Calendar, User, Shield } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Report {
   id: string;
@@ -17,6 +18,7 @@ interface Report {
   isAnonymous: boolean;
   riskScore?: number;
   reporterEmail?: string;
+  adminNotes?: string;
 }
 
 interface ReportReviewModalProps {
@@ -32,6 +34,7 @@ const ReportReviewModal: React.FC<ReportReviewModalProps> = ({
   onClose,
   onUpdateReport
 }) => {
+  const { t } = useTranslation();
   const [status, setStatus] = useState(report?.status || 'new');
   const [adminNotes, setAdminNotes] = useState('');
   const [riskScore, setRiskScore] = useState(report?.riskScore?.toString() || '5');
@@ -68,7 +71,7 @@ const ReportReviewModal: React.FC<ReportReviewModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-orange-500" />
-            Review Report - {report.type}
+            {t('reviewReport', { type: report.type })}
           </DialogTitle>
         </DialogHeader>
         
@@ -77,7 +80,7 @@ const ReportReviewModal: React.FC<ReportReviewModalProps> = ({
             <div className="space-y-2">
               <Label className="text-sm font-medium flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                Date Reported
+                {t('dateReported')}
               </Label>
               <p className="text-sm text-gray-600">{new Date(report.date).toLocaleDateString()}</p>
             </div>
@@ -85,10 +88,10 @@ const ReportReviewModal: React.FC<ReportReviewModalProps> = ({
             <div className="space-y-2">
               <Label className="text-sm font-medium flex items-center gap-2">
                 <User className="h-4 w-4" />
-                Reporter
+                {t('reporter')}
               </Label>
               <p className="text-sm text-gray-600">
-                {report.isAnonymous ? 'Anonymous' : report.reporterEmail || 'Unknown'}
+                {report.isAnonymous ? t('anonymous') : report.reporterEmail || t('unknown')}
               </p>
             </div>
           </div>
@@ -96,20 +99,20 @@ const ReportReviewModal: React.FC<ReportReviewModalProps> = ({
           <div className="space-y-2">
             <Label className="text-sm font-medium flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              Platform
+              {t('platform')}
             </Label>
             <p className="text-sm text-gray-600">{report.platform}</p>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Current Status</Label>
+            <Label className="text-sm font-medium">{t('currentStatus')}</Label>
             <Badge className={getStatusColor(report.status)}>
-              {report.status.replace('-', ' ')}
+              {t(report.status.replace('-', ''))}
             </Badge>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Description</Label>
+            <Label className="text-sm font-medium">{t('description')}</Label>
             <div className="p-3 bg-gray-50 rounded-md">
               <p className="text-sm">{report.description}</p>
             </div>
@@ -117,21 +120,21 @@ const ReportReviewModal: React.FC<ReportReviewModalProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="status">Update Status</Label>
+              <Label htmlFor="status">{t('updateStatus')}</Label>
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="new">New</SelectItem>
-                  <SelectItem value="under-review">Under Review</SelectItem>
-                  <SelectItem value="resolved">Resolved</SelectItem>
+                  <SelectItem value="new">{t('new')}</SelectItem>
+                  <SelectItem value="under-review">{t('underReview')}</SelectItem>
+                  <SelectItem value="resolved">{t('resolved')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="risk">Risk Score (1-10)</Label>
+              <Label htmlFor="risk">{t('riskScoreLabel')}</Label>
               <Select value={riskScore} onValueChange={setRiskScore}>
                 <SelectTrigger>
                   <SelectValue />
@@ -146,10 +149,10 @@ const ReportReviewModal: React.FC<ReportReviewModalProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Admin Notes</Label>
+            <Label htmlFor="notes">{t('adminNotes')}</Label>
             <Textarea
               id="notes"
-              placeholder="Add internal notes about this report..."
+              placeholder={t('adminNotesPlaceholder')}
               value={adminNotes}
               onChange={(e) => setAdminNotes(e.target.value)}
               rows={3}
@@ -159,10 +162,10 @@ const ReportReviewModal: React.FC<ReportReviewModalProps> = ({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {t('cancel')}
           </Button>
           <Button onClick={handleSave}>
-            Save Changes
+            {t('saveChanges')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppContext } from '@/contexts/AppContext';
+import { useTranslation } from 'react-i18next';
 
 interface RegisterFormProps {
   onToggleMode: () => void;
@@ -16,11 +17,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAppContext();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      alert(t('passwordsDoNotMatch'));
       return;
     }
     setLoading(true);
@@ -31,41 +33,41 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">{t('createAccount')}</CardTitle>
         <CardDescription className="text-center">
-          Join our secure reporting platform
+          {t('joinPlatform')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name">{t('fullName')}</Label>
             <Input
               id="name"
               type="text"
-              placeholder="Enter your full name"
+              placeholder={t('enterFullName')}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('email')}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="Enter your email"
+              placeholder={t('enterEmail')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('password')}</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Create a strong password"
+              placeholder={t('createPassword')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -73,11 +75,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="Confirm your password"
+              placeholder={t('confirmYourPassword')}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
@@ -85,12 +87,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Creating Account...' : 'Create Account'}
+            {loading ? t('creatingAccount') : t('createAccount')}
           </Button>
         </form>
         <div className="mt-4 text-center">
           <Button variant="link" onClick={onToggleMode}>
-            Already have an account? Sign In
+            {t('alreadyHaveAccount')}
           </Button>
         </div>
       </CardContent>

@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { ArrowUpDown } from 'lucide-react';
 import Papa from 'papaparse';
+import { useTranslation } from 'react-i18next';
 
 // Replace with your public Google Sheet CSV URL
 const PUBLIC_GOOGLE_SHEET_URL = 'YOUR_PUBLIC_GOOGLE_SHEET_CSV_URL_HERE';
@@ -22,11 +23,12 @@ const PublicDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>({ key: 'Timestamp', direction: 'descending' });
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchReports = async () => {
       if (PUBLIC_GOOGLE_SHEET_URL === 'YOUR_PUBLIC_GOOGLE_SHEET_CSV_URL_HERE') {
-        setError('Please update the public Google Sheet URL in PublicDashboard.tsx');
+        setError(t('updatePublicSheetUrl'));
         setLoading(false);
         return;
       }
@@ -40,7 +42,7 @@ const PublicDashboard: React.FC = () => {
             setLoading(false);
           },
           error: (err) => {
-            setError(err.message);
+            setError(t('fetchParseError'));
             setLoading(false);
           }
         });
@@ -77,31 +79,31 @@ const PublicDashboard: React.FC = () => {
     setSortConfig({ key, direction });
   };
 
-  if (loading) return <div className="text-center p-8">Loading reports...</div>;
-  if (error) return <div className="text-center p-8 text-red-500">Error: {error}</div>;
+  if (loading) return <div className="text-center p-8">{t('loadingReports')}</div>;
+  if (error) return <div className="text-center p-8 text-red-500">{t('error')}: {error}</div>;
 
   return (
     <div className="p-4 md:p-8">
-      <h1 className="text-3xl font-bold mb-4">Public Reports</h1>
+      <h1 className="text-3xl font-bold mb-4">{t('publicReports')}</h1>
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>
                 <Button variant="ghost" onClick={() => requestSort('Timestamp')}>
-                  Timestamp <ArrowUpDown className="ml-2 h-4 w-4" />
+                  {t('timestamp')} <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               </TableHead>
               <TableHead>
                 <Button variant="ghost" onClick={() => requestSort('Category')}>
-                  Category <ArrowUpDown className="ml-2 h-4 w-4" />
+                  {t('category')} <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               </TableHead>
-              <TableHead>Message</TableHead>
-              <TableHead>Tags</TableHead>
+              <TableHead>{t('message')}</TableHead>
+              <TableHead>{t('tags')}</TableHead>
               <TableHead>
                 <Button variant="ghost" onClick={() => requestSort('Urgency')}>
-                  Urgency <ArrowUpDown className="ml-2 h-4 w-4" />
+                  {t('urgencyLabel')} <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               </TableHead>
             </TableRow>

@@ -66,6 +66,7 @@ app.post('/report', async (req, res) => {
 
 // Health check
 app.get('/health', (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
   res.json({ status: 'ok' });
 });
 

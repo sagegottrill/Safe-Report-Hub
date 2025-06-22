@@ -24,6 +24,11 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    // Optimize for modern browsers
+    target: 'esnext',
+    minify: 'esbuild',
+    cssCodeSplit: true,
+    sourcemap: false, // Disable sourcemaps in production for smaller bundles
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html'),

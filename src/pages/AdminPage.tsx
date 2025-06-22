@@ -5,10 +5,12 @@ import { useAppContext } from '@/contexts/AppContext';
 import AuthPage from '@/components/auth/AuthPage';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const AdminPageContent: React.FC = () => {
   const { user, logout } = useAppContext();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   React.useEffect(() => {
     if (!user) return;
@@ -26,10 +28,15 @@ const AdminPageContent: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
-          <Button variant="outline" onClick={logout} className="text-blue-600 border-blue-600 hover:bg-blue-50">
-            Log Out
-          </Button>
+          <h1 className="text-2xl font-bold text-gray-900">{t('adminDashboard')}</h1>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate('/')} className="bg-blue-600 text-white border-blue-600 hover:bg-blue-700">
+              ← {t('returnHome') || 'Back to Home'}
+            </Button>
+            <Button variant="outline" onClick={logout} className="text-blue-600 border-blue-600 hover:bg-blue-50">
+              {t('logout')}
+            </Button>
+          </div>
         </div>
       </div>
       <div className="p-6">

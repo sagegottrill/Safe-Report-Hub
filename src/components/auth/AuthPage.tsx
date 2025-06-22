@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
 import { Shield } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const AuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const { t } = useTranslation();
 
   const toggleMode = () => setIsLogin(!isLogin);
 
@@ -18,10 +20,10 @@ const AuthPage: React.FC = () => {
             </div>
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            SafeReport
+            {t('safeReport')}
           </h1>
           <p className="text-gray-600 mt-2">
-            Secure harassment and bullying reporting platform
+            {t('SecurePlatform')}
           </p>
         </div>
         
@@ -32,7 +34,7 @@ const AuthPage: React.FC = () => {
         )}
         
         <div className="mt-6 text-center text-sm text-gray-500">
-          <p>Your privacy and security are our top priority</p>
+          <p>{t('privacyPriority')}</p>
         </div>
       </div>
     </div>

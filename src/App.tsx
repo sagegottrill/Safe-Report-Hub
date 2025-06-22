@@ -7,11 +7,9 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import AdminPage from "./pages/AdminPage";
-import PublicDashboardPage from "./pages/PublicDashboardPage";
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { AppProvider, useAppContext } from './contexts/AppContext';
+import FAQ from './pages/FAQ';
 
 const queryClient = new QueryClient();
 
@@ -27,11 +25,16 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+const AdminPage = React.lazy(() => import('./pages/AdminPage'));
+const PublicDashboardPage = React.lazy(() => import('./pages/PublicDashboardPage'));
+const NotFound = React.lazy(() => import('./pages/NotFound'));
+
 const AppRoutes: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Index />} />
+        <Route path="/faq" element={<FAQ />} />
         <Route path="/admin" element={
           <ProtectedRoute>
             <AdminPage />
@@ -52,7 +55,9 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <AppRoutes />
+            <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+              <AppRoutes />
+            </Suspense>
             <Analytics />
             <SpeedInsights />
           </TooltipProvider>
