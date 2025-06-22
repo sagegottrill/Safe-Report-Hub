@@ -1,6 +1,6 @@
-const express = require('express');
-const cors = require('cors');
-const { google } = require('googleapis');
+import express from 'express';
+import cors from 'cors';
+import { google } from 'googleapis';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -21,6 +21,8 @@ app.post('/report', async (req, res) => {
       tags,
     } = req.body;
 
+    console.log('Received report data:', { category, urgency, message, location, anonymous, tags });
+
     // Load the service account credentials from env
     const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '{}');
 
@@ -33,6 +35,8 @@ app.post('/report', async (req, res) => {
 
     const spreadsheetId = process.env.SHEET_ID;
     const range = 'Sheet1!A1'; // Start appending from A1
+
+    console.log('Attempting to write to Google Sheets...');
 
     await sheets.spreadsheets.values.append({
       spreadsheetId,
@@ -51,10 +55,11 @@ app.post('/report', async (req, res) => {
       },
     });
 
+    console.log('Successfully wrote to Google Sheets');
     res.status(200).json({ status: 'success' });
   } catch (err) {
     console.error('API Error:', err);
-    res.status(500).json({ error: 'Failed to write to sheet' });
+    res.status(500).json({ error: 'Failed to write to sheet', details: err.message });
   }
 });
 
@@ -65,4 +70,7 @@ app.get('/health', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`API Server running on port ${PORT}`);
+  console.log('Environment check:');
+  console.log('- GOOGLE_SERVICE_ACCOUNT_KEY:', process.env.GOOGLE_SERVICE_ACCOUNT_KEY ? 'Set' : 'Not set');
+  console.log('- SHEET_ID:', process.env.SHEET_ID ? 'Set' : 'Not set');
 }); 
