@@ -77,10 +77,27 @@ function generatePin() {
 }
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Clear any existing user data to prevent old information from showing
+  // Clear any existing user data to ensure fresh start for new visitors
   useEffect(() => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('currentView');
+    // Only clear if this is a new session (no user data)
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) {
+      localStorage.removeItem('user');
+      localStorage.removeItem('currentView');
+    }
+  }, []);
+
+  // Session check effect
+  useEffect(() => {
+    const checkSession = () => {
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser) {
+        // Ensure we're showing auth page for new visitors
+        setCurrentView('auth');
+      }
+    };
+    
+    checkSession();
   }, []);
 
   const [user, setUser] = useState<User | null>(() => {
@@ -118,6 +135,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState<'dashboard' | 'report' | 'auth' | 'admin'>(() => {
     const stored = localStorage.getItem('currentView');
+    const storedUser = localStorage.getItem('user');
+    // If no user is logged in, always show auth page
+    if (!storedUser) {
+      return 'auth';
+    }
     return stored ? stored as any : 'auth';
   });
 

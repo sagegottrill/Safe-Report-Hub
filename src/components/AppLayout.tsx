@@ -17,6 +17,14 @@ const AppLayout: React.FC = () => {
   const lastPathRef = React.useRef(location.pathname);
 
   useEffect(() => {
+    // If no user is logged in, always show auth page regardless of URL
+    if (!user) {
+      if (location.pathname !== '/') {
+        navigate('/', { replace: true });
+      }
+      return;
+    }
+
     // Only redirect to /admin if not already there and not coming from /admin
     if (user && ['admin', 'super_admin', 'country_admin'].includes(user.role)) {
       if (location.pathname !== '/admin' && lastPathRef.current !== '/admin') {
