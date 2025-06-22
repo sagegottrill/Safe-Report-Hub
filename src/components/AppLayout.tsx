@@ -151,10 +151,7 @@ const AppLayout: React.FC = () => {
         <main className="flex-1 overflow-y-auto px-1 sm:px-0">
           {renderCurrentView()}
         </main>
-        {/* Footer with attribution */}
-        <footer className="w-full bg-white border-t border-gray-200 text-xs text-gray-500 text-center py-2 sticky bottom-0 z-20 px-1 sm:px-0">
-          {t('footerAttribution')}
-        </footer>
+        {/* Footer removed as requested */}
         {/* About Modal */}
         {aboutOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 const NotFound = () => {
   const location = useLocation();
-  const { t } = useTranslation();
+   const { t } = useTranslation();
 
   useEffect(() => {
     console.error(
