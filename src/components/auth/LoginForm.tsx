@@ -66,7 +66,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
               minLength={6}
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-full shadow-md hover:from-emerald-600 hover:to-green-700 transition-colors duration-200" disabled={loading}>
             {loading ? t('signingIn') : t('signIn')}
           </Button>
         </form>

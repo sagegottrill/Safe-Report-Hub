@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppContext } from '@/contexts/AppContext';
-import { Search, AlertTriangle, TrendingUp, Users, FileText, Shield, Activity, MapPin, Clock, CheckCircle } from 'lucide-react';
+import { Search, AlertTriangle, TrendingUp, Users, FileText, Shield, Activity, MapPin, Clock, CheckCircle, Home, Trash2 } from 'lucide-react';
 import ReportReviewModal from './ReportReviewModal';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { saveAs } from 'file-saver';
@@ -16,9 +16,17 @@ import { useTranslation } from 'react-i18next';
 import jsPDF from 'jspdf';
 // @ts-ignore: jsPDF-AutoTable types may be missing if not installed
 import 'jspdf-autotable';
+import CryptoJS from 'crypto-js';
+
+// Extend jsPDF with autoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
 
 const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
-  const { reports, updateReport } = useAppContext();
+  const { reports, updateReport, deleteReport } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedReport, setSelectedReport] = useState(null);
@@ -206,67 +214,84 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
     }
   };
 
+  // Helper to decrypt description
+  function decryptDescription(encrypted: string) {
+    try {
+      const bytes = CryptoJS.AES.decrypt(encrypted, 'safeaid-demo-key');
+      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+      return decrypted || encrypted;
+    } catch {
+      return encrypted;
+    }
+  }
+
+  // Helper to generate a caseId if missing
+  function generateCaseId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let id = 'SR-';
+    for (let i = 0; i < 6; i++) id += chars[Math.floor(Math.random() * chars.length)];
+    return id;
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6 p-2 sm:p-4 md:p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
-        <div>
-          <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-xs sm:text-sm md:text-base text-gray-600 mt-1">Monitor and manage incident reports</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 rounded-2xl shadow-lg bg-white/80 backdrop-blur-md border border-green-100 p-4 mb-2">
+        <div className="flex items-center gap-3">
+          <span className="bg-gradient-to-br from-green-500 via-emerald-600 to-green-800 p-3 rounded-2xl shadow-lg flex items-center justify-center" style={{ boxShadow: '0 4px 24px 0 rgba(34,197,94,0.18)' }}>
+            <Home className="h-10 w-10 text-white drop-shadow-md" />
+          </span>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-green-700 to-emerald-500 bg-clip-text text-transparent tracking-tight">Admin Dashboard</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs sm:text-sm">
-            <Shield className="h-3 w-3 mr-1" />
+          <Badge variant="outline" className="text-sm bg-green-100 text-green-800 border-green-200 px-3 py-2 rounded-full font-semibold">
+            <Shield className="h-5 w-5 mr-1 text-green-600" />
             {user.role.replace('_', ' ')}
           </Badge>
         </div>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-6">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 w-full">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mb-2">
+        <Card className="bg-white border-blue-100 w-full rounded-2xl shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-blue-700">Total Reports</CardTitle>
-            <FileText className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm sm:text-base font-semibold text-blue-700 flex items-center gap-2"><FileText className="h-7 w-7 text-blue-600" />Total Reports</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-2xl font-bold text-blue-900">{filteredReports.length}</div>
+            <div className="text-lg sm:text-2xl md:text-3xl font-bold text-blue-900">{filteredReports.length}</div>
             <p className="text-xs text-blue-600 mt-1">
               {reports.length} total in system
             </p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 w-full">
+        <Card className="bg-white border-red-100 w-full rounded-2xl shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-red-700">High Risk</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-sm sm:text-base font-semibold text-red-700 flex items-center gap-2"><AlertTriangle className="h-7 w-7 text-red-600" />High Risk</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-2xl font-bold text-red-900">{highRiskReports.length}</div>
+            <div className="text-lg sm:text-2xl md:text-3xl font-bold text-red-900">{highRiskReports.length}</div>
             <p className="text-xs text-red-600 mt-1">
               Requires immediate attention
             </p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 w-full">
+        <Card className="bg-white border-yellow-100 w-full rounded-2xl shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-yellow-700">New Reports</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
+            <CardTitle className="text-sm sm:text-base font-semibold text-yellow-700 flex items-center gap-2"><Clock className="h-7 w-7 text-yellow-600" />New Reports</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-2xl font-bold text-yellow-900">{newReports.length}</div>
+            <div className="text-lg sm:text-2xl md:text-3xl font-bold text-yellow-900">{newReports.length}</div>
             <p className="text-xs text-yellow-600 mt-1">
               Awaiting review
             </p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 w-full">
+        <Card className="bg-white border-green-100 w-full rounded-2xl shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-green-700">Resolved</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm sm:text-base font-semibold text-green-700 flex items-center gap-2"><CheckCircle className="h-7 w-7 text-green-600" />Resolved</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-2xl font-bold text-green-900">
+            <div className="text-lg sm:text-2xl md:text-3xl font-bold text-green-900">
               {reports.filter(r => r.status === 'resolved').length}
             </div>
             <p className="text-xs text-green-600 mt-1">
@@ -277,22 +302,21 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
       </div>
 
       {/* Filters and Search */}
-      <Card className="bg-white shadow-sm border-gray-200">
+      <Card className="rounded-2xl shadow-lg border border-gray-100 bg-white/90">
         <CardHeader>
-          <CardTitle className="text-base sm:text-lg font-semibold text-gray-900">Filters & Search</CardTitle>
-          <CardDescription className="text-xs sm:text-sm">Filter reports by various criteria</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-base font-semibold text-gray-700">
+            <Search className="h-6 w-6 text-gray-500" />
+            Filter & Search Reports
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search reports..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full"
-              />
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+            <Input
+              placeholder="Search by ID, keyword..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="md:col-span-1 lg:col-span-2"
+            />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Status" />
@@ -341,22 +365,27 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
                 ))}
               </SelectContent>
             </Select>
-            <div className="flex gap-2 w-full">
-              <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={!filteredReports.length} className="w-full">
-                Export CSV
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleExportPDF} className="w-full">
-                Export PDF
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
-
-      <Card>
+      
+      {/* Reports Table */}
+      <Card className="rounded-2xl shadow-lg border border-green-100 bg-white/90">
         <CardHeader>
-          <CardTitle>All Reports</CardTitle>
-          <CardDescription>Review and manage all submitted incident reports.</CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold text-green-700">
+              <FileText className="h-7 w-7 text-green-600" />
+              Manage Reports
+            </CardTitle>
+            <div className="flex items-center gap-2 mt-2 sm:mt-0">
+              <Button variant="outline" size="sm" onClick={handleExportCSV}>Export CSV</Button>
+              <Button variant="outline" size="sm" onClick={handleExportPDF}>Export PDF</Button>
+              <Button variant="outline" size="sm" onClick={handleOpenExportModal}>Submit to Hub</Button>
+            </div>
+          </div>
+          <CardDescription>
+            Review, update, and manage all submitted reports.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -379,11 +408,18 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredReports.map(report => (
                   <tr key={report.id} className={`${report.flagged ? 'bg-red-50' : ''}`}>
-                    <td className="px-4 py-3 text-xs text-gray-500">{report.id}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{report.caseId || generateCaseId()}</td>
                     <td className="px-4 py-3 text-xs text-gray-500">{report.type}</td>
                     <td className="px-4 py-3 text-xs text-gray-500">{new Date(report.date).toLocaleDateString()}</td>
                     <td className="px-4 py-3 text-xs text-gray-500">{report.platform}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500">{report.description.substring(0, 100)}...</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{(() => {
+                      const desc = decryptDescription(report.description);
+                      const isEncrypted = report.description.startsWith('U2FsdGVkX1');
+                      if (isEncrypted || !desc || !desc.trim() || desc === report.description) {
+                        return report.caseId || generateCaseId();
+                      }
+                      return desc.substring(0, 100) + '...';
+                    })()}</td>
                     <td className="px-4 py-3 text-xs text-gray-500">
                       <Badge className={`${getStatusColor(report.status)}`}>
                         {report.status.replace('-', ' ')}
@@ -393,9 +429,12 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
                     <td className="px-4 py-3 text-xs text-gray-500">{report.region || 'N/A'}</td>
                     <td className="px-4 py-3 text-xs text-gray-500">{report.isAnonymous ? 'Yes' : 'No'}</td>
                     <td className="px-4 py-3 text-xs text-gray-500">{report.flagged ? 'Yes' : 'No'}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500">
-                      <Button size="sm" variant="outline" onClick={() => handleReviewReport(report)}>
-                        Review
+                    <td className="px-4 py-3 text-xs text-gray-500 flex gap-2 items-center">
+                      <Button size="sm" variant="outline" className="rounded-full p-2" onClick={() => handleReviewReport(report)}>
+                        <Shield className="h-5 w-5 text-blue-600" />
+                      </Button>
+                      <Button size="sm" variant="destructive" className="rounded-full p-2" onClick={() => deleteReport(report.id)}>
+                        <Trash2 className="h-5 w-5" />
                       </Button>
                     </td>
                   </tr>
@@ -406,10 +445,11 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6 mb-6">
-        <div className="bg-white rounded-lg shadow p-2 sm:p-4">
-          <h3 className="font-semibold text-xs mb-2">Reports Per Day</h3>
-          <ResponsiveContainer width="100%" height={180}>
+      {/* Analytics Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+        <Card className="rounded-2xl shadow-lg border border-gray-100 bg-white/90 p-4">
+          <h3 className="font-semibold text-base mb-2 text-gray-700">Reports Per Day</h3>
+          <ResponsiveContainer width="100%" height={200}>
             <BarChart data={reportsPerDay}>
               <XAxis dataKey="date" fontSize={10} />
               <YAxis fontSize={10} />
@@ -417,10 +457,10 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
               <Bar dataKey="count" fill="#1976D2" />
             </BarChart>
           </ResponsiveContainer>
-        </div>
-        <div className="bg-white rounded-lg shadow p-2 sm:p-4">
-          <h3 className="font-semibold text-xs mb-2">Category Distribution</h3>
-          <ResponsiveContainer width="100%" height={180}>
+        </Card>
+        <Card className="rounded-2xl shadow-lg border border-gray-100 bg-white/90 p-4">
+          <h3 className="font-semibold text-base mb-2 text-gray-700">Category Distribution</h3>
+          <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie data={categoryDist} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60}>
                 {categoryDist.map((entry, idx) => (
@@ -431,10 +471,10 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
               <Legend />
             </PieChart>
           </ResponsiveContainer>
-        </div>
-        <div className="bg-white rounded-lg shadow p-2 sm:p-4">
-          <h3 className="font-semibold text-xs mb-2">Location Heatmap</h3>
-          <ResponsiveContainer width="100%" height={180}>
+        </Card>
+        <Card className="rounded-2xl shadow-lg border border-gray-100 bg-white/90 p-4">
+          <h3 className="font-semibold text-base mb-2 text-gray-700">Location Heatmap</h3>
+          <ResponsiveContainer width="100%" height={200}>
             <BarChart data={regionDist}>
               <XAxis dataKey="region" fontSize={10} />
               <YAxis fontSize={10} />
@@ -442,7 +482,7 @@ const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
               <Bar dataKey="value" fill="#FBC02D" />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </Card>
       </div>
 
       {/* Export Modal */}

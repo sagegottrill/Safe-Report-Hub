@@ -102,8 +102,8 @@ const AppLayout: React.FC = () => {
               onClick={() => navigate('/')}
               aria-label="Go to Home"
             >
-              <img src="/shield.svg" alt="NGO Logo" className="h-7 w-7 sm:h-8 sm:w-8" />
-              <span className="font-bold text-base sm:text-lg text-blue-700 truncate">{t('ngoName')}</span>
+              <img src="/shield.svg" alt="NGO Logo" className="h-7 w-7 sm:h-8 sm:w-8 bg-gradient-to-br from-green-400 to-green-700 rounded-full p-1" />
+              <span className="font-bold text-base sm:text-lg bg-gradient-to-r from-green-400 to-green-700 bg-clip-text text-transparent truncate">{t('ngoName')}</span>
             </button>
           </div>
           {/* Desktop actions */}
@@ -151,7 +151,17 @@ const AppLayout: React.FC = () => {
         <main className="flex-1 overflow-y-auto px-1 sm:px-0">
           {renderCurrentView()}
         </main>
-        {/* Footer removed as requested */}
+        <footer className="text-center text-sm text-gray-600 py-6">
+          Need help? Contact us at
+          <a href="mailto:Contact@bictdareport.com" className="text-blue-600 underline ml-1">
+            Contact@bictdareport.com
+          </a>
+          <br />
+          For official communication: 
+          <a href="mailto:Kabirwanori@bictdareport.com" className="text-blue-600 underline ml-1">
+            Kabirwanori@bictdareport.com
+          </a>
+        </footer>
         {/* About Modal */}
         {aboutOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">

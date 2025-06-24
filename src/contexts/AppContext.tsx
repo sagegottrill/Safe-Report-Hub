@@ -43,6 +43,7 @@ interface AppContextType {
   logout: () => void;
   submitReport: (report: Omit<Report, 'id' | 'status'>) => string;
   updateReport: (reportId: string, updates: Partial<Report>) => void;
+  deleteReport: (reportId: string) => void;
   toggleSidebar: () => void;
   setCurrentView: (view: 'dashboard' | 'report' | 'auth' | 'admin') => void;
 }
@@ -83,34 +84,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const stored = localStorage.getItem('user');
     return stored ? JSON.parse(stored) : null;
   });
-  const [reports, setReports] = useState<Report[]>([
-    {
-      id: 'demo-1',
-      type: 'Harassment',
-      date: new Date().toISOString(),
-      platform: 'Instagram',
-      description: 'Receiving threatening messages and inappropriate comments on my posts.',
-      impact: ['Emotional distress', 'Privacy concerns'],
-      status: 'new',
-      isAnonymous: false,
-      reporterId: 'user-1',
-      riskScore: 7,
-      reporterEmail: 'user@example.com',
-      flagged: false
-    },
-    {
-      id: 'demo-2',
-      type: 'Cyberbullying',
-      date: new Date(Date.now() - 86400000).toISOString(),
-      platform: 'Twitter',
-      description: 'Being targeted by a group of users with coordinated harassment campaign.',
-      impact: ['Mental health', 'Social isolation'],
-      status: 'under-review',
-      isAnonymous: true,
-      riskScore: 9,
-      flagged: false
-    }
-  ]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState<'dashboard' | 'report' | 'auth' | 'admin'>(() => {
     const stored = localStorage.getItem('currentView');
@@ -243,6 +217,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const deleteReport = (reportId: string) => {
+    setReports(prev => prev.filter(report => report.id !== reportId));
+    toast({
+      title: 'Report deleted',
+      description: `Report ${reportId.substring(0, 6)} has been deleted.`
+    });
+  };
+
   const toggleSidebar = () => setSidebarOpen(prev => !prev);
 
   // Keep user and currentView in sync with localStorage
@@ -258,7 +240,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider value={{
       user, reports, sidebarOpen, currentView,
-      login, register, logout, submitReport, updateReport, toggleSidebar, setCurrentView
+      login, register, logout, submitReport, updateReport, deleteReport, toggleSidebar, setCurrentView
     }}>
       {children}
     </AppContext.Provider>

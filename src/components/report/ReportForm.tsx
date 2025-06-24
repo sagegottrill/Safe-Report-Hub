@@ -485,16 +485,18 @@
       return (
         <div className="max-w-4xl mx-auto p-2 md:p-6">
           <Card>
-            <CardHeader className="p-3 md:p-6">
-              <CardTitle className="flex items-center gap-2 text-sm md:text-base">
-                <Shield className="h-4 w-4 md:h-5 md:w-5" />
-                {t('Submit Incident Report')}
+            <CardHeader className="p-4 md:p-6 rounded-t-2xl bg-white/90 border-b border-green-100">
+              <CardTitle className="flex items-center gap-3 text-lg md:text-xl font-bold text-green-700">
+                <span className="bg-gradient-to-br from-green-500 via-emerald-600 to-green-800 p-2.5 rounded-2xl shadow flex items-center justify-center" style={{ boxShadow: '0 2px 8px 0 rgba(34,197,94,0.12)' }}>
+                  <Shield className="h-7 w-7 md:h-8 md:w-8 text-white" />
+                </span>
+                <span className="bg-gradient-to-r from-green-700 to-emerald-500 bg-clip-text text-transparent">{t('Submit Incident Report')}</span>
               </CardTitle>
-              <CardDescription className="text-xs md:text-sm">
+              <CardDescription className="text-xs md:text-sm mt-1">
                 {t('All information is handled with strict confidentiality and security')}
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-3 md:p-6 pt-0">
+            <CardContent className="p-4 md:p-6 pt-0">
               <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="formType" className="text-xs md:text-sm">Form Type *</Label>
@@ -674,7 +676,7 @@
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full h-8 md:h-10 text-xs md:text-sm" disabled={loading}>
+                <Button type="submit" className="w-full h-8 md:h-10 text-xs md:text-sm bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white font-semibold rounded-full shadow-md" disabled={loading}>
                   {loading ? t('Submitting Report...') : t('Submit Report')}
                 </Button>
               </form>
@@ -684,8 +686,10 @@
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                      <Shield className="h-5 w-5 text-blue-600" />
-                      {t('Confirm Report Submission')}
+                      <span className="bg-gradient-to-br from-green-400 via-emerald-500 to-green-700 p-1.5 rounded-full shadow flex items-center justify-center" style={{ boxShadow: '0 2px 8px 0 rgba(34,197,94,0.12)' }}>
+                        <Shield className="h-5 w-5 text-white" />
+                      </span>
+                      <span className="font-bold bg-gradient-to-r from-emerald-700 to-green-600 bg-clip-text text-transparent">{t('Confirm Report Submission')}</span>
                     </DialogTitle>
                     <DialogDescription>
                       {t('Please review your report before submitting. This action cannot be undone.')}
@@ -719,7 +723,7 @@
                     <Button variant="outline" onClick={() => setShowConfirmation(false)}>
                       {t('Cancel')}
                     </Button>
-                    <Button onClick={handleConfirmSubmission} disabled={loading}>
+                    <Button onClick={handleConfirmSubmission} disabled={loading} className="bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white font-semibold rounded-full shadow-md">
                       {loading ? t('Submitting...') : t('Confirm & Submit')}
                     </Button>
                   </DialogFooter>

@@ -37,24 +37,21 @@ const Sidebar: React.FC = () => {
     >
       <div className="flex items-center justify-between gap-2 p-3 sm:p-4 border-b border-gray-200">
         <div className="flex items-center gap-2">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
-            <Shield className="h-5 w-5 text-white" />
+          <div className="bg-gradient-to-br from-green-500 via-emerald-600 to-green-800 p-2.5 rounded-2xl shadow-lg flex items-center justify-center" style={{ boxShadow: '0 4px 24px 0 rgba(34,197,94,0.18)' }}>
+            <Shield className="h-9 w-9 text-white drop-shadow-lg" style={{ filter: 'drop-shadow(0 2px 8px rgba(34,197,94,0.18))' }} />
           </div>
-          <div>
-            <h2 className="font-bold text-gray-900 text-base sm:text-base truncate">{t('safeReport')}</h2>
-            <p className="text-xs text-gray-500 hidden sm:block">{t('SecurePlatform')}</p>
-          </div>
+          <span className="font-bold text-lg bg-gradient-to-r from-green-700 to-emerald-500 bg-clip-text text-transparent ml-2 truncate">BICTDA Report</span>
         </div>
         <button
-          className="sm:hidden p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="sm:hidden p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
           onClick={toggleSidebar}
           aria-label="Close sidebar"
         >
-          <X className="h-5 w-5 text-gray-700" />
+          <X className="h-6 w-6 text-green-700" />
         </button>
       </div>
       <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
-        <nav className="space-y-2" aria-label={t('mainMenu')}>
+        <nav className="space-y-3" aria-label={t('mainMenu')}>
           {filteredItems.length === 0 ? (
             <div className="text-gray-400 text-xs text-center py-8" aria-live="polite">{t('noMenuItems')}</div>
           ) : (
@@ -66,14 +63,15 @@ const Sidebar: React.FC = () => {
                   key={item.id}
                   variant={isActive ? 'default' : 'ghost'}
                   className={cn(
-                    'w-full justify-start gap-3 text-xs sm:text-sm h-10',
-                    isActive && 'bg-gradient-to-r from-blue-600 to-purple-600'
+                    'w-full justify-start gap-4 text-base h-12 rounded-xl font-semibold transition-all',
+                    isActive && 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg',
+                    !isActive && 'text-green-900 hover:bg-green-50'
                   )}
                   onClick={() => setCurrentView(item.id as any)}
                   aria-label={t(item.label)}
                 >
-                  <Icon className="h-4 w-4" />
-                  <span className="text-xs sm:text-sm truncate">{t(item.label)}</span>
+                  <Icon className="h-6 w-6" />
+                  <span className="truncate">{t(item.label)}</span>
                 </Button>
               );
             })

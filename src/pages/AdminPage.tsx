@@ -30,9 +30,6 @@ const AdminPageContent: React.FC = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">{t('adminDashboard')}</h1>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate('/')} className="bg-blue-600 text-white border-blue-600 hover:bg-blue-700">
-              ← {t('returnHome') || 'Back to Home'}
-            </Button>
             <Button variant="outline" onClick={logout} className="text-blue-600 border-blue-600 hover:bg-blue-50">
               {t('logout')}
             </Button>

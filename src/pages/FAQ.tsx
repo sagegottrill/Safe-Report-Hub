@@ -7,8 +7,8 @@ const faqData = [
     category: "General Info",
     items: [
       {
-        q: "What is Safe Report Hub?",
-        a: "Safe Report Hub is a digital platform for safe, anonymous reporting of humanitarian incidents. It connects people in need with trusted support teams.",
+        q: "What is BICTDA Report Hub?",
+        a: "BICTDA Report Hub is a digital platform for safe, anonymous reporting of humanitarian incidents. It connects people in need with trusted support teams.",
         icon: <HelpCircle className="h-5 w-5 text-blue-500 mr-2 inline" />,
       },
     ],
@@ -64,6 +64,16 @@ const emergencyContacts = [
   { label: "Women's Helpline (Nigeria)", value: '0803 123 4567' },
   { label: 'WhatsApp Support', value: '+234 901 234 5678', link: 'https://wa.me/2349012345678' },
   { label: 'Visit', value: 'www.humanityaid.ng', link: 'https://www.humanityaid.ng' },
+  {
+    label: "📧 Email Support",
+    value: "Contact@bictdareport.com",
+    link: "mailto:Contact@bictdareport.com",
+  },
+  {
+    label: "🧑‍💼 Project Coordinator",
+    value: "Kabirwanori@bictdareport.com",
+    link: "mailto:Kabirwanori@bictdareport.com",
+  },
 ];
 
 const FAQ = () => {
