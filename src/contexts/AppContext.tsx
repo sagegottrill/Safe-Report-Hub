@@ -46,6 +46,7 @@ interface AppContextType {
   deleteReport: (reportId: string) => void;
   toggleSidebar: () => void;
   setCurrentView: (view: 'dashboard' | 'report' | 'auth' | 'admin') => void;
+  setReports: React.Dispatch<React.SetStateAction<Report[]>>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -84,7 +85,115 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const stored = localStorage.getItem('user');
     return stored ? JSON.parse(stored) : null;
   });
-  const [reports, setReports] = useState<Report[]>([]);
+  // Always use demo data for demonstration
+  const demoReports = [
+    {
+      id: 'GBV001',
+      type: 'GBV',
+      impact: ['Domestic Violence'],
+      status: 'under-review',
+      urgency: 'high',
+      region: 'Lagos Central',
+      date: '2024-01-15',
+      description: 'A 32-year-old woman reported repeated domestic violence by her spouse in Lagos Central. Case is under review by the GBV office.',
+      platform: 'Web',
+      isAnonymous: false,
+      reporterId: 'admin',
+    },
+    {
+      id: 'EDU001',
+      type: 'Education',
+      impact: ['Infrastructure Problems'],
+      status: 'new',
+      urgency: 'medium',
+      region: 'Kano North',
+      date: '2024-01-15',
+      description: 'A public school in Kano North reported a collapsed classroom block. Immediate repairs needed to ensure student safety.',
+      platform: 'Web',
+      isAnonymous: false,
+      reporterId: 'admin',
+    },
+    {
+      id: 'WAT001',
+      type: 'Water',
+      impact: ['No Water Supply'],
+      status: 'resolved',
+      urgency: 'critical',
+      region: 'Abuja South',
+      date: '2024-01-14',
+      description: 'Abuja South community experienced a 48-hour water outage. Water supply has now been restored.',
+      platform: 'Mobile',
+      isAnonymous: false,
+      reporterId: 'admin',
+    },
+    {
+      id: 'HUM001',
+      type: 'Humanitarian',
+      impact: ['Food Insecurity'],
+      status: 'escalated',
+      urgency: 'critical',
+      region: 'Borno State',
+      date: '2024-01-15',
+      description: 'Severe food shortage affecting over 500 families in Borno State. Humanitarian response escalated.',
+      platform: 'SMS',
+      isAnonymous: true,
+      reporterId: 'admin',
+    },
+    {
+      id: 'GBV002',
+      type: 'GBV',
+      impact: ['Sexual Harassment'],
+      status: 'new',
+      urgency: 'high',
+      region: 'Kaduna',
+      date: '2024-01-16',
+      description: 'A 19-year-old student in Kaduna reported sexual harassment by a teacher. Investigation pending.',
+      platform: 'Web',
+      isAnonymous: true,
+      reporterId: 'admin',
+    },
+    {
+      id: 'EDU002',
+      type: 'Education',
+      impact: ['Bullying'],
+      status: 'resolved',
+      urgency: 'medium',
+      region: 'Enugu',
+      date: '2024-01-13',
+      description: 'Bullying incident at Enugu secondary school resolved after mediation by school authorities.',
+      platform: 'Mobile',
+      isAnonymous: false,
+      reporterId: 'admin',
+    },
+    {
+      id: 'WAT002',
+      type: 'Water',
+      impact: ['Contaminated Water'],
+      status: 'under-review',
+      urgency: 'high',
+      region: 'Jos',
+      date: '2024-01-12',
+      description: 'Jos community reported contaminated water supply. Health teams dispatched for testing.',
+      platform: 'Web',
+      isAnonymous: false,
+      reporterId: 'admin',
+    },
+    {
+      id: 'HUM002',
+      type: 'Humanitarian',
+      impact: ['Displacement'],
+      status: 'new',
+      urgency: 'critical',
+      region: 'Benue',
+      date: '2024-01-15',
+      description: 'Flooding in Benue displaced over 200 people. Temporary shelters being arranged.',
+      platform: 'Mobile',
+      isAnonymous: false,
+      reporterId: 'admin',
+    },
+  ];
+  localStorage.setItem('reports', JSON.stringify(demoReports));
+  const [reports, setReports] = useState<Report[]>(demoReports);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState<'dashboard' | 'report' | 'auth' | 'admin'>(() => {
     const stored = localStorage.getItem('currentView');
@@ -237,10 +346,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     else localStorage.removeItem('currentView');
   }, [currentView]);
 
+  // Add effect to keep reports in sync with localStorage
+  useEffect(() => {
+    localStorage.setItem('reports', JSON.stringify(reports));
+  }, [reports]);
+
   return (
     <AppContext.Provider value={{
-      user, reports, sidebarOpen, currentView,
-      login, register, logout, submitReport, updateReport, deleteReport, toggleSidebar, setCurrentView
+      user,
+      reports,
+      sidebarOpen,
+      currentView,
+      login,
+      register,
+      logout,
+      submitReport,
+      updateReport,
+      deleteReport,
+      toggleSidebar,
+      setCurrentView,
+      setReports,
     }}>
       {children}
     </AppContext.Provider>

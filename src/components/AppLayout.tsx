@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import AuthPage from './auth/AuthPage';
 import Dashboard from './dashboard/Dashboard';
-import ReportForm from './report/ReportForm';
+import EnhancedReportForm from './report/EnhancedReportForm';
 import Sidebar from './layout/Sidebar';
 import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, HelpCircle, Shield, Phone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { TrustIndicator, SecurityBadge } from '@/components/ui/trust-indicators';
 
 const AppLayout: React.FC = () => {
   const { user, currentView, toggleSidebar, sidebarOpen } = useAppContext();
@@ -18,6 +19,7 @@ const AppLayout: React.FC = () => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // If no user is logged in, always show auth page regardless of URL
@@ -67,14 +69,17 @@ const AppLayout: React.FC = () => {
       case 'dashboard':
         return <Dashboard />;
       case 'report':
-        return <ReportForm />;
+        return <EnhancedReportForm onSubmit={(data) => {
+          console.log('Report submitted:', data);
+          // Handle report submission here
+        }} />;
       default:
         return <Dashboard />;
     }
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background-light overflow-hidden">
       {/* Overlay for sidebar */}
       {sidebarOpen && (
         <div 
@@ -86,147 +91,302 @@ const AppLayout: React.FC = () => {
       <Sidebar />
       
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        {/* Header with logo, NGO name, About link */}
-        <header className="bg-white border-b border-gray-200 px-2 sm:px-3 md:px-6 py-2 md:py-4 sticky top-0 z-30 flex flex-wrap items-center justify-between gap-2 md:gap-0">
-          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            {/* Sidebar toggle button */}
+        {/* Enhanced Header */}
+        <header className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-30 shadow-sm">
+          <div className="flex items-center justify-between">
+            {/* Left side - Logo and Menu */}
+            <div className="flex items-center gap-3">
             <button
-              className="mr-1 sm:mr-2 p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-nigerian-green transition-colors"
               onClick={toggleSidebar}
               aria-label="Open navigation menu"
             >
-              <Menu className="h-6 w-6 text-blue-700" />
+                <Menu className="h-5 w-5 text-nigerian-green" />
+              </button>
+              
+              <button
+                className="flex items-center gap-2 focus:outline-none min-w-0"
+                onClick={() => navigate('/')}
+                aria-label="Go to Home"
+              >
+                <div className="bg-nigerian-green p-2 rounded-full shadow-official">
+                  <Shield className="h-5 w-5 text-white" />
+                </div>
+                <div className="hidden sm:block">
+                  <span className="font-bold text-lg text-nigerian-green">{t('ngoName')}</span>
+                  <p className="text-xs text-text-light">Official Platform</p>
+                </div>
             </button>
-            <button
-              className="flex items-center gap-1 sm:gap-2 focus:outline-none min-w-0"
-              onClick={() => navigate('/')}
-              aria-label="Go to Home"
-            >
-              <img src="/shield.svg" alt="NGO Logo" className="h-7 w-7 sm:h-8 sm:w-8 bg-gradient-to-br from-green-400 to-green-700 rounded-full p-1" />
-              <span className="font-bold text-base sm:text-lg bg-gradient-to-r from-green-400 to-green-700 bg-clip-text text-transparent truncate">{t('ngoName')}</span>
-            </button>
-          </div>
-          {/* Desktop actions */}
-          <div className="hidden sm:flex items-center gap-2 md:gap-4">
-            {/* Language selector moved here */}
-            <label htmlFor="lang-select" className="sr-only">{t('language')}</label>
+            </div>
+
+            {/* Center - Trust Indicators (Desktop) */}
+            <div className="hidden md:flex items-center gap-2">
+              <TrustIndicator type="security" size="sm">
+                Secure
+              </TrustIndicator>
+              <TrustIndicator type="official" size="sm">
+                Government
+              </TrustIndicator>
+            </div>
+
+            {/* Right side - Actions */}
+            <div className="flex items-center gap-2">
+            {/* Language selector */}
             <select
-              id="lang-select"
               value={i18n.language}
               onChange={handleLanguageChange}
-              className="border rounded px-1 py-1 text-xs sm:text-sm focus:outline-none focus:ring focus:border-blue-300 ml-1 sm:ml-2"
+                className="border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-nigerian-green bg-white"
               aria-label="Language"
             >
               {languages.map((lang) => (
                 <option key={lang.code} value={lang.code}>{lang.label}</option>
               ))}
             </select>
+
+              {/* Mobile menu button */}
             <button
-              className="text-xs sm:text-sm text-blue-700 hover:text-blue-900 px-2 sm:px-3 py-1 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="md:hidden p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-nigerian-green transition-colors"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="Open mobile menu"
+              >
+                {mobileMenuOpen ? (
+                  <X className="h-5 w-5 text-nigerian-green" />
+                ) : (
+                  <Menu className="h-5 w-5 text-nigerian-green" />
+                )}
+              </button>
+
+              {/* Desktop actions */}
+              <div className="hidden md:flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-nigerian-blue hover:text-nigerian-blue hover:bg-nigerian-blue/10"
+                  onClick={() => navigate('/faq')}
+                >
+                  <HelpCircle className="h-4 w-4 mr-1" />
+                  Help
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-nigerian-blue hover:text-nigerian-blue hover:bg-nigerian-blue/10"
               onClick={() => setAboutOpen(true)}
             >
-              {t('aboutProject')}
-            </button>
-            <button
-              className="text-xs sm:text-sm text-blue-700 hover:text-blue-900 px-2 sm:px-3 py-1 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
-              onClick={() => setPrivacyOpen(true)}
+                  About
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-danger text-white hover:bg-danger/90"
+                  onClick={() => setEmergencyOpen(true)}
             >
-              {t('yourPrivacy')}
-            </button>
-            <button className="text-xs sm:text-sm px-2 sm:px-3 py-1 rounded bg-red-600 text-white font-semibold shadow hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400" onClick={() => setEmergencyOpen(true)}>
-              {t('needHelpNow')}
-            </button>
+                  <Phone className="h-4 w-4 mr-1" />
+                  Emergency
+                </Button>
+              </div>
+            </div>
           </div>
-          {/* Mobile actions: hamburger menu for About/Privacy/Emergency */}
-          <div className="flex sm:hidden items-center">
-            <Menu
-              className="h-6 w-6 text-blue-700 cursor-pointer"
-              aria-label="Open more menu"
-              onClick={() => setAboutOpen(true)}
-            />
-            {/* Optionally, use a Drawer or Popover for About/Privacy/Emergency on mobile */}
-          </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="space-y-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-nigerian-blue"
+                  onClick={() => {
+                    navigate('/faq');
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  <HelpCircle className="h-4 w-4 mr-2" />
+                  Help & FAQ
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-nigerian-blue"
+                  onClick={() => {
+                    setAboutOpen(true);
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  About Project
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-nigerian-blue"
+                  onClick={() => {
+                    setPrivacyOpen(true);
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  Privacy Policy
+                </Button>
+                <Button
+                  size="sm"
+                  className="w-full bg-danger text-white hover:bg-danger/90"
+                  onClick={() => {
+                    setEmergencyOpen(true);
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  <Phone className="h-4 w-4 mr-2" />
+                  Emergency Help
+                </Button>
+              </div>
+            </div>
+          )}
         </header>
         
-        <main className="flex-1 overflow-y-auto px-1 sm:px-0">
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
           {renderCurrentView()}
         </main>
-        <footer className="text-center text-sm text-gray-600 py-6">
-          Need help? Contact us at
-          <a href="mailto:Contact@bictdareport.com" className="text-blue-600 underline ml-1">
-            Contact@bictdareport.com
-          </a>
-          <br />
-          For official communication: 
-          <a href="mailto:Kabirwanori@bictdareport.com" className="text-blue-600 underline ml-1">
-            Kabirwanori@bictdareport.com
-          </a>
+
+        {/* Enhanced Footer */}
+        <footer className="bg-white border-t border-gray-200 px-4 py-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-text-light">
+            <div className="flex items-center gap-4">
+              <SecurityBadge>Government Protected</SecurityBadge>
+              <span>Need help? Contact us at</span>
+              <a href="mailto:Contact@bictdareport.com" className="text-nigerian-blue underline hover:text-nigerian-blue/80">
+                Contact@bictdareport.com
+              </a>
+            </div>
+            <div className="text-xs text-text-light">
+              Official: <a href="mailto:Kabirwanori@bictdareport.com" className="text-nigerian-blue underline hover:text-nigerian-blue/80">
+                Kabirwanori@bictdareport.com
+              </a>
+            </div>
+          </div>
         </footer>
+
         {/* About Modal */}
         {aboutOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full relative">
-              <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700" onClick={() => setAboutOpen(false)} aria-label="Close">&times;</button>
-              <div className="flex items-center gap-3 mb-3">
-                <img src="/shield.svg" alt="NGO Logo" className="h-10 w-10" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-xl shadow-official p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-nigerian-green p-2 rounded-full">
+                    <Shield className="h-6 w-6 text-white" />
+                  </div>
                 <div>
-                  <div className="font-bold text-lg text-blue-700">{t('ngoName')}</div>
-                  <div className="text-xs text-gray-500">{t('ngoSubtitle')}</div>
+                    <div className="font-bold text-lg text-nigerian-green">{t('ngoName')}</div>
+                    <div className="text-xs text-text-light">{t('ngoSubtitle')}</div>
+                  </div>
                 </div>
+                <button 
+                  className="text-gray-400 hover:text-gray-700 p-1" 
+                  onClick={() => setAboutOpen(false)} 
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-              <div className="text-sm text-gray-700 mb-2">
-                <b>{t('aboutProject')}:</b> <br />
-                {t('aboutProjectDescription')}
-                <br /><br />
-                <b>{t('whoIsItFor')}</b> <br />
-                <ul className="list-disc pl-5">
+              <div className="text-sm text-text space-y-3">
+                <div>
+                  <strong className="text-text">{t('aboutProject')}:</strong>
+                  <p className="mt-1">{t('aboutProjectDescription')}</p>
+                </div>
+                <div>
+                  <strong className="text-text">{t('whoIsItFor')}</strong>
+                  <ul className="list-disc pl-5 mt-1 space-y-1">
                   <li>{t('humanitarianResponseTeams')}</li>
                   <li>{t('vulnerableCommunities')}</li>
                   <li>{t('ngosAndDonors')}</li>
                   <li>{t('deployAnywhere')}</li>
                 </ul>
+                </div>
               </div>
             </div>
           </div>
         )}
+
         {/* Privacy Modal */}
         {privacyOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full relative">
-              <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700" onClick={() => setPrivacyOpen(false)} aria-label="Close">&times;</button>
-              <div className="font-bold text-lg text-blue-700 mb-2">{t('yourPrivacyAndDataProtection')}</div>
-              <div className="text-sm text-gray-700 mb-2">
-                <b>{t('howWeProtectYourInformation')}</b>
-                <ul className="list-disc pl-5 mt-2 mb-2">
-                  <li>{t('privacyBullet1')}</li>
-                  <li>{t('privacyBullet2')}</li>
-                  <li>{t('privacyBullet3')}</li>
-                  <li>{t('privacyBullet4')}</li>
-                  <li>{t('privacyBullet5')}</li>
-                </ul>
-                <b>{t('questions')}</b> <a href="mailto:privacy@safeaid.ngo" className="text-blue-600 underline">privacy@safeaid.ngo</a>.
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-xl shadow-official p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <div className="font-bold text-lg text-nigerian-green">{t('yourPrivacyAndDataProtection')}</div>
+                <button 
+                  className="text-gray-400 hover:text-gray-700 p-1" 
+                  onClick={() => setPrivacyOpen(false)} 
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-              <div className="text-xs text-gray-400 mt-2">{t('dataProtectionCompliance')}</div>
+              <div className="text-sm text-text space-y-3">
+                <div>
+                  <strong className="text-text">{t('howWeProtectYourInformation')}</strong>
+                  <ul className="list-disc pl-5 mt-1 space-y-1">
+                    <li>{t('encryption')}</li>
+                    <li>{t('anonymousReporting')}</li>
+                    <li>{t('limitedAccess')}</li>
+                    <li>{t('noThirdPartySharing')}</li>
+                  </ul>
+                </div>
+                <div>
+                  <strong className="text-text">{t('yourRights')}</strong>
+                  <ul className="list-disc pl-5 mt-1 space-y-1">
+                    <li>{t('rightToAccess')}</li>
+                    <li>{t('rightToCorrection')}</li>
+                    <li>{t('rightToDeletion')}</li>
+                    <li>{t('rightToWithdraw')}</li>
+                </ul>
+                </div>
+              </div>
             </div>
           </div>
         )}
+
         {/* Emergency Modal */}
         {emergencyOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full relative">
-              <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700" onClick={() => setEmergencyOpen(false)} aria-label="Close">&times;</button>
-              <div className="font-bold text-lg text-red-700 mb-2">{t('emergencySupport')}</div>
-              <div className="text-sm text-gray-700 mb-2">
-                <b>{t('emergencyContactPrompt')}</b>
-                <ul className="list-disc pl-5 mt-2 mb-2">
-                  <li><b>{t('policeEmergency')}:</b> <a href="tel:112" className="text-blue-600 underline">112</a></li>
-                  <li><b>{t('nationalHelpline')}:</b> <a href="tel:0800-123-4567" className="text-blue-600 underline">0800-123-4567</a></li>
-                  <li><b>{t('gbvHotline')}:</b> <a href="tel:0800-GBV-HELP" className="text-blue-600 underline">0800-GBV-HELP</a></li>
-                  <li><b>{t('childProtection')}:</b> <a href="tel:0800-CHILD-HELP" className="text-blue-600 underline">0800-CHILD-HELP</a></li>
-                  <li><b>{t('whatsappSupport')}:</b> <a href="https://wa.me/2348001234567" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">{t('chatNow')}</a></li>
-                </ul>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-xl shadow-official p-6 max-w-md w-full">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-danger p-2 rounded-full">
+                    <Phone className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="font-bold text-lg text-danger">Emergency Help</div>
+                </div>
+                <button 
+                  className="text-gray-400 hover:text-gray-700 p-1" 
+                  onClick={() => setEmergencyOpen(false)} 
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-              <div className="text-xs text-gray-400 mt-2">{t('emergencyFooter')}</div>
+              <div className="space-y-3 text-sm">
+                <div className="p-3 bg-danger/10 border border-danger/20 rounded-lg">
+                  <p className="text-danger font-medium">If you are in immediate danger, call emergency services first.</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-text">Emergency Helpline:</span>
+                    <span className="font-semibold text-text">112</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-text">Women's Helpline:</span>
+                    <span className="font-semibold text-text">0803 123 4567</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-text">WhatsApp Support:</span>
+                    <a href="https://wa.me/2349012345678" className="text-nigerian-blue underline">+234 901 234 5678</a>
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-gray-200">
+                  <p className="text-text-light text-xs">
+                    This platform is for reporting incidents, not emergency response. 
+                    For immediate help, use the emergency numbers above.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}

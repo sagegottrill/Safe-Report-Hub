@@ -1,25 +1,38 @@
 import React, { useState } from 'react';
-import { ShieldCheck, HelpCircle, AlertTriangle, WifiOff } from 'lucide-react';
+import { ShieldCheck, HelpCircle, AlertTriangle, WifiOff, ArrowLeft, Shield, Lock, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { TrustIndicator, SecurityBadge, OfficialStamp, PrivacyNotice } from '@/components/ui/trust-indicators';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 const faqData = [
   {
-    category: "General Info",
+    category: "General Information",
     items: [
       {
         q: "What is BICTDA Report Hub?",
-        a: "BICTDA Report Hub is a digital platform for safe, anonymous reporting of humanitarian incidents. It connects people in need with trusted support teams.",
-        icon: <HelpCircle className="h-5 w-5 text-blue-500 mr-2 inline" />,
+        a: "BICTDA Report Hub is an official government digital platform for safe, anonymous reporting of humanitarian incidents across Nigeria. It connects people in need with trusted support teams and government agencies.",
+        icon: <HelpCircle className="h-5 w-5 text-nigerian-blue mr-2 inline" />,
+      },
+      {
+        q: "Is this an official government platform?",
+        a: "Yes, this is an official government-approved platform for crisis reporting. All reports are handled by authorized government agencies and verified support organizations.",
+        icon: <Shield className="h-5 w-5 text-nigerian-green mr-2 inline" />,
       },
     ],
   },
   {
-    category: "Privacy & Safety",
+    category: "Privacy & Security",
     items: [
       {
         q: "Is my report really anonymous?",
-        a: "Yes. You can submit a report without providing your name or contact. Only authorized responders can access your report, and your identity is never shared.",
-        icon: <ShieldCheck className="h-5 w-5 text-green-500 mr-2 inline" />,
+        a: "Yes. You can submit a report without providing your name or contact information. Only authorized government responders can access your report, and your identity is never shared without your explicit consent.",
+        icon: <Lock className="h-5 w-5 text-nigerian-green mr-2 inline" />,
+      },
+      {
+        q: "How is my data protected?",
+        a: "All data is encrypted using government-grade security protocols. Your information is stored securely and only accessible to authorized personnel. We follow strict data protection regulations.",
+        icon: <ShieldCheck className="h-5 w-5 text-nigerian-green mr-2 inline" />,
       },
     ],
   },
@@ -28,44 +41,50 @@ const faqData = [
     items: [
       {
         q: "What happens after I submit a report?",
-        a: "Your report is reviewed by trained humanitarian staff. If you provided contact details, they may reach out for more information or to offer support.",
-        icon: <HelpCircle className="h-5 w-5 text-blue-500 mr-2 inline" />,
+        a: "Your report is immediately reviewed by trained government humanitarian staff. If you provided contact details, they may reach out for more information or to offer support. You'll receive a unique case ID for tracking.",
+        icon: <HelpCircle className="h-5 w-5 text-nigerian-blue mr-2 inline" />,
       },
       {
         q: "Can I report on someone else's behalf?",
-        a: "Yes. You can report incidents affecting others, especially if they are unable or afraid to report themselves.",
-        icon: <HelpCircle className="h-5 w-5 text-blue-500 mr-2 inline" />,
+        a: "Yes. You can report incidents affecting others, especially if they are unable or afraid to report themselves. This is encouraged for vulnerable individuals who need support.",
+        icon: <Users className="h-5 w-5 text-nigerian-blue mr-2 inline" />,
       },
       {
         q: "Who receives my report?",
-        a: "Only authorized humanitarian responders and support staff can access your report. Your information is never shared with third parties.",
-        icon: <ShieldCheck className="h-5 w-5 text-green-500 mr-2 inline" />,
+        a: "Only authorized government humanitarian responders and verified support staff can access your report. Your information is never shared with third parties without your explicit consent.",
+        icon: <ShieldCheck className="h-5 w-5 text-nigerian-green mr-2 inline" />,
+      },
+      {
+        q: "How long does it take to get a response?",
+        a: "Emergency reports are reviewed within 2-4 hours. Standard reports are typically reviewed within 24-48 hours. You can track your report status using your unique case ID.",
+        icon: <HelpCircle className="h-5 w-5 text-nigerian-blue mr-2 inline" />,
       },
     ],
   },
   {
-    category: "Emergencies",
+    category: "Emergency Support",
     items: [
       {
         q: "How can I get help in an emergency?",
-        a: "If you or someone you know is in immediate danger, please use the emergency contacts below or reach out to local authorities.",
-        icon: <AlertTriangle className="h-5 w-5 text-red-500 mr-2 inline" />,
+        a: "If you or someone you know is in immediate danger, please use the emergency contacts below or reach out to local authorities immediately. This platform is for reporting, not emergency response.",
+        icon: <AlertTriangle className="h-5 w-5 text-danger mr-2 inline" />,
       },
       {
         q: "What if I don't have internet?",
-        a: "If you're offline, your report will be saved on your device and sent automatically when you reconnect to the internet.",
-        icon: <WifiOff className="h-5 w-5 text-yellow-500 mr-2 inline" />,
+        a: "If you're offline, your report will be saved on your device and sent automatically when you reconnect to the internet. You can also use SMS reporting by texting to our emergency number.",
+        icon: <WifiOff className="h-5 w-5 text-warning mr-2 inline" />,
       },
     ],
   },
 ];
 
 const emergencyContacts = [
-  { label: "Women's Helpline (Nigeria)", value: '0803 123 4567' },
+  { label: "Emergency Helpline (Nigeria)", value: '112' },
+  { label: "Women's Helpline", value: '0803 123 4567' },
   { label: 'WhatsApp Support', value: '+234 901 234 5678', link: 'https://wa.me/2349012345678' },
-  { label: 'Visit', value: 'www.humanityaid.ng', link: 'https://www.humanityaid.ng' },
+  { label: 'Visit Official Website', value: 'www.humanityaid.ng', link: 'https://www.humanityaid.ng' },
   {
-    label: "📧 Email Support",
+    label: "📧 General Support",
     value: "Contact@bictdareport.com",
     link: "mailto:Contact@bictdareport.com",
   },
@@ -85,94 +104,185 @@ const FAQ = () => {
   };
 
   return (
-    <section
-      id="faq"
-      className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex flex-col items-center scroll-mt-24 py-8 px-2 md:px-0"
-      aria-label="Help and FAQ"
-      role="region"
-    >
-      <button
-        onClick={() => navigate('/')}
-        className="mb-6 px-5 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-        aria-label="Back to Home"
-      >
-        ← Back to Home
-      </button>
-      <div className="w-full max-w-3xl mx-auto">
-        <div className="bg-white/90 rounded-2xl shadow-xl p-6 md:p-10 border border-gray-100 mb-8">
-          <div className="flex flex-col items-center gap-2 mb-4">
-            <h1 className="text-3xl md:text-4xl font-extrabold text-blue-700 tracking-tight">Help & FAQ</h1>
-            <div className="text-base md:text-lg text-blue-600 font-medium text-center">
-              Your safety matters. Here's how we keep your experience simple and secure.
-            </div>
-          </div>
-          {/* FAQ Categories */}
-          {faqData.map((cat, catIdx) => (
-            <div key={cat.category} className="mb-6">
-              <h2 className="text-lg md:text-xl font-bold text-blue-800 mb-2 flex items-center gap-2">
-                {cat.category === 'General Info' && <HelpCircle className="h-5 w-5 text-blue-400" />}
-                {cat.category === 'Privacy & Safety' && <ShieldCheck className="h-5 w-5 text-green-400" />}
-                {cat.category === 'Reporting Process' && <HelpCircle className="h-5 w-5 text-blue-400" />}
-                {cat.category === 'Emergencies' && <AlertTriangle className="h-5 w-5 text-red-400" />}
-                {cat.category}
-              </h2>
-              <div className="space-y-2">
-                {cat.items.map((item, idx) => {
-                  const id = `${cat.category}-${idx}`;
-                  const isOpen = openIndex === id;
-                  return (
-                    <div key={id} className="rounded-lg bg-gray-50 border transition-all duration-300 shadow-sm">
-                      <button
-                        className="w-full flex items-center justify-between px-4 py-3 text-left font-medium text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        aria-expanded={isOpen}
-                        aria-controls={`faq-panel-${id}`}
-                        onClick={() => handleAccordion(id)}
-                      >
-                        <span className="flex items-center">{item.icon}{item.q}</span>
-                        <svg className={`h-5 w-5 ml-2 transition-transform ${isOpen ? 'rotate-180 text-blue-500' : 'text-blue-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                      </button>
-                      <div
-                        id={`faq-panel-${id}`}
-                        className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-96 py-2 px-4' : 'max-h-0 py-0 px-4'}`}
-                        style={{
-                          opacity: isOpen ? 1 : 0,
-                          pointerEvents: isOpen ? 'auto' : 'none',
-                        }}
-                        aria-hidden={!isOpen}
-                      >
-                        <div className="text-gray-700 text-base md:text-lg leading-relaxed">{item.a}</div>
-                      </div>
-                    </div>
-                  );
-                })}
+    <div className="min-h-screen bg-background-light">
+      <div className="container mx-auto px-4 py-8 space-y-6">
+        {/* Official Header */}
+        <div className="bg-white rounded-xl shadow-official border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-nigerian-green p-3 rounded-full shadow-official">
+                <HelpCircle className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-text">Help & FAQ</h1>
+                <p className="text-text-light mt-1">Official Government Support Center</p>
               </div>
             </div>
-          ))}
-          {/* Emergency Help Box */}
-          <div className="mt-10 bg-gradient-to-br from-red-50 to-blue-100 border-l-4 border-blue-400 rounded-xl p-6 flex flex-col gap-3 shadow-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="h-7 w-7 text-red-500" />
-              <span className="text-lg md:text-xl font-semibold text-red-700">Need help right now?</span>
+            <div className="flex items-center gap-3">
+              <OfficialStamp>Government Verified</OfficialStamp>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/')}
+                className="btn-official-outline flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Dashboard
+              </Button>
             </div>
-            <ul className="text-gray-700 text-base md:text-lg space-y-1 mb-2">
-              {emergencyContacts.map((c, i) => (
-                <li key={c.label} className="flex items-center gap-2">
-                  {c.link ? (
-                    <a href={c.link} className="text-blue-700 underline" target="_blank" rel="noopener noreferrer">{c.label}: {c.value}</a>
-                  ) : (
-                    <span>{c.label}: {c.value}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-            <div className="text-xs md:text-sm text-gray-500 mt-2">If your device is offline, your report will be saved and sent once internet is restored.</div>
           </div>
-          <div className="mt-8 text-center text-blue-900 font-medium text-base md:text-lg">
-            This platform was built with love, safety, and dignity in mind — so every voice can be heard.
+          
+          {/* Trust Indicators */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <TrustIndicator type="security" size="md">
+              Secure & Encrypted
+            </TrustIndicator>
+            <TrustIndicator type="privacy" size="md">
+              Anonymous Available
+            </TrustIndicator>
+            <TrustIndicator type="official" size="md">
+              Government Verified
+            </TrustIndicator>
           </div>
         </div>
+
+        {/* Privacy Notice */}
+        <PrivacyNotice>
+          Your safety and privacy are our top priority. This is an official government platform with strict data protection protocols. 
+          All reports are encrypted and handled with complete confidentiality.
+        </PrivacyNotice>
+
+        {/* FAQ Content */}
+        <Card className="card-official">
+          <CardContent className="p-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-text mb-2">Frequently Asked Questions</h2>
+              <p className="text-text-light">Your safety matters. Here's how we keep your experience simple and secure.</p>
+            </div>
+
+            {/* FAQ Categories */}
+            <div className="space-y-8">
+              {faqData.map((cat, catIdx) => (
+                <div key={cat.category} className="space-y-4">
+                  <h3 className="text-xl font-semibold text-text flex items-center gap-2 border-b border-gray-200 pb-2">
+                    {cat.category === 'General Information' && <HelpCircle className="h-5 w-5 text-nigerian-blue" />}
+                    {cat.category === 'Privacy & Security' && <Shield className="h-5 w-5 text-nigerian-green" />}
+                    {cat.category === 'Reporting Process' && <HelpCircle className="h-5 w-5 text-nigerian-blue" />}
+                    {cat.category === 'Emergency Support' && <AlertTriangle className="h-5 w-5 text-danger" />}
+                    {cat.category}
+                  </h3>
+                  <div className="space-y-3">
+                    {cat.items.map((item, idx) => {
+                      const id = `${cat.category}-${idx}`;
+                      const isOpen = openIndex === id;
+                      return (
+                        <div key={id} className="border border-gray-200 rounded-lg transition-all duration-300 hover:shadow-sm">
+                          <button
+                            className="w-full flex items-center justify-between px-4 py-4 text-left font-medium text-text focus:outline-none focus:ring-2 focus:ring-nigerian-green rounded-lg"
+                            aria-expanded={isOpen}
+                            aria-controls={`faq-panel-${id}`}
+                            onClick={() => handleAccordion(id)}
+                          >
+                            <span className="flex items-center text-sm md:text-base">{item.icon}{item.q}</span>
+                            <svg 
+                              className={`h-5 w-5 ml-2 transition-transform ${isOpen ? 'rotate-180 text-nigerian-green' : 'text-text-light'}`} 
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          <div
+                            id={`faq-panel-${id}`}
+                            className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-96 py-4 px-4' : 'max-h-0 py-0 px-4'}`}
+                            style={{
+                              opacity: isOpen ? 1 : 0,
+                              pointerEvents: isOpen ? 'auto' : 'none',
+                            }}
+                            aria-hidden={!isOpen}
+                          >
+                            <div className="text-text-light text-sm md:text-base leading-relaxed">{item.a}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Emergency Help Box */}
+        <Card className="card-official border-l-4 border-l-danger bg-danger/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-danger">
+              <AlertTriangle className="h-6 w-6" />
+              Need help right now?
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-semibold text-text mb-2">Emergency Contacts</h4>
+                <ul className="space-y-2 text-sm">
+                  {emergencyContacts.slice(0, 3).map((contact) => (
+                    <li key={contact.label} className="flex items-center gap-2">
+                      {contact.link ? (
+                        <a 
+                          href={contact.link} 
+                          className="text-nigerian-blue underline hover:text-nigerian-blue/80" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                        >
+                          {contact.label}: {contact.value}
+                        </a>
+                      ) : (
+                        <span className="text-text">{contact.label}: {contact.value}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-text mb-2">Additional Support</h4>
+                <ul className="space-y-2 text-sm">
+                  {emergencyContacts.slice(3).map((contact) => (
+                    <li key={contact.label} className="flex items-center gap-2">
+                      {contact.link ? (
+                        <a 
+                          href={contact.link} 
+                          className="text-nigerian-blue underline hover:text-nigerian-blue/80" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                        >
+                          {contact.label}: {contact.value}
+                        </a>
+                      ) : (
+                        <span className="text-text">{contact.label}: {contact.value}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <div className="mt-4 p-3 bg-warning/10 border border-warning/20 rounded-lg">
+              <p className="text-sm text-text-light">
+                <strong>Offline Support:</strong> If your device is offline, your report will be saved and sent automatically when you reconnect to the internet.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Footer Message */}
+        <div className="text-center py-6">
+          <p className="text-text font-medium">
+            This platform was built with love, safety, and dignity in mind — so every voice can be heard.
+          </p>
+          <SecurityBadge className="mt-3">Government Protected</SecurityBadge>
+        </div>
       </div>
-    </section>
+    </div>
   );
 };
 

@@ -1,183 +1,345 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAppContext } from '@/contexts/AppContext';
-import { FileText, Shield, AlertTriangle, CheckCircle, Clock, Plus, Home } from 'lucide-react';
+import { FileText, Shield, AlertTriangle, CheckCircle, Clock, Plus, Home, Users, MapPin, Pencil, Eye, Trash } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import CryptoJS from 'crypto-js';
+import { TrustIndicator, SecurityBadge } from '@/components/ui/trust-indicators';
+import EnhancedReportForm from '@/components/report/EnhancedReportForm';
+import Papa from 'papaparse';
+import ReportReviewModal from '../admin/ReportReviewModal';
+
+const generateShortId = () => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let id = '';
+  for (let i = 0; i < 6; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  return id;
+};
 
 const Dashboard: React.FC = () => {
-  const { user, reports, setCurrentView } = useAppContext();
+  const { user, reports, setCurrentView, setReports } = useAppContext();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [showFaq, setShowFaq] = React.useState(false);
+  const [showReportForm, setShowReportForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
 
-  const userReports = reports.filter(report => 
-    !report.isAnonymous && report.reporterId === user?.id
-  );
+  // Filter reports by search term
+  const userReports = useMemo(() => reports.filter(report => 
+    !report.isAnonymous && report.reporterId === user?.id && (
+      report.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.caseId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  ), [reports, user, searchTerm]);
+
+  // Export reports as CSV
+  const handleExportCSV = () => {
+    const csv = Papa.unparse(userReports.map(r => ({
+      ID: r.id,
+      Type: r.type,
+      CaseID: r.caseId,
+      Status: r.status,
+      Description: r.description,
+      Date: r.date,
+      Platform: r.platform
+    })));
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'my_reports.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  // Handle report submission with short ID
+  const handleReportSubmit = (data: any) => {
+    setReports(prev => {
+      const newId = generateShortId();
+      const newReports = [...prev, { ...data, id: newId, caseId: newId, reporterId: user.id }];
+      localStorage.setItem('reports', JSON.stringify(newReports));
+      return newReports;
+    });
+    setShowReportForm(false);
+  };
+
+  // Delete report
+  const handleDelete = (id: string) => {
+    setReports(prev => {
+      const newReports = prev.filter(r => r.id !== id);
+      localStorage.setItem('reports', JSON.stringify(newReports));
+      return newReports;
+    });
+  };
+
+  // Update report
+  const handleUpdateReport = (reportId, updates) => {
+    setReports(prev => {
+      const newReports = prev.map(r => r.id === reportId ? { ...r, ...updates } : r);
+      localStorage.setItem('reports', JSON.stringify(newReports));
+      return newReports;
+    });
+    setModalOpen(false);
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'new': return <Clock className="h-3 w-3 md:h-4 md:w-4" />;
-      case 'under-review': return <AlertTriangle className="h-3 w-3 md:h-4 md:w-4" />;
-      case 'resolved': return <CheckCircle className="h-3 w-3 md:h-4 md:w-4" />;
-      default: return <FileText className="h-3 w-3 md:h-4 md:w-4" />;
+      case 'new': return <Clock className="h-4 w-4" />;
+      case 'under-review': return <AlertTriangle className="h-4 w-4" />;
+      case 'resolved': return <CheckCircle className="h-4 w-4" />;
+      default: return <FileText className="h-4 w-4" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new': return 'bg-blue-100 text-blue-800';
-      case 'under-review': return 'bg-yellow-100 text-yellow-800';
-      case 'resolved': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'new': return 'bg-info-light text-info border border-info';
+      case 'under-review': return 'bg-warning-light text-warning border border-warning';
+      case 'resolved': return 'bg-success-light text-success border border-success';
+      default: return 'bg-gray-100 text-gray-800 border border-gray-300';
     }
   };
 
   return (
-    <div className="p-2 sm:p-3 md:p-6 space-y-4 md:space-y-6">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 md:gap-3 rounded-xl shadow-md bg-gradient-to-r from-emerald-100 via-white to-green-100 p-4 mb-2">
-        <div className="flex items-center gap-3">
-          <span className="bg-gradient-to-br from-green-400 via-emerald-500 to-green-700 p-2 rounded-full shadow-lg flex items-center justify-center" style={{ boxShadow: '0 4px 24px 0 rgba(34,197,94,0.18)' }}>
-            <Home className="h-8 w-8 text-white drop-shadow-md" />
-          </span>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold bg-gradient-to-r from-emerald-700 to-green-600 bg-clip-text text-transparent tracking-tight">{t('Welcome back')}</h1>
+    <div className="min-h-screen bg-background-light">
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        {/* Official Header */}
+        <div className="bg-white rounded-xl shadow-official border border-gray-200 p-6">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-nigerian-green p-3 rounded-full shadow-official">
+                <Home className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl lg:text-3xl font-bold text-text">{t('Welcome back')}</h1>
+                <p className="text-text-light">Official Government Crisis Reporting Platform</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button onClick={() => navigate('/report')} className="btn-official flex items-center gap-2">
+                <Plus className="h-5 w-5" />
+                {t('New Report')}
+              </Button>
+            </div>
+          </div>
         </div>
-        <Button onClick={() => setCurrentView('report')} className="bg-gradient-to-r from-emerald-500 to-green-600 text-xs sm:text-sm md:text-base h-12 w-full md:w-auto mt-2 md:mt-0 rounded-full shadow-lg flex items-center gap-2 px-6">
-          <Plus className="h-6 w-6 md:h-6 md:w-6 mr-1 md:mr-2" />
-          {t('New Report')}
-        </Button>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mb-2">
-        <Card className="bg-gradient-to-br from-blue-100 to-blue-200 border-blue-200 w-full rounded-2xl shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-semibold text-blue-700 flex items-center gap-2"><FileText className="h-6 w-6 text-blue-600" />{t('Total Reports')}</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2 sm:p-3 md:p-6 pt-0">
-            <div className="text-base sm:text-lg md:text-2xl font-bold text-blue-700">{userReports.length}</div>
-            <p className="text-xs text-blue-600">{t('Your submitted reports')}</p>
-          </CardContent>
-        </Card>
+        {/* Trust and Security Indicators */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <TrustIndicator type="security" size="md">
+            Secure & Encrypted
+          </TrustIndicator>
+          <TrustIndicator type="privacy" size="md">
+            Anonymous Reporting Available
+          </TrustIndicator>
+          <TrustIndicator type="official" size="md">
+            Government Verified
+          </TrustIndicator>
+        </div>
 
-        <Card className="bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-200 w-full rounded-2xl shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-semibold text-yellow-700 flex items-center gap-2"><AlertTriangle className="h-6 w-6 text-yellow-600" />{t('underReview')}</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2 sm:p-3 md:p-6 pt-0">
-            <div className="text-base sm:text-lg md:text-2xl font-bold text-yellow-700">
-              {userReports.filter(r => r.status === 'under-review').length}
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card className="card-official border-l-4 border-l-nigerian-green">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-text flex items-center gap-2">
+                <FileText className="h-5 w-5 text-nigerian-green" />
+                {t('Total Reports')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-nigerian-green">{userReports.length}</div>
+              <p className="text-xs text-text-light">{t('Your submitted reports')}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="card-official border-l-4 border-l-nigerian-blue">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-text flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-nigerian-blue" />
+                {t('underReview')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-nigerian-blue">
+                {userReports.filter(r => r.status === 'under-review').length}
+              </div>
+              <p className="text-xs text-text-light">{t('Being processed')}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="card-official border-l-4 border-l-success">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-text flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-success" />
+                {t('resolved')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-success">
+                {userReports.filter(r => r.status === 'resolved').length}
+              </div>
+              <p className="text-xs text-text-light">{t('Completed cases')}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Reports Section */}
+        <Card className="card-official">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-lg font-semibold text-text">
+                  <Shield className="h-6 w-6 text-nigerian-green" />
+                  {t('Your Reports')}
+                </CardTitle>
+                <CardDescription className="text-sm text-text-light mt-1">
+                  {t('Track the status of your submitted incident reports')}
+                </CardDescription>
+              </div>
+              <SecurityBadge>Protected</SecurityBadge>
             </div>
-            <p className="text-xs text-yellow-600">{t('Being processed')}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-100 to-green-200 border-green-200 w-full rounded-2xl shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-semibold text-green-700 flex items-center gap-2"><CheckCircle className="h-6 w-6 text-green-600" />{t('resolved')}</CardTitle>
           </CardHeader>
-          <CardContent className="p-2 sm:p-3 md:p-6 pt-0">
-            <div className="text-base sm:text-lg md:text-2xl font-bold text-green-700">
-              {userReports.filter(r => r.status === 'resolved').length}
-            </div>
-            <p className="text-xs text-green-600">{t('Completed cases')}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="rounded-2xl shadow-md">
-        <CardHeader className="p-2 sm:p-3 md:p-6">
-          <CardTitle className="flex items-center gap-2 text-xs sm:text-sm md:text-base">
-            <Shield className="h-6 w-6 md:h-7 md:w-7 text-blue-600" />
-            {t('Your Reports')}
-          </CardTitle>
-          <CardDescription className="text-xs sm:text-xs md:text-sm">
-            {t('Track the status of your submitted incident reports')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-2 sm:p-3 md:p-6 pt-0">
-          {userReports.length === 0 ? (
-            <div className="text-center py-4 md:py-8 text-gray-500 text-xs sm:text-sm" aria-live="polite">
-              {t('No reports yet')}
-              <br />
-              {t('Submit your first incident report to get started')}
-            </div>
-          ) : (
-            <div className="space-y-2 md:space-y-4">
-              {userReports.map(report => (
-                <div key={report.id} className="border rounded-2xl p-3 md:p-5 hover:bg-gray-50 transition-colors shadow-sm flex flex-col gap-1">
-                  <div className="flex justify-between items-start mb-1 md:mb-2">
-                    <div className="flex items-center gap-2 md:gap-3">
-                      {(() => {
-                        switch (report.status) {
-                          case 'new': return <Clock className="h-5 w-5 text-blue-500" />;
-                          case 'under-review': return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
-                          case 'resolved': return <CheckCircle className="h-5 w-5 text-green-500" />;
-                          default: return <FileText className="h-5 w-5 text-gray-400" />;
-                        }
-                      })()}
-                      <h4 className="font-semibold text-xs sm:text-sm md:text-base">{report.type}</h4>
+          <CardContent>
+            {userReports.length === 0 ? (
+              <div className="text-center py-12 text-text-light">
+                <FileText className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                <p className="text-lg font-medium text-text mb-2">{t('No reports yet')}</p>
+                <p className="text-sm text-text-light mb-4">{t('Submit your first incident report to get started')}</p>
+                <Button 
+                  onClick={() => setShowReportForm(true)} 
+                  className="btn-official"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Submit First Report
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {userReports.map(report => (
+                  <div key={report.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-3">
+                        {getStatusIcon(report.status)}
+                        <div>
+                          <h4 className="font-semibold text-text">{report.type}</h4>
+                          <p className="text-sm text-text-light">Case ID: {report.caseId || report.id?.substring(0, 8)}</p>
+                        </div>
+                      </div>
+                      <Badge className={`${getStatusColor(report.status)} text-xs font-medium rounded-full px-3 py-1`}>
+                        {report.status ? t(report.status === 'under-review' ? 'underReview' : report.status) : t('unknown')}
+                      </Badge>
                     </div>
-                    <Badge className={`${getStatusColor(report.status)} text-xs sm:text-xs md:text-xs rounded-full px-3 py-1`}> 
-                      {report.status ? t(report.status === 'under-review' ? 'underReview' : report.status) : t('unknown')}
-                    </Badge>
-                  </div>
-                  <p className="text-xs sm:text-xs md:text-sm text-gray-600 mb-1 md:mb-2">
-                    {(() => {
-                      function decryptDescription(encrypted: string) {
-                        try {
-                          const bytes = CryptoJS.AES.decrypt(encrypted, 'safeaid-demo-key');
-                          const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-                          return decrypted || encrypted;
-                        } catch {
-                          return encrypted;
+                    <p className="text-sm text-text-light mb-3">
+                      {(() => {
+                        function decryptDescription(encrypted: string) {
+                          try {
+                            const bytes = CryptoJS.AES.decrypt(encrypted, 'safeaid-demo-key');
+                            const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+                            return decrypted || encrypted;
+                          } catch {
+                            return encrypted;
+                          }
                         }
-                      }
-                      const desc = decryptDescription(report.description);
-                      const isEncrypted = report.description.startsWith('U2FsdGVkX1');
-                      if (isEncrypted || !desc || !desc.trim() || desc === report.description) {
-                        return report.caseId || 'ID unavailable';
-                      }
-                      return desc.substring(0, 60) + '...';
-                    })()}
-                  </p>
-                  <div className="flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 gap-1 sm:gap-0">
-                    <span className="truncate">{report.platform || t('unknownPlatform')}</span>
-                    <span className="text-xs">{report.id ? report.id.substring(0, 6) : t('na')}</span>
-                    <span className="text-xs">{report.date ? new Date(report.date).toLocaleDateString() : t('na')}</span>
+                        const desc = decryptDescription(report.description);
+                        const isEncrypted = report.description.startsWith('U2FsdGVkX1');
+                        if (isEncrypted || !desc || !desc.trim() || desc === report.description) {
+                          return report.caseId || 'ID unavailable';
+                        }
+                        return desc.substring(0, 80) + (desc.length > 80 ? '...' : '');
+                      })()}
+                    </p>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-text-light gap-2">
+                      <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {report.platform || t('unknownPlatform')}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {report.date ? new Date(report.date).toLocaleDateString() : t('na')}
+                        </span>
+                      </div>
+                      {report.isAnonymous && (
+                        <TrustIndicator type="anonymous" size="sm">
+                          Anonymous
+                        </TrustIndicator>
+                      )}
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <Button variant="outline" size="sm" onClick={() => { setSelectedReport(report); setModalOpen(true); setEditMode(false); }}><Eye className="h-4 w-4" /></Button>
+                      <Button variant="outline" size="sm" onClick={() => { setSelectedReport(report); setModalOpen(true); setEditMode(true); }}><Pencil className="h-4 w-4" /></Button>
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(report.id)}><Trash className="h-4 w-4" /></Button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 w-full rounded-2xl shadow-md">
-        <CardHeader className="p-2 sm:p-3 md:p-6">
-          <CardTitle className="text-purple-800 text-xs sm:text-sm md:text-base">{t('Support Resources')}</CardTitle>
-          <CardDescription className="text-purple-600 text-xs sm:text-xs md:text-sm">
-            {t('Get help and support when you need it most')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-2 sm:p-3 md:p-6 pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
-            <div className="space-y-1 md:space-y-2">
-              <h4 className="font-medium text-purple-800 text-xs md:text-sm">{t('Crisis Support')}</h4>
-              <p className="text-xs text-purple-600">{t('24/7 helpline: 1-800-HELP')}</p>
-            </div>
-            <div className="space-y-1 md:space-y-2">
-              <h4 className="font-medium text-purple-800 text-xs md:text-sm">{t('Legal Resources')}</h4>
-              <p className="text-xs text-purple-600">{t('Free legal consultation available')}</p>
-            </div>
-          </div>
-          <div className="mt-4 flex flex-col gap-2">
-            {/* Show More button and FAQ link removed as requested */}
-          </div>
-        </CardContent>
-      </Card>
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="card-official">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-text">
+                <Shield className="h-5 w-5 text-nigerian-green" />
+                Community Dashboard
+              </CardTitle>
+              <CardDescription>
+                View community insights and impact metrics
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={() => navigate('/community-dashboard')} 
+                variant="outline" 
+                className="btn-official-outline w-full"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                View Community Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="card-official">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-text">
+                <FileText className="h-5 w-5 text-nigerian-blue" />
+                Multi-Sectoral Reports
+              </CardTitle>
+              <CardDescription>
+                Access enhanced reporting for all sectors
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={() => navigate('/test-multisectoral')} 
+                variant="outline" 
+                className="btn-official-outline w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Multi-Sectoral Form
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Report View/Edit Modal */}
+        {selectedReport && (
+          <ReportReviewModal 
+            report={selectedReport} 
+            isOpen={modalOpen} 
+            onClose={() => setModalOpen(false)} 
+            onUpdateReport={handleUpdateReport} 
+          />
+        )}
+      </div>
     </div>
   );
 };

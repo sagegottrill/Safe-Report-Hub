@@ -26,8 +26,11 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 const AdminPage = React.lazy(() => import('./pages/AdminPage'));
-const PublicDashboardPage = React.lazy(() => import('./pages/PublicDashboardPage'));
+const AdminAnalyticsPage = React.lazy(() => import('./pages/AdminAnalyticsPage'));
+const CommunityDashboardPage = React.lazy(() => import('./pages/CommunityDashboardPage'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
+const TestMultiSectoral = React.lazy(() => import('./pages/TestMultiSectoral'));
+const ReportPage = React.lazy(() => import('./pages/ReportPage'));
 
 const AppRoutes: React.FC = () => {
   return (
@@ -35,12 +38,19 @@ const AppRoutes: React.FC = () => {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/test-multisectoral" element={<TestMultiSectoral />} />
+        <Route path="/report" element={<ReportPage />} />
         <Route path="/admin" element={
           <ProtectedRoute>
             <AdminPage />
           </ProtectedRoute>
         } />
-        <Route path="/public-dashboard" element={<PublicDashboardPage />} />
+        <Route path="/admin-analytics" element={
+          <ProtectedRoute>
+            <AdminAnalyticsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/community-dashboard" element={<CommunityDashboardPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>

@@ -1,535 +1,578 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  BarChart3, 
+  TrendingUp, 
+  Users, 
+  AlertTriangle, 
+  CheckCircle, 
+  Clock, 
+  MapPin,
+  Shield,
+  School,
+  Droplets,
+  Heart,
+  FileText,
+  Eye,
+  Settings,
+  Download,
+  Filter,
+  Search,
+  Calendar,
+  Bell,
+  Trash
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
-import { Search, AlertTriangle, TrendingUp, Users, FileText, Shield, Activity, MapPin, Clock, CheckCircle, Home, Trash2 } from 'lucide-react';
+import Papa from 'papaparse';
+import jsPDF from 'jspdf';
 import ReportReviewModal from './ReportReviewModal';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
-import { saveAs } from 'file-saver';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/sonner';
-import { useTranslation } from 'react-i18next';
-// @ts-ignore: jsPDF types may be missing if not installed
-import jsPDF from 'jspdf';
-// @ts-ignore: jsPDF-AutoTable types may be missing if not installed
-import 'jspdf-autotable';
-import CryptoJS from 'crypto-js';
 
-// Extend jsPDF with autoTable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
+interface ReportData {
+  id: string;
+  type: string;
+  impact: string;
+  status: 'pending' | 'in-progress' | 'resolved' | 'escalated';
+  urgency: 'low' | 'medium' | 'high' | 'critical';
+  region: string;
+  date: string;
+  description: string;
 }
 
-const AdminDashboard: React.FC<{ user: any }> = ({ user }) => {
-  const { reports, updateReport, deleteReport } = useAppContext();
+const AdminDashboard: React.FC<{ user: any }> = () => {
+  const navigate = useNavigate();
+  const { reports, setReports } = useAppContext();
+  const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [selectedReport, setSelectedReport] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [urgencyFilter, setUrgencyFilter] = useState('all');
-  const [regionFilter, setRegionFilter] = useState('all');
-  const [exportModalOpen, setExportModalOpen] = useState(false);
-  const [selectedExportReports, setSelectedExportReports] = useState<string[]>([]);
-  const [exportDestination, setExportDestination] = useState('hdx');
-  const [exportStatus, setExportStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const { t } = useTranslation();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [partnerHubOpen, setPartnerHubOpen] = useState(false);
+  const [selectedOffice, setSelectedOffice] = useState('GBV');
 
-  // RBAC filtering
-  let filteredReports = reports;
-  if (user.role === 'field_officer' || user.role === 'case_worker') {
-    if (user.allowedCategories) {
-      filteredReports = filteredReports.filter(r => user.allowedCategories.includes(r.type.replace(/\s+/g, '_').toLowerCase()));
-    }
-    if (user.region) {
-      filteredReports = filteredReports.filter(r => r.region === user.region);
-    }
-  } else if (user.role === 'country_admin') {
-    if (user.region) {
-      filteredReports = filteredReports.filter(r => r.region === user.region);
-    }
-  }
+  // Filter reports by search term
+  const filteredReports = useMemo(() => reports.filter(report =>
+    report.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    report.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    ((report.impact ? (Array.isArray(report.impact) ? report.impact.join(', ') : String(report.impact)) : '').toLowerCase().includes(searchTerm.toLowerCase())) ||
+    report.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  ), [reports, searchTerm]);
 
-  filteredReports = filteredReports.filter(report => {
-    const matchesSearch =
-      report.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (report.id && report.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (report.caseId && report.caseId.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
-    const matchesCategory = categoryFilter === 'all' || report.type.replace(/\s+/g, '_').toLowerCase() === categoryFilter;
-    const matchesUrgency = urgencyFilter === 'all' || (report.urgency || 'medium') === urgencyFilter;
-    const matchesRegion = regionFilter === 'all' || (report.region || 'Unknown') === regionFilter;
-    return matchesSearch && matchesStatus && matchesCategory && matchesUrgency && matchesRegion;
-  });
+  // Export reports as CSV
+  const handleExportCSV = () => {
+    const csv = Papa.unparse(filteredReports.map(r => ({
+      ID: r.id,
+      Type: r.type,
+      Impact: r.impact,
+      Status: r.status,
+      Urgency: r.urgency,
+      Region: r.region,
+      Date: r.date,
+      Description: r.description
+    })));
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'all_reports.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  // Export reports as PDF
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.text('Incident Reports', 10, 10);
+    filteredReports.forEach((r, i) => {
+      doc.text(`${i + 1}. ${r.type} - ${r.impact} - ${r.status} - ${r.region} - ${r.date}`, 10, 20 + i * 10);
+    });
+    doc.save('all_reports.pdf');
+  };
+
+  // Add export menu handler
+  const handleExportPartnerHub = () => {
+    setPartnerHubOpen(true);
+  };
+
+  const handlePartnerHubSubmit = () => {
+    // Simulate sending reports to the selected office
+    console.log(`Exported ${filteredReports.length} reports to ${selectedOffice} office.`);
+    setPartnerHubOpen(false);
+    toast.success(`Reports submitted to ${selectedOffice} office!`);
+  };
+
+  // Delete report
+  const handleDelete = (id: string) => {
+    setReports(prev => {
+      const newReports = prev.filter(r => r.id !== id);
+      localStorage.setItem('reports', JSON.stringify(newReports));
+      return newReports;
+    });
+  };
+
+  // Update report handler
+  const handleUpdateReport = (reportId, updates) => {
+    setReports(prev => {
+      const newReports = prev.map(r => r.id === reportId ? { ...r, ...updates } : r);
+      localStorage.setItem('reports', JSON.stringify(newReports));
+      return newReports;
+    });
+  };
+
+  const stats = [
+    { 
+      label: 'Total Reports', 
+      value: '1,247', 
+      change: '+12%', 
+      icon: <FileText className="h-5 w-5" />,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100'
+    },
+    { 
+      label: 'Active Cases', 
+      value: '355', 
+      change: '+5%', 
+      icon: <AlertTriangle className="h-5 w-5" />,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-100'
+    },
+    { 
+      label: 'Resolved', 
+      value: '892', 
+      change: '+18%', 
+      icon: <CheckCircle className="h-5 w-5" />,
+      color: 'text-green-600',
+      bgColor: 'bg-green-100'
+    },
+    { 
+      label: 'Response Time', 
+      value: '2.4h', 
+      change: '-15%', 
+      icon: <Clock className="h-5 w-5" />,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100'
+    }
+  ];
+
+  const sectorStats = [
+    { sector: 'GBV', count: 561, percentage: 45, color: 'bg-red-500' },
+    { sector: 'Education', count: 374, percentage: 30, color: 'bg-blue-500' },
+    { sector: 'Water', count: 187, percentage: 15, color: 'bg-cyan-500' },
+    { sector: 'Humanitarian', count: 125, percentage: 10, color: 'bg-green-500' }
+  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new': return 'bg-blue-100 text-blue-800';
-      case 'under-review': return 'bg-yellow-100 text-yellow-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'in-progress': return 'bg-blue-100 text-blue-800';
       case 'resolved': return 'bg-green-100 text-green-800';
+      case 'escalated': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getRiskColor = (score: number) => {
-    if (score >= 8) return 'bg-red-100 text-red-800';
-    if (score >= 5) return 'bg-yellow-100 text-yellow-800';
-    return 'bg-green-100 text-green-800';
-  };
-
-  const handleReviewReport = (report) => {
-    setSelectedReport(report);
-    setIsModalOpen(true);
-  };
-
-  const handleUpdateReport = (reportId: string, updates) => {
-    updateReport(reportId, updates);
-  };
-
-  const highRiskReports = reports.filter(r => (r.riskScore || 0) >= 8);
-  const newReports = reports.filter(r => r.status === 'new');
-  const flaggedReports = reports.filter(r => r.flagged);
-
-  // Analytics data
-  const reportsPerDay = Object.entries(filteredReports.reduce((acc, r) => {
-    const day = new Date(r.date).toLocaleDateString();
-    acc[day] = (acc[day] || 0) + 1;
-    return acc;
-  }, {})).map(([date, count]) => ({ date, count }));
-  const categoryDist = Object.entries(filteredReports.reduce((acc, r) => {
-    acc[r.type] = (acc[r.type] || 0) + 1;
-    return acc;
-  }, {})).map(([type, value]) => ({ name: type, value }));
-  const regionDist = Object.entries(filteredReports.reduce((acc, r) => {
-    const region = r.region || 'Unknown';
-    acc[region] = (acc[region] || 0) + 1;
-    return acc;
-  }, {})).map(([region, value]) => ({ region, value }));
-  const COLORS = ['#1976D2', '#B3E5FC', '#F5F5DC', '#FBC02D', '#D32F2F', '#388E3C', '#B388FF'];
-
-  // Export handlers
-  const handleExportCSV = () => {
-    if (!filteredReports.length) {
-      toast.error('No reports to export.');
-      return;
-    }
-    const csv = [
-      'ID,Type,Date,Platform,Description,Status,Urgency,Region,Anonymous,Flagged',
-      ...filteredReports.map(r => [
-        r.id, r.type, r.date, r.platform, r.description.replace(/\n/g, ' '), r.status, r.urgency || 'N/A', r.region || 'N/A', r.isAnonymous, r.flagged
-      ].join(','))
-    ].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    saveAs(blob, 'reports.csv');
-    toast.success('CSV exported.');
-  };
-
-  const handleExportPDF = () => {
-    if (!filteredReports.length) {
-      toast.error('No reports to export.');
-      return;
-    }
-    const doc = new jsPDF();
-    doc.text('Incident Reports', 14, 16);
-    const tableColumn = ['ID', 'Type', 'Date', 'Platform', 'Description', 'Status', 'Urgency', 'Region', 'Anonymous', 'Flagged'];
-    const tableRows = filteredReports.map(r => [
-      r.id,
-      r.type,
-      r.date,
-      r.platform,
-      r.description.replace(/\n/g, ' '),
-      r.status,
-      r.urgency || 'N/A',
-      r.region || 'N/A',
-      r.isAnonymous ? 'Yes' : 'No',
-      r.flagged ? 'Yes' : 'No',
-    ]);
-    doc.autoTable({ head: [tableColumn], body: tableRows, startY: 20 });
-    doc.save('reports.pdf');
-    toast.success('PDF exported.');
-  };
-
-  const handleSecureEmail = async () => {
-    if (!filteredReports.length) {
-      toast.error('No reports to export.');
-      return;
-    }
-    try {
-      const response = await fetch('/api/send-secure-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(filteredReports),
-      });
-      if (response.ok) {
-        toast.success('Secure email sent!');
-      } else {
-        toast.error('Failed to send secure email.');
-      }
-    } catch (err) {
-      toast.error('Failed to send secure email.');
+  const getPriorityColor = (urgency: string) => {
+    switch (urgency) {
+      case 'critical': return 'bg-red-100 text-red-800';
+      case 'high': return 'bg-orange-100 text-orange-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const handleOpenExportModal = () => {
-    setSelectedExportReports([]);
-    setExportDestination('hdx');
-    setExportStatus('idle');
-    setExportModalOpen(true);
-  };
-
-  const handleExportToHub = async () => {
-    if (!selectedExportReports.length) {
-      toast.error('No reports selected for export.');
-      return;
-    }
-    setExportStatus('idle');
-    const reportsToExport = filteredReports.filter(r => selectedExportReports.includes(r.id));
-    const anonymized = reportsToExport.map(r => ({
-      type: r.type,
-      date: r.date,
-      platform: r.platform,
-      description: r.description,
-      status: r.status,
-      urgency: r.urgency || 'N/A',
-      region: r.region || 'N/A',
-      flagged: r.flagged,
-    }));
-    try {
-      await fetch(exportDestination === 'hdx' ? 'https://example.com/hdx-maiduguri' : 'https://example.com/fedran-neuropsychiatry', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(anonymized),
-      });
-      setExportStatus('success');
-      toast.success('Export successful!');
-    } catch {
-      setExportStatus('error');
-      toast.error('Export failed. Try again.');
+  const getSectorIcon = (type: string) => {
+    switch (type) {
+      case 'GBV': return <Shield className="h-4 w-4" />;
+      case 'Education': return <School className="h-4 w-4" />;
+      case 'Water': return <Droplets className="h-4 w-4" />;
+      case 'Humanitarian': return <Heart className="h-4 w-4" />;
+      default: return <FileText className="h-4 w-4" />;
     }
   };
-
-  // Helper to decrypt description
-  function decryptDescription(encrypted: string) {
-    try {
-      const bytes = CryptoJS.AES.decrypt(encrypted, 'safeaid-demo-key');
-      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-      return decrypted || encrypted;
-    } catch {
-      return encrypted;
-    }
-  }
-
-  // Helper to generate a caseId if missing
-  function generateCaseId() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let id = 'SR-';
-    for (let i = 0; i < 6; i++) id += chars[Math.floor(Math.random() * chars.length)];
-    return id;
-  }
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4 md:p-6">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 rounded-2xl shadow-lg bg-white/80 backdrop-blur-md border border-green-100 p-4 mb-2">
-        <div className="flex items-center gap-3">
-          <span className="bg-gradient-to-br from-green-500 via-emerald-600 to-green-800 p-3 rounded-2xl shadow-lg flex items-center justify-center" style={{ boxShadow: '0 4px 24px 0 rgba(34,197,94,0.18)' }}>
-            <Home className="h-10 w-10 text-white drop-shadow-md" />
-          </span>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-green-700 to-emerald-500 bg-clip-text text-transparent tracking-tight">Admin Dashboard</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-sm bg-green-100 text-green-800 border-green-200 px-3 py-2 rounded-full font-semibold">
-            <Shield className="h-5 w-5 mr-1 text-green-600" />
-            {user.role.replace('_', ' ')}
-          </Badge>
-        </div>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mb-2">
-        <Card className="bg-white border-blue-100 w-full rounded-2xl shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm sm:text-base font-semibold text-blue-700 flex items-center gap-2"><FileText className="h-7 w-7 text-blue-600" />Total Reports</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg sm:text-2xl md:text-3xl font-bold text-blue-900">{filteredReports.length}</div>
-            <p className="text-xs text-blue-600 mt-1">
-              {reports.length} total in system
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white border-red-100 w-full rounded-2xl shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm sm:text-base font-semibold text-red-700 flex items-center gap-2"><AlertTriangle className="h-7 w-7 text-red-600" />High Risk</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg sm:text-2xl md:text-3xl font-bold text-red-900">{highRiskReports.length}</div>
-            <p className="text-xs text-red-600 mt-1">
-              Requires immediate attention
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white border-yellow-100 w-full rounded-2xl shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm sm:text-base font-semibold text-yellow-700 flex items-center gap-2"><Clock className="h-7 w-7 text-yellow-600" />New Reports</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg sm:text-2xl md:text-3xl font-bold text-yellow-900">{newReports.length}</div>
-            <p className="text-xs text-yellow-600 mt-1">
-              Awaiting review
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white border-green-100 w-full rounded-2xl shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm sm:text-base font-semibold text-green-700 flex items-center gap-2"><CheckCircle className="h-7 w-7 text-green-600" />Resolved</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg sm:text-2xl md:text-3xl font-bold text-green-900">
-              {reports.filter(r => r.status === 'resolved').length}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+              <p className="text-gray-600 mt-1">Multi-sectoral crisis management and analytics</p>
             </div>
-            <p className="text-xs text-green-600 mt-1">
-              Successfully handled
-            </p>
+            <div className="flex items-center gap-4">
+              <Button variant="outline" size="sm">
+                <Bell className="h-4 w-4 mr-2" />
+                Notifications
+              </Button>
+              <DropdownMenu open={exportMenuOpen} onOpenChange={setExportMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export Data
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleExportCSV}>Export All Reports (CSV)</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportPDF}>Export All Reports (PDF)</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportPDF}>Export Analytics (PDF)</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportPartnerHub}>Export to Partner Hub</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button onClick={() => navigate('/admin-analytics')}>
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Advanced Analytics
+              </Button>
+            </div>
+        </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Reports
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Settings
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {stats.map((stat, index) => (
+                <Card key={index}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{stat.label}</p>
+                        <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                        <p className="text-sm text-green-600">{stat.change} from last month</p>
+                      </div>
+                      <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                        <div className={stat.color}>{stat.icon}</div>
+                      </div>
+                    </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Filters and Search */}
-      <Card className="rounded-2xl shadow-lg border border-gray-100 bg-white/90">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base font-semibold text-gray-700">
-            <Search className="h-6 w-6 text-gray-500" />
-            Filter & Search Reports
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-            <Input
-              placeholder="Search by ID, keyword..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="md:col-span-1 lg:col-span-2"
-            />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="new">New</SelectItem>
-                <SelectItem value="under-review">Under Review</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="gender_based_violence">Gender-Based Violence</SelectItem>
-                <SelectItem value="child_protection">Child Protection</SelectItem>
-                <SelectItem value="forced_displacement">Forced Displacement</SelectItem>
-                <SelectItem value="food_insecurity">Food Insecurity</SelectItem>
-                <SelectItem value="water_sanitation">Water/Sanitation</SelectItem>
-                <SelectItem value="shelter_issues">Shelter Issues</SelectItem>
-                <SelectItem value="health_emergencies">Health Emergencies</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Urgency" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Urgency</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={regionFilter} onValueChange={setRegionFilter}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Region" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Regions</SelectItem>
-                {Array.from(new Set(reports.map(r => r.region || 'Unknown'))).map(region => (
-                  <SelectItem key={region} value={region}>{region}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Reports Table */}
-      <Card className="rounded-2xl shadow-lg border border-green-100 bg-white/90">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="flex items-center gap-2 text-base font-semibold text-green-700">
-              <FileText className="h-7 w-7 text-green-600" />
-              Manage Reports
-            </CardTitle>
-            <div className="flex items-center gap-2 mt-2 sm:mt-0">
-              <Button variant="outline" size="sm" onClick={handleExportCSV}>Export CSV</Button>
-              <Button variant="outline" size="sm" onClick={handleExportPDF}>Export PDF</Button>
-              <Button variant="outline" size="sm" onClick={handleOpenExportModal}>Submit to Hub</Button>
-            </div>
-          </div>
-          <CardDescription>
-            Review, update, and manage all submitted reports.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Urgency</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Region</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Anonymous</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Flagged</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredReports.map(report => (
-                  <tr key={report.id} className={`${report.flagged ? 'bg-red-50' : ''}`}>
-                    <td className="px-4 py-3 text-xs text-gray-500">{report.caseId || generateCaseId()}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500">{report.type}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500">{new Date(report.date).toLocaleDateString()}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500">{report.platform}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500">{(() => {
-                      const desc = decryptDescription(report.description);
-                      const isEncrypted = report.description.startsWith('U2FsdGVkX1');
-                      if (isEncrypted || !desc || !desc.trim() || desc === report.description) {
-                        return report.caseId || generateCaseId();
-                      }
-                      return desc.substring(0, 100) + '...';
-                    })()}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500">
-                      <Badge className={`${getStatusColor(report.status)}`}>
-                        {report.status.replace('-', ' ')}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-gray-500">{report.urgency || 'N/A'}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500">{report.region || 'N/A'}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500">{report.isAnonymous ? 'Yes' : 'No'}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500">{report.flagged ? 'Yes' : 'No'}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500 flex gap-2 items-center">
-                      <Button size="sm" variant="outline" className="rounded-full p-2" onClick={() => handleReviewReport(report)}>
-                        <Shield className="h-5 w-5 text-blue-600" />
-                      </Button>
-                      <Button size="sm" variant="destructive" className="rounded-full p-2" onClick={() => deleteReport(report.id)}>
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Analytics Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
-        <Card className="rounded-2xl shadow-lg border border-gray-100 bg-white/90 p-4">
-          <h3 className="font-semibold text-base mb-2 text-gray-700">Reports Per Day</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={reportsPerDay}>
-              <XAxis dataKey="date" fontSize={10} />
-              <YAxis fontSize={10} />
-              <Tooltip />
-              <Bar dataKey="count" fill="#1976D2" />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-        <Card className="rounded-2xl shadow-lg border border-gray-100 bg-white/90 p-4">
-          <h3 className="font-semibold text-base mb-2 text-gray-700">Category Distribution</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie data={categoryDist} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60}>
-                {categoryDist.map((entry, idx) => (
-                  <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </Card>
-        <Card className="rounded-2xl shadow-lg border border-gray-100 bg-white/90 p-4">
-          <h3 className="font-semibold text-base mb-2 text-gray-700">Location Heatmap</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={regionDist}>
-              <XAxis dataKey="region" fontSize={10} />
-              <YAxis fontSize={10} />
-              <Tooltip />
-              <Bar dataKey="value" fill="#FBC02D" />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
-
-      {/* Export Modal */}
-      <Dialog open={exportModalOpen} onOpenChange={setExportModalOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Submit Reports to Humanitarian Data Hub</DialogTitle>
-          </DialogHeader>
-          <div className="mb-2">
-            <label className="block text-xs font-semibold mb-1">Destination</label>
-            <select value={exportDestination} onChange={e => setExportDestination(e.target.value)} className="border rounded px-2 py-1 text-sm w-full">
-              <option value="hdx">{t('ocha_maiduguri_office', 'OCHA Maiduguri Office')}</option>
-              <option value="fedran">{t('fedral_neuropsychiatry_hospital_maiduguri', 'Fedral Neuro-psychiatry Hospital Maiduguri')}</option>
-            </select>
-          </div>
-          <div className="mb-2">
-            <label className="block text-xs font-semibold mb-1">Select Reports</label>
-            <div className="max-h-40 overflow-y-auto border rounded p-2">
-              {filteredReports.map(r => (
-                <div key={r.id} className="flex items-center gap-2 mb-1">
-                  <input type="checkbox" checked={selectedExportReports.includes(r.id)} onChange={e => {
-                    if (e.target.checked) setSelectedExportReports(prev => [...prev, r.id]);
-                    else setSelectedExportReports(prev => prev.filter(id => id !== r.id));
-                  }} />
-                  <span className="text-xs">{r.type} ({r.date})</span>
-                </div>
               ))}
             </div>
+
+            {/* Sector Distribution */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Reports by Sector</CardTitle>
+                  <CardDescription>Distribution of reports across different sectors</CardDescription>
+          </CardHeader>
+          <CardContent>
+                  <div className="space-y-4">
+                    {sectorStats.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-3 h-3 rounded-full ${item.color}`}></div>
+                          <span className="font-medium">{item.sector}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Progress value={item.percentage} className="w-24" />
+                          <span className="text-sm text-gray-600">{item.count}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+          </CardContent>
+        </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>Latest reports and updates</CardDescription>
+          </CardHeader>
+          <CardContent>
+                  <div className="space-y-4">
+                    {reports.length === 0 ? (
+                      <div className="text-center text-gray-400 py-8">No reports yet.</div>
+                    ) : (
+                      reports.slice(0, 5).map((report) => (
+                        <div key={report.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            {getSectorIcon(report.type)}
+                            <div>
+                              <p className="font-medium text-sm">{report.type} - {report.impact}</p>
+                              <p className="text-xs text-gray-600">{report.region}</p>
+                            </div>
+                          </div>
+                          <Badge className={getStatusColor(report.status)}>
+                            {report.status}
+                          </Badge>
+                        </div>
+                      ))
+                    )}
+                  </div>
+          </CardContent>
+        </Card>
+            </div>
+          </TabsContent>
+
+          {/* Reports Tab */}
+          <TabsContent value="reports" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>All Reports</CardTitle>
+                    <CardDescription>Manage and track all submitted reports</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm">
+                      <Filter className="h-4 w-4 mr-2" />
+                      Filter
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Search className="h-4 w-4 mr-2" />
+                      Search
+                    </Button>
+                  </div>
+                </div>
+          </CardHeader>
+          <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-3 font-medium">ID</th>
+                        <th className="text-left p-3 font-medium">Sector</th>
+                        <th className="text-left p-3 font-medium">Category</th>
+                        <th className="text-left p-3 font-medium">Status</th>
+                        <th className="text-left p-3 font-medium">Priority</th>
+                        <th className="text-left p-3 font-medium">Location</th>
+                        <th className="text-left p-3 font-medium">Date</th>
+                        <th className="text-left p-3 font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reports.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="text-center p-3">No reports yet.</td>
+                        </tr>
+                      ) : (
+                        filteredReports.map((report) => (
+                          <tr key={report.id} className="border-b hover:bg-gray-50">
+                            <td className="p-3 text-sm font-medium">{report.id}</td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                {getSectorIcon(report.type)}
+                                <span className="text-sm">{report.type}</span>
+                              </div>
+                            </td>
+                            <td className="p-3 text-sm">{Array.isArray(report.impact) ? report.impact.join(', ') : report.impact}</td>
+                            <td className="p-3">
+                              <Badge className={getStatusColor(report.status)}>
+                                {report.status}
+                              </Badge>
+                            </td>
+                            <td className="p-3">
+                              <Badge className={getPriorityColor(report.urgency)}>
+                                {report.urgency}
+                              </Badge>
+                            </td>
+                            <td className="p-3 text-sm">{report.region}</td>
+                            <td className="p-3 text-sm">
+                              {new Date(report.date).toLocaleDateString()}
+                            </td>
+                            <td className="p-3">
+                              <Button variant="outline" size="sm" onClick={() => { setSelectedReport(report); setModalOpen(true); }}><Eye className="h-4 w-4" /></Button>
+                              <Button variant="destructive" size="sm" onClick={() => handleDelete(report.id)}><Trash className="h-4 w-4" /></Button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+            </div>
+          </CardContent>
+        </Card>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+        <CardHeader>
+                  <CardTitle>Response Time Trends</CardTitle>
+                  <CardDescription>Average response time by sector</CardDescription>
+        </CardHeader>
+        <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-red-600" />
+                        GBV
+                      </span>
+                      <span className="font-medium">1.2 hours</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <School className="h-4 w-4 text-blue-600" />
+                        Education
+                      </span>
+                      <span className="font-medium">3.5 hours</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <Droplets className="h-4 w-4 text-cyan-600" />
+                        Water
+                      </span>
+                      <span className="font-medium">2.8 hours</span>
+            </div>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <Heart className="h-4 w-4 text-green-600" />
+                        Humanitarian
+                      </span>
+                      <span className="font-medium">4.1 hours</span>
+            </div>
           </div>
-          {exportStatus === 'success' && <div className="text-green-600 text-xs mb-2">Export successful!</div>}
-          {exportStatus === 'error' && <div className="text-red-600 text-xs mb-2">Export failed. Try again.</div>}
+        </CardContent>
+      </Card>
+
+      <Card>
+                <CardHeader>
+                  <CardTitle>Geographic Distribution</CardTitle>
+                  <CardDescription>Reports by location</CardDescription>
+        </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        Lagos
+                      </span>
+                      <span className="font-medium">342 reports</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        Kano
+                      </span>
+                      <span className="font-medium">287 reports</span>
+              </div>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        Abuja
+                      </span>
+                      <span className="font-medium">234 reports</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        Borno
+                      </span>
+                      <span className="font-medium">156 reports</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>System Settings</CardTitle>
+                <CardDescription>Configure dashboard preferences and notifications</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Notification Preferences</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span>Email notifications for new reports</span>
+                        <Button variant="outline" size="sm">Enable</Button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>SMS alerts for critical issues</span>
+                        <Button variant="outline" size="sm">Enable</Button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Weekly analytics reports</span>
+                        <Button variant="outline" size="sm">Enable</Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Data Export</h3>
+                    <div className="space-y-3">
+                      <Button variant="outline" className="w-full" onClick={handleExportCSV}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Export All Reports (CSV)
+                      </Button>
+                      <Button variant="outline" className="w-full" onClick={handleExportPDF}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Export Analytics (PDF)
+                      </Button>
+                    </div>
+                  </div>
+          </div>
+        </CardContent>
+      </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+      <ReportReviewModal report={selectedReport} isOpen={modalOpen} onClose={() => setModalOpen(false)} onUpdateReport={handleUpdateReport} />
+      {/* Partner Hub Export Modal */}
+      <Dialog open={partnerHubOpen} onOpenChange={setPartnerHubOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Export to Partner Hub</DialogTitle>
+          </DialogHeader>
+          <div className="mb-4">
+            <label className="block mb-2 font-medium">Select Office/Partner:</label>
+            <select
+              className="border rounded px-3 py-2 w-full"
+              value={selectedOffice}
+              onChange={e => setSelectedOffice(e.target.value)}
+            >
+              <option value="GBV">GBV Office</option>
+              <option value="Education">Education Office</option>
+              <option value="Water">Water Office</option>
+              <option value="Humanitarian">Humanitarian Office</option>
+            </select>
+          </div>
+          <div className="bg-black text-green-400 font-mono rounded p-3 mb-4 h-32 overflow-auto text-xs">
+            {`> Ready to export ${filteredReports.length} reports to ${selectedOffice} office...`}
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setExportModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleExportToHub} disabled={selectedExportReports.length === 0}>Submit</Button>
+            <Button variant="outline" onClick={() => setPartnerHubOpen(false)}>Cancel</Button>
+            <Button onClick={handlePartnerHubSubmit}>Submit</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <ReportReviewModal
-        report={selectedReport}
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedReport(null);
-        }}
-        onUpdateReport={handleUpdateReport}
-      />
     </div>
   );
 };

@@ -7,12 +7,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const {
+    sector,
     category,
     urgency,
     message,
     location,
     anonymous,
     tags,
+    incidentDate,
+    description,
+    // Additional fields for multi-sectoral reports
+    stakeholder,
+    schoolName,
+    communityName,
+    infrastructureType,
+    // ... other fields
   } = req.body;
 
   if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY || !process.env.SHEET_ID) {
@@ -28,19 +37,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const sheets = google.sheets({ version: 'v4', auth });
 
+    // Use the same range as Express server for consistency
     await sheets.spreadsheets.values.append({
       spreadsheetId: process.env.SHEET_ID,
-      range: 'ID!A1',
+      range: 'Sheet1!A1',
       valueInputOption: 'RAW',
       requestBody: {
         values: [[
           new Date().toISOString(),
-          category,
-          message,
+          category || sector,
+          description || message,
           urgency,
           tags,
           location,
           anonymous,
+          // Add additional fields for better analytics
+          sector,
+          stakeholder,
+          schoolName,
+          communityName,
+          infrastructureType,
+          incidentDate
         ]],
       },
     });

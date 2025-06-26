@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAppContext } from '@/contexts/AppContext';
 import { toast } from '@/components/ui/sonner';
 import { useTranslation } from 'react-i18next';
+import { TrustIndicator, PrivacyNotice } from '@/components/ui/trust-indicators';
 
 interface LoginFormProps {
   onToggleMode: () => void;
@@ -73,6 +74,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
         {error && (
           <div className="text-red-600 text-xs text-center mt-2" aria-live="polite">{error}</div>
         )}
+        <PrivacyNotice className="mt-4">
+          We respect your privacy. Your login details are never shared.
+        </PrivacyNotice>
         <div className="mt-4 text-center">
           <Button variant="link" onClick={onToggleMode}>
             {t('dontHaveAccount')}
