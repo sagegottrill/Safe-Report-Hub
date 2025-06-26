@@ -21,6 +21,10 @@ const AppLayout: React.FC = () => {
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // DEBUG LOGGING
+  console.log('DEBUG: user:', user);
+  console.log('DEBUG: currentView:', currentView);
+
   useEffect(() => {
     // If no user is logged in, always show auth page regardless of URL
     if (!user) {
