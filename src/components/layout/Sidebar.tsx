@@ -156,18 +156,6 @@ const Sidebar: React.FC = () => {
         </nav>
       </div>
 
-      {/* Trust Indicators */}
-      <div className="p-3 bg-gray-50 border-t border-gray-200">
-        <div className="space-y-2 mb-3">
-          <TrustIndicator type="security" size="sm">
-            Encrypted
-          </TrustIndicator>
-          <TrustIndicator type="privacy" size="sm">
-            Anonymous Available
-          </TrustIndicator>
-        </div>
-      </div>
-
       <div className="p-4 border-t border-gray-200">
         <div className="space-y-2">
           <Button

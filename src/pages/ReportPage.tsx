@@ -6,16 +6,11 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const ReportPage: React.FC = () => {
-  const { user, setReports } = useAppContext();
+  const { submitReport } = useAppContext();
   const navigate = useNavigate();
 
   const handleReportSubmit = (data: any) => {
-    setReports(prev => {
-      const newId = Math.random().toString(36).substr(2, 8).toUpperCase();
-      const newReports = [...prev, { ...data, id: newId, caseId: newId, reporterId: user?.id }];
-      localStorage.setItem('reports', JSON.stringify(newReports));
-      return newReports;
-    });
+    submitReport(data);
     navigate('/'); // Redirect to dashboard after submit
   };
 

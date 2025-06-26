@@ -47,7 +47,9 @@ const Dashboard: React.FC = () => {
       Status: r.status,
       Description: r.description,
       Date: r.date,
-      Platform: r.platform
+      Platform: r.platform,
+      Email: r.email,
+      Phone: r.phone
     })));
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);

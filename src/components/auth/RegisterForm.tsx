@@ -15,6 +15,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAppContext();
   const { t } = useTranslation();
@@ -26,7 +27,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
       return;
     }
     setLoading(true);
-    await register(email, password, name);
+    await register(email, password, name, phone);
     setLoading(false);
   };
 
@@ -84,6 +85,17 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               minLength={6}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">{t('phoneNumber')}</Label>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder={t('enterPhoneNumber')}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
             />
           </div>
           <Button type="submit" className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-full shadow-md hover:from-emerald-600 hover:to-green-700 transition-colors duration-200" disabled={loading}>

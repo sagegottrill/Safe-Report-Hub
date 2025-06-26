@@ -6,6 +6,7 @@ interface User {
   id: string;
   email: string;
   name: string;
+  phone?: string;
   role: 'field_officer' | 'case_worker' | 'country_admin' | 'super_admin' | 'admin' | 'user';
   region?: string;
   allowedCategories?: string[];
@@ -39,7 +40,7 @@ interface AppContextType {
   sidebarOpen: boolean;
   currentView: 'dashboard' | 'report' | 'auth' | 'admin';
   login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, name: string) => Promise<boolean>;
+  register: (email: string, password: string, name: string, phone: string) => Promise<boolean>;
   logout: () => void;
   submitReport: (report: Omit<Report, 'id' | 'status'>) => string;
   updateReport: (reportId: string, updates: Partial<Report>) => void;
@@ -130,7 +131,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: 'HUM001',
       type: 'Humanitarian',
       impact: ['Food Insecurity'],
-      status: 'escalated',
+      status: 'new',
       urgency: 'critical',
       region: 'Borno State',
       date: '2024-01-15',
@@ -259,10 +260,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return false;
   };
 
-  const register = async (email: string, password: string, name: string): Promise<boolean> => {
-    if (email && password.length >= 6 && name) {
+  const register = async (email: string, password: string, name: string, phone: string): Promise<boolean> => {
+    if (email && password.length >= 6 && name && phone) {
       const displayName = extractFirstName(email, name);
-      const mockUser: User = { id: '1', email, name: displayName, role: 'user' };
+      const mockUser: User = { id: '1', email, name: displayName, phone, role: 'user' };
       setUser(mockUser);
       localStorage.setItem('user', JSON.stringify(mockUser));
       setCurrentView('dashboard');

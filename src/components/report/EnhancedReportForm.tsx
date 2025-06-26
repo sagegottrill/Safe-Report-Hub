@@ -26,7 +26,7 @@ interface EnhancedReportFormProps {
 
 const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => {
   const { t } = useTranslation();
-  const { setCurrentView } = useAppContext();
+  const { setCurrentView, user } = useAppContext();
   const [currentStep, setCurrentStep] = useState<ReportStep>('sector');
   const [selectedSector, setSelectedSector] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -35,7 +35,6 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => 
     location: '',
     description: '',
     immediateDanger: false,
-    isAnonymous: true,
     consentForSharing: false,
     contactDetails: ''
   });
@@ -73,7 +72,9 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => 
         sector: selectedSector,
         category: selectedCategory,
         timestamp: new Date().toISOString(),
-        urgency: getUrgencyLevel(selectedCategory)
+        urgency: getUrgencyLevel(selectedCategory),
+        email: user?.email || '',
+        phone: user?.phone || ''
       };
       await onSubmit(finalReportData);
     } catch (error) {
@@ -196,32 +197,6 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => 
         
         <div className="flex items-center space-x-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <Checkbox
-            id="isAnonymous"
-            checked={reportData.isAnonymous}
-            onCheckedChange={(checked) => handleInputChange('isAnonymous', checked)}
-          />
-          <Label htmlFor="isAnonymous" className="font-medium text-blue-800">
-            Submit anonymously
-          </Label>
-        </div>
-
-        {!reportData.isAnonymous && (
-          <div className="space-y-2">
-            <Label htmlFor="contactDetails" className="text-sm font-medium text-text">
-              Contact Details (Optional)
-            </Label>
-            <Input
-              id="contactDetails"
-              placeholder="Phone number or email"
-              value={reportData.contactDetails}
-              onChange={(e) => handleInputChange('contactDetails', e.target.value)}
-              className="form-official"
-            />
-          </div>
-        )}
-
-        <div className="flex items-start space-x-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-          <Checkbox
             id="consentForSharing"
             checked={reportData.consentForSharing}
             onCheckedChange={(checked) => handleInputChange('consentForSharing', checked)}
@@ -232,6 +207,15 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => 
         </div>
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="email">Email <span className="text-danger">*</span></Label>
+        <Input id="email" type="email" value={reportData.email} onChange={e => handleInputChange('email', e.target.value)} required />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="phone">Phone Number <span className="text-danger">*</span></Label>
+        <Input id="phone" type="tel" value={reportData.phone} onChange={e => handleInputChange('phone', e.target.value)} required />
+      </div>
+
       <div className="flex justify-between pt-6">
         <Button onClick={handleBack} variant="outline" className="btn-official-outline">
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -240,7 +224,7 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => 
         
         <Button 
           onClick={handleSubmit}
-          disabled={loading || !reportData.incidentDate || !reportData.location || !reportData.description}
+          disabled={loading || !reportData.incidentDate || !reportData.location || !reportData.description || !reportData.email || !reportData.phone}
           className="btn-official"
         >
           {loading ? 'Submitting...' : 'Submit Report'}
@@ -456,29 +440,6 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => 
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Checkbox
-                id="isAnonymous"
-                checked={reportData.isAnonymous}
-                onCheckedChange={(checked) => handleInputChange('isAnonymous', checked)}
-              />
-              <Label htmlFor="isAnonymous" className="font-medium">
-                Submit anonymously
-              </Label>
-            </div>
-
-            {!reportData.isAnonymous && (
-              <div className="space-y-2">
-                <Label htmlFor="contactDetails">Contact Details (Optional)</Label>
-                <Input
-                  id="contactDetails"
-                  placeholder="Phone number or email"
-                  value={reportData.contactDetails}
-                  onChange={(e) => handleInputChange('contactDetails', e.target.value)}
-                />
-              </div>
-            )}
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
                 id="consentForSharing"
                 checked={reportData.consentForSharing}
                 onCheckedChange={(checked) => handleInputChange('consentForSharing', checked)}
@@ -491,6 +452,15 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => 
         </div>
       )}
 
+      <div className="space-y-2">
+        <Label htmlFor="email">Email <span className="text-danger">*</span></Label>
+        <Input id="email" type="email" value={reportData.email} onChange={e => handleInputChange('email', e.target.value)} required />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="phone">Phone Number <span className="text-danger">*</span></Label>
+        <Input id="phone" type="tel" value={reportData.phone} onChange={e => handleInputChange('phone', e.target.value)} required />
+      </div>
+
       <div className="flex justify-between pt-6">
         <Button onClick={handleBack} variant="outline">
           ← Back to Categories
@@ -498,7 +468,7 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => 
         
         <Button 
           onClick={handleSubmit}
-          disabled={loading || !reportData.stakeholder || !reportData.incidentDate || !reportData.location || !reportData.description}
+          disabled={loading || !reportData.stakeholder || !reportData.incidentDate || !reportData.location || !reportData.description || !reportData.email || !reportData.phone}
           className="bg-blue-600 hover:bg-blue-700"
         >
           {loading ? 'Submitting...' : 'Submit Report'}
@@ -714,29 +684,6 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => 
       <div className="space-y-4">
         <div className="flex items-center space-x-2">
           <Checkbox
-            id="isAnonymous"
-            checked={reportData.isAnonymous}
-            onCheckedChange={(checked) => handleInputChange('isAnonymous', checked)}
-          />
-          <Label htmlFor="isAnonymous" className="font-medium">
-            Submit anonymously
-          </Label>
-        </div>
-
-        {!reportData.isAnonymous && (
-          <div className="space-y-2">
-            <Label htmlFor="contactDetails">Contact Details (Optional)</Label>
-            <Input
-              id="contactDetails"
-              placeholder="Phone number or email for follow-up"
-              value={reportData.contactDetails}
-              onChange={(e) => handleInputChange('contactDetails', e.target.value)}
-            />
-          </div>
-        )}
-
-        <div className="flex items-center space-x-2">
-          <Checkbox
             id="consentForSharing"
             checked={reportData.consentForSharing}
             onCheckedChange={(checked) => handleInputChange('consentForSharing', checked)}
@@ -758,6 +705,15 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => 
         </div>
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="email">Email <span className="text-danger">*</span></Label>
+        <Input id="email" type="email" value={reportData.email} onChange={e => handleInputChange('email', e.target.value)} required />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="phone">Phone Number <span className="text-danger">*</span></Label>
+        <Input id="phone" type="tel" value={reportData.phone} onChange={e => handleInputChange('phone', e.target.value)} required />
+      </div>
+
       <div className="flex justify-between pt-6">
         <Button onClick={handleBack} variant="outline">
           ← Back to Categories
@@ -765,7 +721,7 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => 
         
         <Button 
           onClick={handleSubmit}
-          disabled={loading || !reportData.communityName || !reportData.incidentDate || !reportData.location || !reportData.description}
+          disabled={loading || !reportData.communityName || !reportData.incidentDate || !reportData.location || !reportData.description || !reportData.email || !reportData.phone}
           className="bg-cyan-600 hover:bg-cyan-700"
         >
           {loading ? 'Submitting...' : 'Submit Report'}
@@ -943,29 +899,6 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => 
       <div className="space-y-4">
         <div className="flex items-center space-x-2">
           <Checkbox
-            id="isAnonymous"
-            checked={reportData.isAnonymous}
-            onCheckedChange={(checked) => handleInputChange('isAnonymous', checked)}
-          />
-          <Label htmlFor="isAnonymous" className="font-medium">
-            Submit anonymously
-          </Label>
-        </div>
-
-        {!reportData.isAnonymous && (
-          <div className="space-y-2">
-            <Label htmlFor="contactDetails">Contact Details (Optional)</Label>
-            <Input
-              id="contactDetails"
-              placeholder="Phone number or email for follow-up"
-              value={reportData.contactDetails}
-              onChange={(e) => handleInputChange('contactDetails', e.target.value)}
-            />
-          </div>
-        )}
-
-        <div className="flex items-center space-x-2">
-          <Checkbox
             id="consentForSharing"
             checked={reportData.consentForSharing}
             onCheckedChange={(checked) => handleInputChange('consentForSharing', checked)}
@@ -987,6 +920,15 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => 
         </div>
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="email">Email <span className="text-danger">*</span></Label>
+        <Input id="email" type="email" value={reportData.email} onChange={e => handleInputChange('email', e.target.value)} required />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="phone">Phone Number <span className="text-danger">*</span></Label>
+        <Input id="phone" type="tel" value={reportData.phone} onChange={e => handleInputChange('phone', e.target.value)} required />
+      </div>
+
       <div className="flex justify-between pt-6">
         <Button onClick={handleBack} variant="outline">
           ← Back to Categories
@@ -994,7 +936,7 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => 
         
         <Button 
           onClick={handleSubmit}
-          disabled={loading || !reportData.communityName || !reportData.incidentDate || !reportData.location || !reportData.description}
+          disabled={loading || !reportData.communityName || !reportData.incidentDate || !reportData.location || !reportData.description || !reportData.email || !reportData.phone}
           className="bg-purple-600 hover:bg-purple-700"
         >
           {loading ? 'Submitting...' : 'Submit Report'}

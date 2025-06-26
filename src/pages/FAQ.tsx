@@ -11,12 +11,12 @@ const faqData = [
     items: [
       {
         q: "What is BICTDA Report Hub?",
-        a: "BICTDA Report Hub is an official government digital platform for safe, anonymous reporting of humanitarian incidents across Nigeria. It connects people in need with trusted support teams and government agencies.",
+        a: "BICTDA Report Hub is a digital platform for safe reporting of humanitarian incidents. It connects people in need with trusted support teams and organizations.",
         icon: <HelpCircle className="h-5 w-5 text-nigerian-blue mr-2 inline" />,
       },
       {
         q: "Is this an official government platform?",
-        a: "Yes, this is an official government-approved platform for crisis reporting. All reports are handled by authorized government agencies and verified support organizations.",
+        a: "No, this platform is not affiliated with any government. It is designed to help users report incidents and get support from trusted organizations.",
         icon: <Shield className="h-5 w-5 text-nigerian-green mr-2 inline" />,
       },
     ],
@@ -26,12 +26,12 @@ const faqData = [
     items: [
       {
         q: "Is my report really anonymous?",
-        a: "Yes. You can submit a report without providing your name or contact information. Only authorized government responders can access your report, and your identity is never shared without your explicit consent.",
+        a: "No. Reports are linked to your registered account for follow-up and support. Your information is handled with care and is not shared without your consent.",
         icon: <Lock className="h-5 w-5 text-nigerian-green mr-2 inline" />,
       },
       {
         q: "How is my data protected?",
-        a: "All data is encrypted using government-grade security protocols. Your information is stored securely and only accessible to authorized personnel. We follow strict data protection regulations.",
+        a: "Your information is stored securely and only accessible to authorized support staff. We follow strict data protection practices.",
         icon: <ShieldCheck className="h-5 w-5 text-nigerian-green mr-2 inline" />,
       },
     ],
@@ -41,22 +41,22 @@ const faqData = [
     items: [
       {
         q: "What happens after I submit a report?",
-        a: "Your report is immediately reviewed by trained government humanitarian staff. If you provided contact details, they may reach out for more information or to offer support. You'll receive a unique case ID for tracking.",
+        a: "Your report is reviewed by trained support staff. If you provided contact details, they may reach out for more information or to offer support. You'll receive a unique case ID for tracking.",
         icon: <HelpCircle className="h-5 w-5 text-nigerian-blue mr-2 inline" />,
       },
       {
         q: "Can I report on someone else's behalf?",
-        a: "Yes. You can report incidents affecting others, especially if they are unable or afraid to report themselves. This is encouraged for vulnerable individuals who need support.",
+        a: "Yes. You can report incidents affecting others, especially if they are unable or afraid to report themselves.",
         icon: <Users className="h-5 w-5 text-nigerian-blue mr-2 inline" />,
       },
       {
         q: "Who receives my report?",
-        a: "Only authorized government humanitarian responders and verified support staff can access your report. Your information is never shared with third parties without your explicit consent.",
+        a: "Only authorized support staff can access your report. Your information is never shared with third parties without your explicit consent.",
         icon: <ShieldCheck className="h-5 w-5 text-nigerian-green mr-2 inline" />,
       },
       {
         q: "How long does it take to get a response?",
-        a: "Emergency reports are reviewed within 2-4 hours. Standard reports are typically reviewed within 24-48 hours. You can track your report status using your unique case ID.",
+        a: "Emergency reports are reviewed as quickly as possible. Standard reports are typically reviewed within 24-48 hours. You can track your report status using your unique case ID.",
         icon: <HelpCircle className="h-5 w-5 text-nigerian-blue mr-2 inline" />,
       },
     ],
@@ -71,7 +71,7 @@ const faqData = [
       },
       {
         q: "What if I don't have internet?",
-        a: "If you're offline, your report will be saved on your device and sent automatically when you reconnect to the internet. You can also use SMS reporting by texting to our emergency number.",
+        a: "If you're offline, your report will be saved on your device and sent automatically when you reconnect to the internet.",
         icon: <WifiOff className="h-5 w-5 text-warning mr-2 inline" />,
       },
     ],
@@ -115,11 +115,10 @@ const FAQ = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-text">Help & FAQ</h1>
-                <p className="text-text-light mt-1">Official Government Support Center</p>
+                <p className="text-text-light mt-1">Support Center</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <OfficialStamp>Government Verified</OfficialStamp>
               <Button 
                 variant="outline" 
                 onClick={() => navigate('/')}
@@ -132,23 +131,19 @@ const FAQ = () => {
           </div>
           
           {/* Trust Indicators */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <TrustIndicator type="security" size="md">
-              Secure & Encrypted
+              Secure Platform
             </TrustIndicator>
             <TrustIndicator type="privacy" size="md">
-              Anonymous Available
-            </TrustIndicator>
-            <TrustIndicator type="official" size="md">
-              Government Verified
+              Privacy Focused
             </TrustIndicator>
           </div>
         </div>
 
         {/* Privacy Notice */}
         <PrivacyNotice>
-          Your safety and privacy are our top priority. This is an official government platform with strict data protection protocols. 
-          All reports are encrypted and handled with complete confidentiality.
+          Your safety and privacy are our top priority. All reports are handled with care and confidentiality by our support team.
         </PrivacyNotice>
 
         {/* FAQ Content */}
