@@ -31,7 +31,7 @@ const CommunityDashboardPage = React.lazy(() => import('./pages/CommunityDashboa
 const NotFound = React.lazy(() => import('./pages/NotFound'));
 const TestMultiSectoral = React.lazy(() => import('./pages/TestMultiSectoral'));
 const ReportPage = React.lazy(() => import('./pages/ReportPage'));
-const GovernorPanel = React.lazy(() => import('./pages/GovernorPanel'));
+import GovernorPanel from '@/pages/GovernorPanel';
 const GovernorAdminPanel = React.lazy(() => import('./components/admin/GovernorAdminPanel'));
 
 const AppRoutes: React.FC = () => {
@@ -57,6 +57,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/governor" element={
           <ProtectedRoute>
             <GovernorPanel />
+            
           </ProtectedRoute>
         } />
         <Route path="/governor-admin" element={
@@ -70,6 +71,35 @@ const AppRoutes: React.FC = () => {
   );
 };
 
+// Simple ErrorBoundary implementation
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: any }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: any, errorInfo: any) {
+    // You can log errorInfo here if needed
+    console.error('ErrorBoundary caught:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 40, textAlign: 'center', color: 'red', background: '#fff', minHeight: '100vh' }}>
+          <h2>Something went wrong (App Error)</h2>
+          <pre style={{ textAlign: 'left', display: 'inline-block', background: '#f5f5f5', padding: 10, borderRadius: 6 }}>
+            {this.state.error?.toString()}
+          </pre>
+          <button onClick={() => window.location.reload()}>Reload</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const App = () => {
   return (
     <AppProvider>
@@ -78,9 +108,11 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
-              <AppRoutes />
-            </Suspense>
+            <ErrorBoundary>
+              <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+                <AppRoutes />
+              </Suspense>
+            </ErrorBoundary>
             <Analytics />
             <SpeedInsights />
           </TooltipProvider>

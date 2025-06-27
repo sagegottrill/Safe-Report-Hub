@@ -13,6 +13,10 @@ export default defineConfig(({ mode }) => ({
         target: 'http://localhost:3001',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
+      },
+      '/analytics': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
       }
     }
   },

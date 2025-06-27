@@ -92,7 +92,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: 'GBV001',
       type: 'GBV',
       impact: ['Domestic Violence'],
-      status: 'under-review',
+      status: 'under-review' as const,
       urgency: 'high',
       region: 'Lagos Central',
       date: '2024-01-15',
@@ -105,7 +105,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: 'EDU001',
       type: 'Education',
       impact: ['Infrastructure Problems'],
-      status: 'new',
+      status: 'new' as const,
       urgency: 'medium',
       region: 'Kano North',
       date: '2024-01-15',
@@ -118,7 +118,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: 'WAT001',
       type: 'Water',
       impact: ['No Water Supply'],
-      status: 'resolved',
+      status: 'resolved' as const,
       urgency: 'critical',
       region: 'Abuja South',
       date: '2024-01-14',
@@ -131,7 +131,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: 'HUM001',
       type: 'Humanitarian',
       impact: ['Food Insecurity'],
-      status: 'new',
+      status: 'new' as const,
       urgency: 'critical',
       region: 'Borno State',
       date: '2024-01-15',
@@ -144,7 +144,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: 'GBV002',
       type: 'GBV',
       impact: ['Sexual Harassment'],
-      status: 'new',
+      status: 'new' as const,
       urgency: 'high',
       region: 'Kaduna',
       date: '2024-01-16',
@@ -157,7 +157,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: 'EDU002',
       type: 'Education',
       impact: ['Bullying'],
-      status: 'resolved',
+      status: 'resolved' as const,
       urgency: 'medium',
       region: 'Enugu',
       date: '2024-01-13',
@@ -170,7 +170,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: 'WAT002',
       type: 'Water',
       impact: ['Contaminated Water'],
-      status: 'under-review',
+      status: 'under-review' as const,
       urgency: 'high',
       region: 'Jos',
       date: '2024-01-12',
@@ -183,7 +183,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: 'HUM002',
       type: 'Humanitarian',
       impact: ['Displacement'],
-      status: 'new',
+      status: 'new' as const,
       urgency: 'critical',
       region: 'Benue',
       date: '2024-01-15',
@@ -220,7 +220,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (/^country\./i.test(firebaseUser.email.trim())) { role = 'country_admin'; region = 'Nigeria'; }
         if (/^case\./i.test(firebaseUser.email.trim())) { role = 'case_worker'; region = 'Nigeria'; allowedCategories = ['gender_based_violence', 'child_protection']; }
         if (/^field\./i.test(firebaseUser.email.trim())) { role = 'field_officer'; region = 'Nigeria'; allowedCategories = ['food_insecurity', 'water_sanitation', 'shelter_issues', 'health_emergencies']; }
-        if (/^governor\./i.test(firebaseUser.email.trim())) role = 'governor_admin';
+        if (/^governor_admin\./i.test(firebaseUser.email.trim())) role = 'governor_admin';
+        else if (/^governor\./i.test(firebaseUser.email.trim())) role = 'governor';
         const displayName = extractFirstName(firebaseUser.email, firebaseUser.displayName);
         const mockUser: User = {
           id: '1',
@@ -232,9 +233,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
         setUser(mockUser);
         localStorage.setItem('user', JSON.stringify(mockUser));
-        let view = 'dashboard';
+        let view: typeof currentView = 'dashboard';
         if (role === 'admin' || role === 'super_admin' || role === 'country_admin') view = 'admin';
         if (role === 'governor_admin') view = 'governor-admin';
+        if (role === 'governor') view = 'governor';
         setCurrentView(view);
         localStorage.setItem('currentView', view);
       } else {
@@ -252,6 +254,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // This is now handled by Firebase auth state listener
     // For demo purposes, we'll keep the mock login for non-Google users
     if (email && password.length >= 6) {
+      // Special demo account for governor panel
+      if (email.trim().toLowerCase() === 'superpanel@gmail.com') {
+        const mockUser: User = {
+          id: '1',
+          email,
+          name: 'Governor',
+          role: 'governor',
+        };
+        setUser(mockUser);
+        localStorage.setItem('user', JSON.stringify(mockUser));
+        setCurrentView('governor');
+        localStorage.setItem('currentView', 'governor');
+        toast({ title: 'Login successful', description: 'Welcome, Governor!' });
+        return true;
+      }
       // Demo role assignment by email prefix
       let role: User['role'] = 'user';
       let region = undefined;
@@ -261,7 +278,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (/^country\./i.test(email.trim())) { role = 'country_admin'; region = 'Nigeria'; }
       if (/^case\./i.test(email.trim())) { role = 'case_worker'; region = 'Nigeria'; allowedCategories = ['gender_based_violence', 'child_protection']; }
       if (/^field\./i.test(email.trim())) { role = 'field_officer'; region = 'Nigeria'; allowedCategories = ['food_insecurity', 'water_sanitation', 'shelter_issues', 'health_emergencies']; }
-      if (/^governor\./i.test(email.trim())) role = 'governor_admin';
+      if (/^governor_admin\./i.test(email.trim())) role = 'governor_admin';
+      else if (/^governor\./i.test(email.trim())) role = 'governor';
       const displayName = extractFirstName(email);
       const mockUser: User = {
         id: '1',
@@ -273,9 +291,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
       setUser(mockUser);
       localStorage.setItem('user', JSON.stringify(mockUser));
-      let view = 'dashboard';
+      let view: typeof currentView = 'dashboard';
       if (role === 'admin' || role === 'super_admin' || role === 'country_admin') view = 'admin';
       if (role === 'governor_admin') view = 'governor-admin';
+      if (role === 'governor') view = 'governor';
       setCurrentView(view);
       localStorage.setItem('currentView', view);
       toast({ title: 'Login successful', description: `Welcome, ${role.replace('_', ' ')}!` });
