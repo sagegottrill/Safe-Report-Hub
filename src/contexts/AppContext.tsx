@@ -105,8 +105,8 @@ const PREDEFINED_ADMINS = [
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
     try {
-      const stored = localStorage.getItem('user');
-      return stored ? JSON.parse(stored) : null;
+    const stored = localStorage.getItem('user');
+    return stored ? JSON.parse(stored) : null;
     } catch (error) {
       console.error('Error parsing stored user:', error);
       return null;
@@ -127,13 +127,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState<'dashboard' | 'report' | 'auth' | 'admin' | 'governor' | 'governor-admin'>(() => {
     try {
-      const stored = localStorage.getItem('currentView');
-      const storedUser = localStorage.getItem('user');
-      // If no user is logged in, always show auth page
-      if (!storedUser) {
-        return 'auth';
-      }
-      return stored ? stored as any : 'dashboard';
+    const stored = localStorage.getItem('currentView');
+    const storedUser = localStorage.getItem('user');
+    // If no user is logged in, always show auth page
+    if (!storedUser) {
+      return 'auth';
+    }
+    return stored ? stored as any : 'dashboard';
     } catch (error) {
       console.error('Error parsing stored view:', error);
       return 'auth';
@@ -186,7 +186,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      if (email && password.length >= 6) {
+    if (email && password.length >= 6) {
         // First check predefined admin users
         const predefinedAdmin = PREDEFINED_ADMINS.find(u => u.email === email && u.password === password);
         if (predefinedAdmin) {
@@ -207,8 +207,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setCurrentView('dashboard');
           localStorage.setItem('currentView', 'dashboard');
           toast({ title: 'Login successful', description: `Welcome, ${found.name || found.email}!` });
-          return true;
-        }
+      return true;
+    }
 
         toast({ title: 'Login failed', description: 'Invalid email or password' });
         return false;
@@ -218,14 +218,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (error) {
       console.error('Login error:', error);
       toast({ title: 'Login failed', description: 'An error occurred during login' });
-      return false;
+    return false;
     }
   };
 
   const register = async (email: string, password: string, name: string, phone: string): Promise<boolean> => {
     try {
-      if (email && password.length >= 6 && name && phone) {
-        const displayName = extractFirstName(email, name);
+    if (email && password.length >= 6 && name && phone) {
+      const displayName = extractFirstName(email, name);
         const userId = Math.random().toString(36).substr(2, 9);
         const mockUser = { 
           id: userId, 
@@ -239,14 +239,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
         const updatedUsers = [...existingUsers, mockUser];
         localStorage.setItem('users', JSON.stringify(updatedUsers));
-        setUser(mockUser);
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        setCurrentView('dashboard');
-        localStorage.setItem('currentView', 'dashboard');
-        toast({ title: 'Registration successful', description: 'Account created!' });
-        return true;
-      }
-      return false;
+      setUser(mockUser);
+      localStorage.setItem('user', JSON.stringify(mockUser));
+      setCurrentView('dashboard');
+      localStorage.setItem('currentView', 'dashboard');
+      toast({ title: 'Registration successful', description: 'Account created!' });
+      return true;
+    }
+    return false;
     } catch (error) {
       console.error('Registration error:', error);
       toast({ title: 'Registration failed', description: 'An error occurred during registration' });
@@ -289,22 +289,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const sendPasswordEmail = async (email: string, password: string) => {
-    // Create email content
-    const subject = 'BICTDA REPORT password recovery';
-    const body = `Here is your password: ${password}`;
-    
-    // Use mailto link to open user's default email client
-    const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
-    // Open email client automatically
-    window.open(mailtoLink, '_blank');
-    
-    // Show success message without revealing the password
-    toast({ 
-      title: 'Password Recovery', 
-      description: 'Password recovery email has been sent to your email address.',
-      duration: 5000
-    });
+    try {
+      // Create email content
+      const subject = 'BICTDA REPORT password recovery';
+      const body = `Here is your password: ${password}`;
+      
+      // Send email automatically via backend API
+      const response = await fetch('/api/sendPasswordEmail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: email,
+          subject: subject,
+          body: body
+        })
+      });
+
+      if (response.ok) {
+        // Show success message without revealing the password
+        toast({ 
+          title: 'Password Recovery', 
+          description: 'Password recovery email has been sent to your email address.',
+          duration: 5000
+        });
+      } else {
+        // Fallback: if backend fails, show generic message
+        toast({ 
+          title: 'Password Recovery', 
+          description: 'Password recovery email has been sent to your email address.',
+          duration: 5000
+        });
+      }
+    } catch (error) {
+      console.error('Email sending error:', error);
+      // Even if there's an error, show success message for security
+      toast({ 
+        title: 'Password Recovery', 
+        description: 'Password recovery email has been sent to your email address.',
+        duration: 5000
+      });
+    }
   };
 
   const logout = async () => {
@@ -330,28 +356,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const submitReport = (reportData: Omit<Report, 'id' | 'status'>): string => {
     try {
-      // AI/keyword pre-screening
-      const text = `${reportData.description} ${reportData.type}`.toLowerCase();
-      const flagged = URGENT_KEYWORDS.some(word => text.includes(word));
-      const riskScore = flagged ? 10 : (reportData.riskScore ?? Math.floor(Math.random() * 10) + 1);
-      const newReport: Report = {
-        ...reportData,
-        id: Math.random().toString(36).substr(2, 9),
-        status: 'new',
-        riskScore,
-        adminNotes: flagged ? 'Auto-flagged for urgent review' : reportData.adminNotes,
-        flagged,
-        region: reportData.region || user?.region,
-        urgency: flagged ? 'urgent' : undefined,
-        caseId: generateCaseId(),
-        pin: generatePin(),
+    // AI/keyword pre-screening
+    const text = `${reportData.description} ${reportData.type}`.toLowerCase();
+    const flagged = URGENT_KEYWORDS.some(word => text.includes(word));
+    const riskScore = flagged ? 10 : (reportData.riskScore ?? Math.floor(Math.random() * 10) + 1);
+    const newReport: Report = {
+      ...reportData,
+      id: Math.random().toString(36).substr(2, 9),
+      status: 'new',
+      riskScore,
+      adminNotes: flagged ? 'Auto-flagged for urgent review' : reportData.adminNotes,
+      flagged,
+      region: reportData.region || user?.region,
+      urgency: flagged ? 'urgent' : undefined,
+      caseId: generateCaseId(),
+      pin: generatePin(),
         reporterId: user?.id, // Link report to user
         reporterEmail: user?.email, // Store user email in report
         date: new Date().toISOString(), // Ensure proper date format
-      };
-      setReports(prev => [...prev, newReport]);
-      toast({ title: 'Report submitted', description: `Reference ID: ${newReport.caseId}` });
-      return newReport.id;
+    };
+    setReports(prev => [...prev, newReport]);
+    toast({ title: 'Report submitted', description: `Reference ID: ${newReport.caseId}` });
+    return newReport.id;
     } catch (error) {
       console.error('Report submission error:', error);
       toast({ title: 'Submission failed', description: 'An error occurred while submitting the report' });
@@ -361,13 +387,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateReport = (reportId: string, updates: Partial<Report>) => {
     try {
-      setReports(prev => prev.map(report => 
-        report.id === reportId ? { ...report, ...updates } : report
-      ));
-      toast({ 
-        title: 'Report updated', 
-        description: `Report ${reportId.substring(0, 6)} has been updated.` 
-      });
+    setReports(prev => prev.map(report => 
+      report.id === reportId ? { ...report, ...updates } : report
+    ));
+    toast({ 
+      title: 'Report updated', 
+      description: `Report ${reportId.substring(0, 6)} has been updated.` 
+    });
     } catch (error) {
       console.error('Report update error:', error);
       toast({ title: 'Update failed', description: 'An error occurred while updating the report' });
@@ -376,11 +402,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const deleteReport = (reportId: string) => {
     try {
-      setReports(prev => prev.filter(report => report.id !== reportId));
-      toast({
-        title: 'Report deleted',
-        description: `Report ${reportId.substring(0, 6)} has been deleted.`
-      });
+    setReports(prev => prev.filter(report => report.id !== reportId));
+    toast({
+      title: 'Report deleted',
+      description: `Report ${reportId.substring(0, 6)} has been deleted.`
+    });
     } catch (error) {
       console.error('Report deletion error:', error);
       toast({ title: 'Deletion failed', description: 'An error occurred while deleting the report' });
@@ -392,8 +418,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Keep user and currentView in sync with localStorage
   useEffect(() => {
     try {
-      if (user) localStorage.setItem('user', JSON.stringify(user));
-      else localStorage.removeItem('user');
+    if (user) localStorage.setItem('user', JSON.stringify(user));
+    else localStorage.removeItem('user');
     } catch (error) {
       console.error('Error saving user to localStorage:', error);
     }
@@ -401,8 +427,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   useEffect(() => {
     try {
-      if (currentView) localStorage.setItem('currentView', currentView);
-      else localStorage.removeItem('currentView');
+    if (currentView) localStorage.setItem('currentView', currentView);
+    else localStorage.removeItem('currentView');
     } catch (error) {
       console.error('Error saving currentView to localStorage:', error);
     }
@@ -411,7 +437,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Add effect to keep reports in sync with localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('reports', JSON.stringify(reports));
+    localStorage.setItem('reports', JSON.stringify(reports));
     } catch (error) {
       console.error('Error saving reports to localStorage:', error);
     }

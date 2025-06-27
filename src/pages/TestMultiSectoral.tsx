@@ -112,7 +112,7 @@ const TestMultiSectoral: React.FC = () => {
             <CardHeader>
               <CardTitle className="text-success flex items-center gap-2">
                 <Shield className="h-5 w-5" />
-                GBV Module
+                Gender-Based Violence
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -136,7 +136,7 @@ const TestMultiSectoral: React.FC = () => {
             <CardHeader>
               <CardTitle className="text-success flex items-center gap-2">
                 <Shield className="h-5 w-5" />
-                Education Module
+                Education
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -160,7 +160,7 @@ const TestMultiSectoral: React.FC = () => {
             <CardHeader>
               <CardTitle className="text-success flex items-center gap-2">
                 <Shield className="h-5 w-5" />
-                Water Module
+                Water & Infrastructure
               </CardTitle>
             </CardHeader>
             <CardContent>

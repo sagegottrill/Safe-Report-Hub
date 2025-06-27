@@ -153,10 +153,10 @@ const Dashboard: React.FC = () => {
           <TrustIndicator type="security" size="md">
             Secure & Encrypted
           </TrustIndicator>
-          <TrustIndicator type="privacy" size="md">
+          <TrustIndicator type="security" size="md">
             Anonymous Reporting Available
           </TrustIndicator>
-          <TrustIndicator type="official" size="md">
+          <TrustIndicator type="security" size="md">
             Government Verified
           </TrustIndicator>
         </div>

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TrustIndicator, SecurityBadge, OfficialStamp } from '@/components/ui/trust-indicators';
+import { useAppContext } from '@/contexts/AppContext';
 
 interface CommunityMetrics {
   totalReports: number;
@@ -41,6 +42,7 @@ interface SectorStats {
 
 const CommunityDashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { reports } = useAppContext();
   const [metrics, setMetrics] = useState<CommunityMetrics>({
     totalReports: 0,
     resolvedReports: 0,
@@ -51,14 +53,16 @@ const CommunityDashboardPage: React.FC = () => {
 
   const [sectorStats, setSectorStats] = useState<SectorStats[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadCommunityData = async () => {
       setLoading(true);
+      setError(null);
       
       try {
         // Fetch data from the analytics API
-        const response = await fetch('http://localhost:3001/analytics');
+        const response = await fetch('/analytics');
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -109,55 +113,70 @@ const CommunityDashboardPage: React.FC = () => {
         setSectorStats(transformedSectorStats);
       } catch (error) {
         console.error('Failed to load community data:', error);
+        setError('Failed to load analytics data from server');
         
-        // Fallback to mock data if API fails
-        const mockMetrics: CommunityMetrics = {
-          totalReports: 1247,
-          resolvedReports: 1156,
-          pendingReports: 91,
-          communityMembers: 2847,
-          responseRate: 92.7
+        // Use real data from AppContext as fallback
+        const resolvedReports = reports.filter(r => r.status === 'resolved').length;
+        const pendingReports = reports.filter(r => r.status === 'new' || r.status === 'under-review').length;
+        const responseRate = reports.length > 0 ? Math.round((resolvedReports / reports.length) * 100) : 0;
+        
+        const realMetrics: CommunityMetrics = {
+          totalReports: reports.length,
+          resolvedReports: resolvedReports,
+          pendingReports: pendingReports,
+          communityMembers: 2847, // This would come from user analytics
+          responseRate: responseRate
         };
 
-        const mockSectorStats: SectorStats[] = [
+        const realSectorStats: SectorStats[] = [
           {
             sector: 'Gender-Based Violence',
-            totalReports: 456,
-            resolvedReports: 423,
+            totalReports: reports.filter(r => r.type?.includes('gender') || r.type?.includes('gbv')).length,
+            resolvedReports: reports.filter(r => (r.type?.includes('gender') || r.type?.includes('gbv')) && r.status === 'resolved').length,
             avgResponseTime: '2.3 hours',
-            topIssues: ['Domestic Violence', 'Sexual Harassment', 'Child Abuse'],
+            topIssues: calculateTopIssues(reports.filter(r => r.type?.includes('gender') || r.type?.includes('gbv'))),
             icon: Shield,
             color: 'text-danger bg-danger/10'
           },
           {
             sector: 'Education',
-            totalReports: 389,
-            resolvedReports: 356,
+            totalReports: reports.filter(r => r.type?.includes('education')).length,
+            resolvedReports: reports.filter(r => r.type?.includes('education') && r.status === 'resolved').length,
             avgResponseTime: '4.1 hours',
-            topIssues: ['School Safety', 'Infrastructure Issues', 'Bullying'],
+            topIssues: calculateTopIssues(reports.filter(r => r.type?.includes('education'))),
             icon: GraduationCap,
             color: 'text-nigerian-blue bg-nigerian-blue/10'
           },
           {
             sector: 'Water & Infrastructure',
-            totalReports: 402,
-            resolvedReports: 377,
+            totalReports: reports.filter(r => r.type?.includes('water')).length,
+            resolvedReports: reports.filter(r => r.type?.includes('water') && r.status === 'resolved').length,
             avgResponseTime: '3.7 hours',
-            topIssues: ['Water Quality', 'Infrastructure', 'Access Issues'],
+            topIssues: calculateTopIssues(reports.filter(r => r.type?.includes('water'))),
             icon: Droplets,
             color: 'text-nigerian-green bg-nigerian-green/10'
           }
         ];
 
-        setMetrics(mockMetrics);
-        setSectorStats(mockSectorStats);
+        setMetrics(realMetrics);
+        setSectorStats(realSectorStats);
       } finally {
         setLoading(false);
       }
     };
 
     loadCommunityData();
-  }, []);
+  }, [reports]);
+
+  // Helper function to calculate top issues
+  const calculateTopIssues = (sectorReports: any[]) => {
+    const issues: { [key: string]: number } = {};
+    sectorReports.forEach(report => {
+      const issue = report.type?.replace(/_/g, ' ') || 'Other';
+      issues[issue] = (issues[issue] || 0) + 1;
+    });
+    return Object.keys(issues).sort((a, b) => issues[b] - issues[a]).slice(0, 3);
+  };
 
   if (loading) {
     return (
@@ -480,6 +499,15 @@ const CommunityDashboardPage: React.FC = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {error && (
+          <Alert className="border-warning bg-warning/10">
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <AlertDescription className="text-text">
+              <strong>Data Notice:</strong> {error}. Showing local data as fallback.
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
     </div>
   );

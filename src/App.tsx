@@ -7,9 +7,18 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import Index from "./pages/Index";
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import FAQ from './pages/FAQ';
+import { redirectToMobile } from './utils/deviceDetection';
+import AdminPage from './pages/AdminPage';
+import AdminAnalyticsPage from './pages/AdminAnalyticsPage';
+import CommunityDashboardPage from './pages/CommunityDashboardPage';
+import NotFound from './pages/NotFound';
+import TestMultiSectoral from './pages/TestMultiSectoral';
+import ReportPage from './pages/ReportPage';
+import GovernorPanel from '@/pages/GovernorPanel';
+const GovernorAdminPanel = React.lazy(() => import('./components/admin/GovernorAdminPanel'));
 
 const queryClient = new QueryClient();
 
@@ -25,17 +34,14 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-const AdminPage = React.lazy(() => import('./pages/AdminPage'));
-const AdminAnalyticsPage = React.lazy(() => import('./pages/AdminAnalyticsPage'));
-const CommunityDashboardPage = React.lazy(() => import('./pages/CommunityDashboardPage'));
-const NotFound = React.lazy(() => import('./pages/NotFound'));
-const TestMultiSectoral = React.lazy(() => import('./pages/TestMultiSectoral'));
-const ReportPage = React.lazy(() => import('./pages/ReportPage'));
-import GovernorPanel from '@/pages/GovernorPanel';
-const GovernorAdminPanel = React.lazy(() => import('./components/admin/GovernorAdminPanel'));
-
 const AppRoutes: React.FC = () => {
   const { user } = useAppContext();
+  
+  // Check for mobile device and redirect if needed
+  useEffect(() => {
+    redirectToMobile();
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -109,9 +115,14 @@ const App = () => {
             <Toaster />
             <Sonner />
             <ErrorBoundary>
-              <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
-                <AppRoutes />
-              </Suspense>
+            <Suspense fallback={<div className="flex items-center justify-center h-screen bg-background-light">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-nigerian-green mx-auto mb-4"></div>
+                <p className="text-text-light">Loading...</p>
+              </div>
+            </div>}>
+              <AppRoutes />
+            </Suspense>
             </ErrorBoundary>
             <Analytics />
             <SpeedInsights />

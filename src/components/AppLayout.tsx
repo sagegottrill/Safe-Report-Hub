@@ -85,7 +85,7 @@ const AppLayout: React.FC = () => {
       return <GovernorAdminPanel />;
     }
     if (user.role === 'user' && currentView === 'dashboard') {
-      return <Dashboard />;
+        return <Dashboard />;
     }
     return (
       <div style={{ padding: 40, textAlign: 'center', color: 'red', background: '#fff', minHeight: '100vh' }}>
@@ -128,11 +128,11 @@ const AppLayout: React.FC = () => {
           <div className="flex items-center justify-between">
             {/* Left side - Logo and Menu */}
             <div className="flex items-center gap-3">
-              <button
+            <button
                 className="p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-nigerian-green transition-colors"
-                onClick={toggleSidebar}
-                aria-label="Open navigation menu"
-              >
+              onClick={toggleSidebar}
+              aria-label="Open navigation menu"
+            >
                 <Menu className="h-5 w-5 text-nigerian-green" />
               </button>
               <button
@@ -144,31 +144,32 @@ const AppLayout: React.FC = () => {
                   <Shield className="h-5 w-5 text-white" />
                 </div>
                 <div className="hidden sm:block">
-                  <span className="font-bold text-lg text-nigerian-green">{t('ngoName')}</span>
-                  <p className="text-xs text-text-light">Official Platform</p>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-lg text-nigerian-green leading-tight">{t('ngoName')}</span>
+                    <span className="text-xs text-text-light leading-tight">Official Platform</span>
+                  </div>
                 </div>
-              </button>
+            </button>
             </div>
             {/* Center - Trust Indicators (Desktop) */}
             <div className="hidden md:flex items-center gap-2">
-              <TrustIndicator type="security" size="sm">Secure</TrustIndicator>
-              <TrustIndicator type="official" size="sm">Government</TrustIndicator>
+              <TrustIndicator type="security" size="sm">Secure Government</TrustIndicator>
             </div>
             {/* Right side - Actions */}
             <div className="flex items-center gap-2">
-              {/* Language selector */}
-              <select
-                value={i18n.language}
-                onChange={handleLanguageChange}
+            {/* Language selector */}
+            <select
+              value={i18n.language}
+              onChange={handleLanguageChange}
                 className="border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-nigerian-green bg-white"
-                aria-label="Language"
-              >
-                {languages.map((lang) => (
-                  <option key={lang.code} value={lang.code}>{lang.label}</option>
-                ))}
-              </select>
+              aria-label="Language"
+            >
+              {languages.map((lang) => (
+                <option key={lang.code} value={lang.code}>{lang.label}</option>
+              ))}
+            </select>
               {/* Mobile menu button */}
-              <button
+            <button
                 className="md:hidden p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-nigerian-green transition-colors"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 aria-label="Open mobile menu"
@@ -194,15 +195,15 @@ const AppLayout: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   className="text-nigerian-blue hover:text-nigerian-blue hover:bg-nigerian-blue/10"
-                  onClick={() => setAboutOpen(true)}
-                >
+              onClick={() => setAboutOpen(true)}
+            >
                   About
                 </Button>
                 <Button
                   size="sm"
                   className="bg-danger text-white hover:bg-danger/90"
                   onClick={() => setEmergencyOpen(true)}
-                >
+            >
                   <Phone className="h-4 w-4 mr-1" />
                   Emergency
                 </Button>
@@ -270,7 +271,7 @@ const AppLayout: React.FC = () => {
         <footer className="bg-white border-t border-gray-200 px-4 py-4">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500">&copy; {new Date().getFullYear()} {t('ngoName')} - All rights reserved.</span>
-            <SecurityBadge />
+            <SecurityBadge>Protected</SecurityBadge>
           </div>
         </footer>
       </div>

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useAppContext } from '@/contexts/AppContext';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -39,6 +40,7 @@ interface SectorData {
 }
 
 const MultiSectoralDashboard: React.FC = () => {
+  const { reports } = useAppContext();
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalReports: 0,
     gbvReports: 0,
@@ -57,11 +59,56 @@ const MultiSectoralDashboard: React.FC = () => {
   useEffect(() => {
     // Load dashboard data from API
     const loadDashboardData = async () => {
-      setLoading(true);
+      // Set initial fallback data immediately to prevent flash
+      const fallbackMetrics: DashboardMetrics = {
+        totalReports: reports.length,
+        gbvReports: reports.filter(r => r.type?.includes('gender') || r.type?.includes('gbv')).length,
+        educationReports: reports.filter(r => r.type?.includes('education')).length,
+        waterReports: reports.filter(r => r.type?.includes('water')).length,
+        urgentReports: reports.filter(r => r.urgency === 'high' || r.urgency === 'critical').length,
+        recentReports: reports.filter(r => {
+          const reportDate = new Date(r.date);
+          const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+          return reportDate > oneDayAgo;
+        }).length,
+        anonymousReports: reports.filter(r => r.isAnonymous).length,
+        followUpRequired: reports.filter(r => r.status === 'new' || r.urgency === 'high').length
+      };
+
+      const fallbackSectorData = {
+        gbv: {
+          sector: 'GBV',
+          count: fallbackMetrics.gbvReports,
+          urgent: reports.filter(r => (r.type?.includes('gender') || r.type?.includes('gbv')) && (r.urgency === 'high' || r.urgency === 'critical')).length,
+          anonymous: reports.filter(r => (r.type?.includes('gender') || r.type?.includes('gbv')) && r.isAnonymous).length,
+          categories: calculateCategories(reports.filter(r => r.type?.includes('gender') || r.type?.includes('gbv'))),
+          trends: generateTrends(reports.filter(r => r.type?.includes('gender') || r.type?.includes('gbv')))
+        },
+        education: {
+          sector: 'Education',
+          count: fallbackMetrics.educationReports,
+          urgent: reports.filter(r => r.type?.includes('education') && (r.urgency === 'high' || r.urgency === 'critical')).length,
+          anonymous: reports.filter(r => r.type?.includes('education') && r.isAnonymous).length,
+          categories: calculateCategories(reports.filter(r => r.type?.includes('education'))),
+          trends: generateTrends(reports.filter(r => r.type?.includes('education')))
+        },
+        water: {
+          sector: 'Water',
+          count: fallbackMetrics.waterReports,
+          urgent: reports.filter(r => r.type?.includes('water') && (r.urgency === 'high' || r.urgency === 'critical')).length,
+          anonymous: reports.filter(r => r.type?.includes('water') && r.isAnonymous).length,
+          categories: calculateCategories(reports.filter(r => r.type?.includes('water'))),
+          trends: generateTrends(reports.filter(r => r.type?.includes('water')))
+        }
+      };
+
+      setMetrics(fallbackMetrics);
+      setSectorData(fallbackSectorData);
+      setLoading(false); // Set loading to false immediately
       
       try {
         // Fetch data from the analytics API
-        const response = await fetch('http://localhost:3001/analytics');
+        const response = await fetch('/analytics');
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -112,97 +159,40 @@ const MultiSectoralDashboard: React.FC = () => {
         setSectorData(transformedSectorData);
       } catch (error) {
         console.error('Failed to load dashboard data:', error);
-        
-        // Fallback to mock data if API fails
-        const mockMetrics: DashboardMetrics = {
-          totalReports: 1247,
-          gbvReports: 456,
-          educationReports: 389,
-          waterReports: 402,
-          urgentReports: 89,
-          recentReports: 156,
-          anonymousReports: 234,
-          followUpRequired: 67
-        };
-
-        const mockSectorData = {
-          gbv: {
-            sector: 'GBV',
-            count: 456,
-            urgent: 34,
-            anonymous: 123,
-            categories: {
-              'Domestic Violence': 156,
-              'Sexual Harassment': 89,
-              'Child Abuse': 67,
-              'Forced Marriage': 45,
-              'Other': 99
-            },
-            trends: [
-              { date: '2024-01-01', count: 12 },
-              { date: '2024-01-02', count: 15 },
-              { date: '2024-01-03', count: 8 },
-              { date: '2024-01-04', count: 22 },
-              { date: '2024-01-05', count: 18 },
-              { date: '2024-01-06', count: 25 },
-              { date: '2024-01-07', count: 20 }
-            ]
-          },
-          education: {
-            sector: 'Education',
-            count: 389,
-            urgent: 23,
-            anonymous: 67,
-            categories: {
-              'School Safety': 134,
-              'Infrastructure Issues': 89,
-              'Bullying': 67,
-              'Teacher Concerns': 45,
-              'Other': 54
-            },
-            trends: [
-              { date: '2024-01-01', count: 8 },
-              { date: '2024-01-02', count: 12 },
-              { date: '2024-01-03', count: 15 },
-              { date: '2024-01-04', count: 10 },
-              { date: '2024-01-05', count: 18 },
-              { date: '2024-01-06', count: 14 },
-              { date: '2024-01-07', count: 16 }
-            ]
-          },
-          water: {
-            sector: 'Water',
-            count: 402,
-            urgent: 32,
-            anonymous: 44,
-            categories: {
-              'Water Quality': 145,
-              'Infrastructure': 123,
-              'Access Issues': 78,
-              'Maintenance': 34,
-              'Other': 22
-            },
-            trends: [
-              { date: '2024-01-01', count: 10 },
-              { date: '2024-01-02', count: 14 },
-              { date: '2024-01-03', count: 12 },
-              { date: '2024-01-04', count: 18 },
-              { date: '2024-01-05', count: 15 },
-              { date: '2024-01-06', count: 20 },
-              { date: '2024-01-07', count: 17 }
-            ]
-          }
-        };
-
-        setMetrics(mockMetrics);
-        setSectorData(mockSectorData);
-      } finally {
-        setLoading(false);
+        // Keep the fallback data that was already set
       }
     };
 
     loadDashboardData();
-  }, [timeFilter]);
+  }, [reports, timeFilter]);
+
+  // Helper function to calculate categories
+  const calculateCategories = (sectorReports: any[]) => {
+    const categories: { [key: string]: number } = {};
+    sectorReports.forEach(report => {
+      const category = report.type?.replace(/_/g, ' ') || 'Other';
+      categories[category] = (categories[category] || 0) + 1;
+    });
+    return categories;
+  };
+
+  // Helper function to generate trends
+  const generateTrends = (sectorReports: any[]) => {
+    const trends: { date: string; count: number }[] = [];
+    const now = new Date();
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const dateKey = date.toISOString().split('T')[0];
+      const count = sectorReports.filter(report => {
+        const reportDate = new Date(report.date);
+        return reportDate.toISOString().split('T')[0] === dateKey;
+      }).length;
+      trends.push({ date: dateKey, count });
+    }
+    
+    return trends;
+  };
 
   const getSectorIcon = (sector: string) => {
     switch (sector.toLowerCase()) {

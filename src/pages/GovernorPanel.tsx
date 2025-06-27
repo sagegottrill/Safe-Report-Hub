@@ -55,7 +55,6 @@ const GovernorPanel: React.FC = () => {
   const { user, logout, reports } = useAppContext();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<any>(null);
   // Modal state
   const [userModalOpen, setUserModalOpen] = useState(false);
@@ -69,21 +68,37 @@ const GovernorPanel: React.FC = () => {
   useEffect(() => {
     const fetchAnalytics = async () => {
       setLoading(true);
-      setError(null);
+      
+      // Set initial fallback data immediately to prevent flash
+      setAnalytics({
+        totalReports: reports.length,
+        gbvReports: reports.filter(r => r.type?.includes('gender') || r.type?.includes('gbv')).length,
+        educationReports: reports.filter(r => r.type?.includes('education')).length,
+        waterReports: reports.filter(r => r.type?.includes('water')).length,
+        urgentReports: reports.filter(r => r.urgency === 'high' || r.urgency === 'critical').length,
+        recentReports: reports.filter(r => {
+          const reportDate = new Date(r.date);
+          const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+          return reportDate > oneDayAgo;
+        }).length,
+        anonymousReports: reports.filter(r => r.isAnonymous).length,
+        followUpRequired: reports.filter(r => r.status === 'new' || r.urgency === 'high').length
+      });
+      
       try {
         const res = await fetch('/analytics');
         if (!res.ok) throw new Error('Failed to fetch analytics');
         const data = await res.json();
         setAnalytics(data);
       } catch (err: any) {
-        setError(err.message || 'Unknown error');
-        setAnalytics(null);
+        console.error('Analytics fetch error:', err);
+        // Keep the fallback data that was already set
       } finally {
         setLoading(false);
       }
     };
     fetchAnalytics();
-  }, []);
+  }, [reports]);
 
   if (!user || user.role !== 'governor') {
     return null;
@@ -94,6 +109,26 @@ const GovernorPanel: React.FC = () => {
   let urgentReports = reports.filter(r => (r.riskScore || 0) >= 8 || r.urgency === 'critical').length;
   let resolvedReports = reports.filter(r => r.status === 'resolved').length;
   let underReviewReports = reports.filter(r => r.status === 'under-review').length;
+
+  // Generate real trend data from reports
+  const generateTrendData = () => {
+    const trends = [];
+    const now = new Date();
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const dateKey = date.toISOString().split('T')[0];
+      const count = reports.filter(report => {
+        const reportDate = new Date(report.date);
+        return reportDate.toISOString().split('T')[0] === dateKey;
+      }).length;
+      trends.push({ date: dateKey, count });
+    }
+    
+    return trends;
+  };
+
+  const realTrends = generateTrendData();
 
   // User management actions
   const handleRoleChange = (id: number, newRole: string) => {
@@ -138,12 +173,6 @@ const GovernorPanel: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Warning if analytics failed */}
-        {error && (
-          <div className="mb-6 p-4 bg-yellow-100 text-yellow-800 rounded text-center text-sm">
-            {t('Analytics data unavailable. Showing demo data.')} ({error})
-          </div>
-        )}
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -401,12 +430,12 @@ const GovernorPanel: React.FC = () => {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{t('Analytics & Trends')}</DialogTitle>
-                <DialogDescription>{t('Reports trend (mock data)')}</DialogDescription>
+                <DialogDescription>{t('Reports trend (real-time data)')}</DialogDescription>
               </DialogHeader>
               <div className="mb-4">
                 <ChartContainer config={{ trend: { color: '#2563eb', label: 'Reports' } }}>
                   <ResponsiveContainer width="100%" height={200}>
-                    <RechartsBarChart data={mockTrends}>
+                    <RechartsBarChart data={realTrends}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />

@@ -187,10 +187,24 @@ app.get('/analytics', async (req, res) => {
     // Add trend data to each sector
     Object.keys(analytics.sectorData).forEach(sectorKey => {
       const sector = analytics.sectorData[sectorKey];
-      sector.trends = analytics.trends.map(trend => ({
-        date: trend.date,
-        count: Math.floor(Math.random() * 5) + 1 // Mock trend data for now
-      }));
+      sector.trends = analytics.trends.map(trend => {
+        // Count reports for this sector on this specific date
+        const sectorCount = dataRows.filter(row => {
+          const rowDate = new Date(row[0]); // Assuming timestamp is first column
+          const rowDateKey = rowDate.toISOString().split('T')[0];
+          const rowSector = row[7]?.toLowerCase() || row[1]?.toLowerCase() || ''; // sector column or category column
+          
+          return rowDateKey === trend.date && 
+                 ((sectorKey === 'gbv' && (rowSector.includes('gbv') || rowSector.includes('gender') || rowSector.includes('violence'))) ||
+                  (sectorKey === 'education' && rowSector.includes('education')) ||
+                  (sectorKey === 'water' && (rowSector.includes('water') || rowSector.includes('infrastructure'))));
+        }).length;
+        
+        return {
+          date: trend.date,
+          count: sectorCount
+        };
+      });
     });
 
     console.log('Analytics data processed successfully');

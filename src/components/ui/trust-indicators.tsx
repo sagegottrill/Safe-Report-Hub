@@ -45,7 +45,7 @@ const TrustIndicator: React.FC<TrustIndicatorProps> = ({
       case 'verified':
         return cn(baseStyles, "bg-green-50 text-green-700 border border-green-200", className);
       case 'official':
-        return cn(baseStyles, "bg-nigerian-green text-white border border-green-600", className);
+        return cn(baseStyles, "bg-green-50 text-green-700 border border-green-200", className);
       case 'anonymous':
         return cn(baseStyles, "bg-gray-50 text-gray-700 border border-gray-200", className);
       case 'urgent':
