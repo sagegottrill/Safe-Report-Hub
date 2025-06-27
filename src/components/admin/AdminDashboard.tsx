@@ -126,46 +126,66 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
     });
   };
 
+  // Calculate stats from real data
+  const totalReports = reports.length;
+  const activeCases = reports.filter(r => r.status === 'new' || r.status === 'under-review').length;
+  const resolvedCases = reports.filter(r => r.status === 'resolved').length;
+  // For now, response time is not tracked, so set as 'N/A'
+  const responseTime = 'N/A';
+
+  // Calculate sector distribution
+  const sectorCounts: Record<string, number> = {};
+  reports.forEach(r => {
+    sectorCounts[r.type] = (sectorCounts[r.type] || 0) + 1;
+  });
+  const sectorStats = Object.entries(sectorCounts).map(([sector, count]) => ({
+    sector,
+    count,
+    percentage: totalReports > 0 ? Math.round((count / totalReports) * 100) : 0,
+    color: sector === 'GBV' ? 'bg-red-500' : sector === 'Education' ? 'bg-blue-500' : sector === 'Water' ? 'bg-cyan-500' : 'bg-green-500',
+  }));
+
+  // Calculate geographic distribution
+  const regionCounts: Record<string, number> = {};
+  reports.forEach(r => {
+    if (r.region) regionCounts[r.region] = (regionCounts[r.region] || 0) + 1;
+  });
+  const regionStats = Object.entries(regionCounts).map(([region, count]) => ({ region, count }));
+
+  // Stats for metrics cards
   const stats = [
-    { 
-      label: 'Total Reports', 
-      value: '1,247', 
-      change: '+12%', 
+    {
+      label: 'Total Reports',
+      value: totalReports,
+      change: '',
       icon: <FileText className="h-5 w-5" />,
       color: 'text-blue-600',
-      bgColor: 'bg-blue-100'
+      bgColor: 'bg-blue-100',
     },
-    { 
-      label: 'Active Cases', 
-      value: '355', 
-      change: '+5%', 
+    {
+      label: 'Active Cases',
+      value: activeCases,
+      change: '',
       icon: <AlertTriangle className="h-5 w-5" />,
       color: 'text-orange-600',
-      bgColor: 'bg-orange-100'
+      bgColor: 'bg-orange-100',
     },
-    { 
-      label: 'Resolved', 
-      value: '892', 
-      change: '+18%', 
+    {
+      label: 'Resolved',
+      value: resolvedCases,
+      change: '',
       icon: <CheckCircle className="h-5 w-5" />,
       color: 'text-green-600',
-      bgColor: 'bg-green-100'
+      bgColor: 'bg-green-100',
     },
-    { 
-      label: 'Response Time', 
-      value: '2.4h', 
-      change: '-15%', 
+    {
+      label: 'Response Time',
+      value: responseTime,
+      change: '',
       icon: <Clock className="h-5 w-5" />,
       color: 'text-purple-600',
-      bgColor: 'bg-purple-100'
-    }
-  ];
-
-  const sectorStats = [
-    { sector: 'GBV', count: 561, percentage: 45, color: 'bg-red-500' },
-    { sector: 'Education', count: 374, percentage: 30, color: 'bg-blue-500' },
-    { sector: 'Water', count: 187, percentage: 15, color: 'bg-cyan-500' },
-    { sector: 'Humanitarian', count: 125, percentage: 10, color: 'bg-green-500' }
+      bgColor: 'bg-purple-100',
+    },
   ];
 
   const getStatusColor = (status: string) => {
@@ -464,34 +484,15 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
         </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        Lagos
-                      </span>
-                      <span className="font-medium">342 reports</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        Kano
-                      </span>
-                      <span className="font-medium">287 reports</span>
-              </div>
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        Abuja
-                      </span>
-                      <span className="font-medium">234 reports</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        Borno
-                      </span>
-                      <span className="font-medium">156 reports</span>
-                    </div>
+                    {regionStats.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          <span className="font-medium">{item.region}</span>
+                        </div>
+                        <span className="font-medium">{item.count}</span>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>

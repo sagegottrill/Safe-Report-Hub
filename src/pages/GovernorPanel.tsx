@@ -89,23 +89,11 @@ const GovernorPanel: React.FC = () => {
     return null;
   }
 
-  // Fallback to local demo data if analytics fail
-  let totalReports = 0;
-  let urgentReports = 0;
-  let resolvedReports = 0;
-  let underReviewReports = 0;
-
-  if (analytics) {
-    totalReports = analytics.totalReports || 0;
-    urgentReports = analytics.urgentReports || 0;
-    resolvedReports = analytics.sectorData?.gbv?.count + analytics.sectorData?.education?.count + analytics.sectorData?.water?.count - analytics.urgentReports || 0;
-    underReviewReports = analytics.recentReports || 0;
-  } else if (reports && reports.length > 0) {
-    totalReports = reports.length;
-    urgentReports = reports.filter(r => (r.riskScore || 0) >= 8 || r.urgency === 'critical').length;
-    resolvedReports = reports.filter(r => r.status === 'resolved').length;
-    underReviewReports = reports.filter(r => r.status === 'under-review').length;
-  }
+  // Remove fallback to mock/demo data for metrics
+  let totalReports = reports.length;
+  let urgentReports = reports.filter(r => (r.riskScore || 0) >= 8 || r.urgency === 'critical').length;
+  let resolvedReports = reports.filter(r => r.status === 'resolved').length;
+  let underReviewReports = reports.filter(r => r.status === 'under-review').length;
 
   // User management actions
   const handleRoleChange = (id: number, newRole: string) => {
