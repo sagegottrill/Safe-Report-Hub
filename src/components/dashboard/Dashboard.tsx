@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,14 +28,40 @@ const Dashboard: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
-  // Filter reports by search term
-  const userReports = useMemo(() => reports.filter(report => 
-    !report.isAnonymous && report.reporterId === user?.id && (
-      report.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.caseId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  ), [reports, user, searchTerm]);
+  // Ensure user is logged in
+  useEffect(() => {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+  }, [user, navigate]);
+
+  // Filter reports by search term and ensure only current user's reports
+  const userReports = useMemo(() => {
+    // First, filter by current user ID to ensure user isolation
+    const currentUserReports = reports.filter(report => {
+      // Only show reports that belong to the current user
+      return report.reporterId === user?.id;
+    });
+
+    // Then apply search filter
+    return currentUserReports.filter(report => 
+      !report.isAnonymous && (
+        report.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        report.caseId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        report.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+  }, [reports, user?.id, searchTerm]);
+
+  // Debug logging to help identify issues
+  console.log('Dashboard Debug:', {
+    totalReports: reports.length,
+    currentUserId: user?.id,
+    currentUserEmail: user?.email,
+    userReportsCount: userReports.length,
+    allReportsWithUserIds: reports.map(r => ({ id: r.id, reporterId: r.reporterId, email: r.reporterEmail }))
+  });
 
   // Export reports as CSV
   const handleExportCSV = () => {
@@ -56,16 +82,6 @@ const Dashboard: React.FC = () => {
     a.download = 'my_reports.csv';
     a.click();
     window.URL.revokeObjectURL(url);
-  };
-
-  // Handle report submission with short ID
-  const handleReportSubmit = (data: any) => {
-    setReports(prev => {
-      const newId = generateShortId();
-      const newReports = [...prev, { ...data, id: newId, caseId: newId, reporterId: user.id }];
-      localStorage.setItem('reports', JSON.stringify(newReports));
-      return newReports;
-    });
   };
 
   // Delete report
@@ -116,8 +132,11 @@ const Dashboard: React.FC = () => {
                 <Home className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-text">{t('Welcome back')}</h1>
-                <p className="text-text-light">Official Government Crisis Reporting Platform</p>
+                <h1 className="text-2xl lg:text-3xl font-bold text-text">
+                  {t('Welcome back')}, {user?.name || user?.email}
+                </h1>
+                <p className="text-text-light">Your Personal Dashboard - Official Government Crisis Reporting Platform</p>
+                <p className="text-xs text-gray-500 mt-1">User ID: {user?.id} | Email: {user?.email}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -148,12 +167,12 @@ const Dashboard: React.FC = () => {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-semibold text-text flex items-center gap-2">
                 <FileText className="h-5 w-5 text-nigerian-green" />
-                {t('Total Reports')}
+                {t('Your Reports')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-nigerian-green">{userReports.length}</div>
-              <p className="text-xs text-text-light">{t('Your submitted reports')}</p>
+              <p className="text-xs text-text-light">Reports you've submitted</p>
             </CardContent>
           </Card>
 
@@ -168,7 +187,7 @@ const Dashboard: React.FC = () => {
               <div className="text-2xl font-bold text-nigerian-blue">
                 {userReports.filter(r => r.status === 'under-review').length}
               </div>
-              <p className="text-xs text-text-light">{t('Being processed')}</p>
+              <p className="text-xs text-text-light">Your reports being processed</p>
             </CardContent>
           </Card>
 
@@ -183,7 +202,7 @@ const Dashboard: React.FC = () => {
               <div className="text-2xl font-bold text-success">
                 {userReports.filter(r => r.status === 'resolved').length}
               </div>
-              <p className="text-xs text-text-light">{t('Completed cases')}</p>
+              <p className="text-xs text-text-light">Your completed cases</p>
             </CardContent>
           </Card>
         </div>
@@ -208,14 +227,14 @@ const Dashboard: React.FC = () => {
             {userReports.length === 0 ? (
               <div className="text-center py-12 text-text-light">
                 <FileText className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                <p className="text-lg font-medium text-text mb-2">{t('No reports yet')}</p>
-                <p className="text-sm text-text-light mb-4">{t('Submit your first incident report to get started')}</p>
+                <p className="text-lg font-medium text-text mb-2">You haven't submitted any reports yet</p>
+                <p className="text-sm text-text-light mb-4">This is your personal dashboard. Submit your first incident report to get started.</p>
                 <Button 
                   onClick={() => navigate('/report')} 
                   className="btn-official"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Submit First Report
+                  Submit Your First Report
                 </Button>
               </div>
             ) : (
