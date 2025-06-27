@@ -7,7 +7,7 @@ interface User {
   email: string;
   name: string;
   phone?: string;
-  role: 'field_officer' | 'case_worker' | 'country_admin' | 'super_admin' | 'admin' | 'user';
+  role: 'field_officer' | 'case_worker' | 'country_admin' | 'super_admin' | 'admin' | 'governor' | 'user' | 'governor_admin';
   region?: string;
   allowedCategories?: string[];
   photoURL?: string;
@@ -38,7 +38,7 @@ interface AppContextType {
   user: User | null;
   reports: Report[];
   sidebarOpen: boolean;
-  currentView: 'dashboard' | 'report' | 'auth' | 'admin';
+  currentView: 'dashboard' | 'report' | 'auth' | 'admin' | 'governor' | 'governor-admin';
   login: (email: string, password: string) => Promise<boolean>;
   register: (email: string, password: string, name: string, phone: string) => Promise<boolean>;
   logout: () => void;
@@ -46,7 +46,7 @@ interface AppContextType {
   updateReport: (reportId: string, updates: Partial<Report>) => void;
   deleteReport: (reportId: string) => void;
   toggleSidebar: () => void;
-  setCurrentView: (view: 'dashboard' | 'report' | 'auth' | 'admin') => void;
+  setCurrentView: (view: 'dashboard' | 'report' | 'auth' | 'admin' | 'governor' | 'governor-admin') => void;
   setReports: React.Dispatch<React.SetStateAction<Report[]>>;
 }
 
@@ -196,7 +196,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   localStorage.setItem('reports', JSON.stringify(demoReports));
   const [reports, setReports] = useState<Report[]>(demoReports);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'report' | 'auth' | 'admin'>(() => {
+  const [currentView, setCurrentView] = useState<'dashboard' | 'report' | 'auth' | 'admin' | 'governor' | 'governor-admin'>(() => {
     const stored = localStorage.getItem('currentView');
     const storedUser = localStorage.getItem('user');
     // If no user is logged in, always show auth page
@@ -212,7 +212,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (firebaseUser) {
         setUser(firebaseUser);
         localStorage.setItem('user', JSON.stringify(firebaseUser));
-        const view = (firebaseUser.role === 'admin' || firebaseUser.role === 'super_admin' || firebaseUser.role === 'country_admin') ? 'admin' : 'dashboard';
+        let role: User['role'] = 'user';
+        let region = undefined;
+        let allowedCategories = undefined;
+        if (/^admin\./i.test(firebaseUser.email.trim())) role = 'admin';
+        if (/^superadmin\./i.test(firebaseUser.email.trim())) role = 'super_admin';
+        if (/^country\./i.test(firebaseUser.email.trim())) { role = 'country_admin'; region = 'Nigeria'; }
+        if (/^case\./i.test(firebaseUser.email.trim())) { role = 'case_worker'; region = 'Nigeria'; allowedCategories = ['gender_based_violence', 'child_protection']; }
+        if (/^field\./i.test(firebaseUser.email.trim())) { role = 'field_officer'; region = 'Nigeria'; allowedCategories = ['food_insecurity', 'water_sanitation', 'shelter_issues', 'health_emergencies']; }
+        if (/^governor\./i.test(firebaseUser.email.trim())) role = 'governor_admin';
+        const displayName = extractFirstName(firebaseUser.email, firebaseUser.displayName);
+        const mockUser: User = {
+          id: '1',
+          email: firebaseUser.email,
+          name: displayName,
+          role,
+          region,
+          allowedCategories,
+        };
+        setUser(mockUser);
+        localStorage.setItem('user', JSON.stringify(mockUser));
+        let view = 'dashboard';
+        if (role === 'admin' || role === 'super_admin' || role === 'country_admin') view = 'admin';
+        if (role === 'governor_admin') view = 'governor-admin';
         setCurrentView(view);
         localStorage.setItem('currentView', view);
       } else {
@@ -239,6 +261,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (/^country\./i.test(email.trim())) { role = 'country_admin'; region = 'Nigeria'; }
       if (/^case\./i.test(email.trim())) { role = 'case_worker'; region = 'Nigeria'; allowedCategories = ['gender_based_violence', 'child_protection']; }
       if (/^field\./i.test(email.trim())) { role = 'field_officer'; region = 'Nigeria'; allowedCategories = ['food_insecurity', 'water_sanitation', 'shelter_issues', 'health_emergencies']; }
+      if (/^governor\./i.test(email.trim())) role = 'governor_admin';
       const displayName = extractFirstName(email);
       const mockUser: User = {
         id: '1',
@@ -250,7 +273,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
       setUser(mockUser);
       localStorage.setItem('user', JSON.stringify(mockUser));
-      const view = (role === 'admin' || role === 'super_admin' || role === 'country_admin') ? 'admin' : 'dashboard';
+      let view = 'dashboard';
+      if (role === 'admin' || role === 'super_admin' || role === 'country_admin') view = 'admin';
+      if (role === 'governor_admin') view = 'governor-admin';
       setCurrentView(view);
       localStorage.setItem('currentView', view);
       toast({ title: 'Login successful', description: `Welcome, ${role.replace('_', ' ')}!` });

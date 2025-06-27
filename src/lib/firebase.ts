@@ -52,6 +52,7 @@ const USER_ROLES = {
   'country@example.com': 'country_admin',
   'case@example.com': 'case_worker',
   'field@example.com': 'field_officer',
+  'governor_admin@example.com': 'governor_admin',
 } as const;
 
 // Default role for new users

@@ -394,6 +394,17 @@ const AppLayout: React.FC = () => {
             </div>
           </div>
         )}
+
+        {user && user.role === 'governor' && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-nigerian-blue border-nigerian-blue hover:bg-nigerian-blue/10"
+            onClick={() => navigate('/governor')}
+          >
+            Governor Panel
+          </Button>
+        )}
       </div>
     </div>
   );

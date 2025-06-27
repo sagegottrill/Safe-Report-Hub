@@ -31,8 +31,11 @@ const CommunityDashboardPage = React.lazy(() => import('./pages/CommunityDashboa
 const NotFound = React.lazy(() => import('./pages/NotFound'));
 const TestMultiSectoral = React.lazy(() => import('./pages/TestMultiSectoral'));
 const ReportPage = React.lazy(() => import('./pages/ReportPage'));
+const GovernorPanel = React.lazy(() => import('./pages/GovernorPanel'));
+const GovernorAdminPanel = React.lazy(() => import('./components/admin/GovernorAdminPanel'));
 
 const AppRoutes: React.FC = () => {
+  const { user } = useAppContext();
   return (
     <BrowserRouter>
       <Routes>
@@ -51,6 +54,16 @@ const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         } />
         <Route path="/community-dashboard" element={<CommunityDashboardPage />} />
+        <Route path="/governor" element={
+          <ProtectedRoute>
+            <GovernorPanel />
+          </ProtectedRoute>
+        } />
+        <Route path="/governor-admin" element={
+          <ProtectedRoute>
+            {user?.role === 'governor_admin' ? <GovernorAdminPanel /> : <Navigate to="/" replace />}
+          </ProtectedRoute>
+        } />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
