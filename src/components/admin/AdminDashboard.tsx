@@ -34,6 +34,7 @@ import ReportReviewModal from './ReportReviewModal';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/sonner';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 
 interface ReportData {
   id: string;
@@ -44,7 +45,31 @@ interface ReportData {
   region: string;
   date: string;
   description: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  reporterEmail?: string;
 }
+
+// Predefined admin users (same as in AppContext)
+const PREDEFINED_ADMINS = [
+  {
+    id: 'admin-daniel',
+    email: 'admin.daniel@bictdareport.com',
+    password: '123456',
+    name: 'Daniel Admin',
+    phone: 'N/A',
+    role: 'admin'
+  },
+  {
+    id: 'admin-sj',
+    email: 'admin.s.j@bictdareport.com',
+    password: '123456',
+    name: 'S.J. Admin',
+    phone: 'N/A',
+    role: 'admin'
+  }
+];
 
 const AdminDashboard: React.FC<{ user: any }> = () => {
   const navigate = useNavigate();
@@ -56,6 +81,20 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [partnerHubOpen, setPartnerHubOpen] = useState(false);
   const [selectedOffice, setSelectedOffice] = useState('GBV');
+  const [customExportOpen, setCustomExportOpen] = useState(false);
+  const [exportType, setExportType] = useState('all');
+  const [exportId, setExportId] = useState('');
+  const [exportIdRange, setExportIdRange] = useState({ from: '', to: '' });
+  const [exportDate, setExportDate] = useState<Date | undefined>(undefined);
+  const [exportDateRange, setExportDateRange] = useState<{ from: Date | undefined, to: Date | undefined }>({ from: undefined, to: undefined });
+  const [exportSector, setExportSector] = useState<string[]>([]);
+
+  const sectorOptions = [
+    { value: 'GBV', label: 'GBV' },
+    { value: 'Education', label: 'Education' },
+    { value: 'Water', label: 'Water' },
+    { value: 'Humanitarian', label: 'Humanitarian' },
+  ];
 
   // Filter reports by search term
   const filteredReports = useMemo(() => reports.filter(report =>
@@ -65,18 +104,38 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
     report.description?.toLowerCase().includes(searchTerm.toLowerCase())
   ), [reports, searchTerm]);
 
+  // Helper function to get user info by reporterId
+  const getUserInfo = (reporterId: string) => {
+    // Check predefined admins first
+    const predefinedAdmin = PREDEFINED_ADMINS.find(u => u.id === reporterId);
+    if (predefinedAdmin) {
+      return predefinedAdmin;
+    }
+    
+    // Then check localStorage users array
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const user = users.find((u: any) => u.id === reporterId);
+    return user || { name: 'Unknown', email: 'N/A', phone: 'N/A' };
+  };
+
   // Export reports as CSV
   const handleExportCSV = () => {
-    const csv = Papa.unparse(filteredReports.map(r => ({
-      ID: r.id,
-      Type: r.type,
-      Impact: r.impact,
-      Status: r.status,
-      Urgency: r.urgency,
-      Region: r.region,
-      Date: r.date,
-      Description: r.description
-    })));
+    const csv = Papa.unparse(filteredReports.map(r => {
+      const userInfo = getUserInfo(r.reporterId || '');
+      return {
+        ID: r.id,
+        Name: userInfo.name || '',
+        Email: userInfo.email || r.reporterEmail || '',
+        Phone: userInfo.phone || '',
+        Type: r.type,
+        Impact: r.impact,
+        Status: r.status,
+        Urgency: r.urgency,
+        Region: r.region,
+        Date: r.date,
+        Description: r.description
+      };
+    }));
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -133,10 +192,54 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
   // For now, response time is not tracked, so set as 'N/A'
   const responseTime = 'N/A';
 
+  // Calculate date ranges for change indicators
+  const now = new Date();
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+  const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  
+  const reportsThisMonth = reports.filter(r => {
+    const reportDate = new Date(r.date);
+    return reportDate >= lastMonth;
+  }).length;
+  
+  const reportsLastMonth = reports.filter(r => {
+    const reportDate = new Date(r.date);
+    const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, now.getDate());
+    return reportDate >= twoMonthsAgo && reportDate < lastMonth;
+  }).length;
+
+  const activeCasesThisMonth = reports.filter(r => {
+    const reportDate = new Date(r.date);
+    return reportDate >= lastMonth && (r.status === 'new' || r.status === 'under-review');
+  }).length;
+
+  const resolvedCasesThisMonth = reports.filter(r => {
+    const reportDate = new Date(r.date);
+    return reportDate >= lastMonth && r.status === 'resolved';
+  }).length;
+
+  // Helper to get the best available sector/type
+  const getSector = (report: any) => report.type || report.sector || 'N/A';
+  // Helper to get the best available category/impact
+  const getCategory = (report: any) => Array.isArray(report.impact) ? report.impact.join(', ') : report.impact || report.category || 'N/A';
+  // Helper to get the best available urgency/priority
+  const getUrgency = (report: any) => report.urgency || report.priority || 'N/A';
+  // Helper to get the best available region/location
+  const getRegion = (report: any) => report.region || report.location || 'N/A';
+  // Helper to get the best available date
+  const getReportDate = (report: any) => report.date || report.timestamp || report.incidentDate || '';
+  // Helper to format date
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return 'N/A';
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? 'N/A' : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  };
+
   // Calculate sector distribution
   const sectorCounts: Record<string, number> = {};
   reports.forEach(r => {
-    sectorCounts[r.type] = (sectorCounts[r.type] || 0) + 1;
+    const sector = getSector(r);
+    sectorCounts[sector] = (sectorCounts[sector] || 0) + 1;
   });
   const sectorStats = Object.entries(sectorCounts).map(([sector, count]) => ({
     sector,
@@ -152,12 +255,12 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
   });
   const regionStats = Object.entries(regionCounts).map(([region, count]) => ({ region, count }));
 
-  // Stats for metrics cards
+  // Stats for metrics cards with proper change indicators
   const stats = [
     {
       label: 'Total Reports',
       value: totalReports,
-      change: '',
+      change: reportsThisMonth > 0 ? `+${reportsThisMonth} this month` : 'No new reports this month',
       icon: <FileText className="h-5 w-5" />,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100',
@@ -165,7 +268,7 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
     {
       label: 'Active Cases',
       value: activeCases,
-      change: '',
+      change: activeCasesThisMonth > 0 ? `+${activeCasesThisMonth} this month` : 'No new active cases this month',
       icon: <AlertTriangle className="h-5 w-5" />,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
@@ -173,7 +276,7 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
     {
       label: 'Resolved',
       value: resolvedCases,
-      change: '',
+      change: resolvedCasesThisMonth > 0 ? `+${resolvedCasesThisMonth} this month` : 'No resolved cases this month',
       icon: <CheckCircle className="h-5 w-5" />,
       color: 'text-green-600',
       bgColor: 'bg-green-100',
@@ -181,7 +284,7 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
     {
       label: 'Response Time',
       value: responseTime,
-      change: '',
+      change: 'Not tracked',
       icon: <Clock className="h-5 w-5" />,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100',
@@ -218,6 +321,56 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
     }
   };
 
+  const handleCustomExport = () => {
+    setCustomExportOpen(true);
+  };
+
+  const handleCustomExportCSV = () => {
+    let filtered = reports;
+    if (exportType === 'single' && exportId) {
+      filtered = reports.filter(r => r.id === exportId);
+    } else if (exportType === 'range' && exportIdRange.from && exportIdRange.to) {
+      const fromIdx = reports.findIndex(r => r.id === exportIdRange.from);
+      const toIdx = reports.findIndex(r => r.id === exportIdRange.to);
+      if (fromIdx !== -1 && toIdx !== -1) {
+        filtered = reports.slice(Math.min(fromIdx, toIdx), Math.max(fromIdx, toIdx) + 1);
+      }
+    } else if (exportType === 'date' && exportDate) {
+      filtered = reports.filter(r => new Date(r.date).toDateString() === exportDate.toDateString());
+    } else if (exportType === 'dateRange' && exportDateRange.from && exportDateRange.to) {
+      filtered = reports.filter(r => {
+        const d = new Date(r.date);
+        return d >= exportDateRange.from! && d <= exportDateRange.to!;
+      });
+    } else if (exportType === 'sector' && exportSector.length > 0) {
+      filtered = reports.filter(r => exportSector.includes(r.type));
+    }
+    const csv = Papa.unparse(filtered.map(r => {
+      const userInfo = getUserInfo(r.reporterId || '');
+      return {
+        ID: r.id,
+        Name: userInfo.name || '',
+        Email: userInfo.email || r.reporterEmail || '',
+        Phone: userInfo.phone || '',
+        Type: r.type,
+        Impact: r.impact,
+        Status: r.status,
+        Urgency: r.urgency,
+        Region: r.region,
+        Date: r.date,
+        Description: r.description
+      };
+    }));
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'custom_reports.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+    setCustomExportOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -245,6 +398,7 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
                   <DropdownMenuItem onClick={handleExportPDF}>Export All Reports (PDF)</DropdownMenuItem>
                   <DropdownMenuItem onClick={handleExportPDF}>Export Analytics (PDF)</DropdownMenuItem>
                   <DropdownMenuItem onClick={handleExportPartnerHub}>Export to Partner Hub</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleCustomExport}>Custom Export...</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               <Button onClick={() => navigate('/admin-analytics')}>
@@ -288,7 +442,7 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-600">{stat.label}</p>
                         <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                        <p className="text-sm text-green-600">{stat.change} from last month</p>
+                        <p className="text-sm text-green-600">{stat.change}</p>
                       </div>
                       <div className={`p-3 rounded-full ${stat.bgColor}`}>
                         <div className={stat.color}>{stat.icon}</div>
@@ -312,7 +466,7 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
                       <div key={index} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className={`w-3 h-3 rounded-full ${item.color}`}></div>
-                          <span className="font-medium">{item.sector}</span>
+                          <span className="font-medium">{item.sector || 'N/A'}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Progress value={item.percentage} className="w-24" />
@@ -337,10 +491,10 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
                       reports.slice(0, 5).map((report) => (
                         <div key={report.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                           <div className="flex items-center gap-3">
-                            {getSectorIcon(report.type)}
+                            {getSectorIcon(getSector(report))}
                             <div>
-                              <p className="font-medium text-sm">{report.type} - {report.impact}</p>
-                              <p className="text-xs text-gray-600">{report.region}</p>
+                              <p className="font-medium text-sm">{getSector(report)} - {getCategory(report)}</p>
+                              <p className="text-xs text-gray-600">{getRegion(report)}</p>
                             </div>
                           </div>
                           <Badge className={getStatusColor(report.status)}>
@@ -382,6 +536,9 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
                     <thead>
                       <tr className="border-b">
                         <th className="text-left p-3 font-medium">ID</th>
+                        <th className="text-left p-3 font-medium">Reporter Name</th>
+                        <th className="text-left p-3 font-medium">Email</th>
+                        <th className="text-left p-3 font-medium">Phone</th>
                         <th className="text-left p-3 font-medium">Sector</th>
                         <th className="text-left p-3 font-medium">Category</th>
                         <th className="text-left p-3 font-medium">Status</th>
@@ -394,39 +551,38 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
                     <tbody>
                       {reports.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="text-center p-3">No reports yet.</td>
+                          <td colSpan={11} className="text-center p-3">No reports yet.</td>
                         </tr>
                       ) : (
-                        filteredReports.map((report) => (
-                          <tr key={report.id} className="border-b hover:bg-gray-50">
-                            <td className="p-3 text-sm font-medium">{report.id}</td>
-                            <td className="p-3">
-                              <div className="flex items-center gap-2">
-                                {getSectorIcon(report.type)}
-                                <span className="text-sm">{report.type}</span>
-                              </div>
-                            </td>
-                            <td className="p-3 text-sm">{Array.isArray(report.impact) ? report.impact.join(', ') : report.impact}</td>
-                            <td className="p-3">
-                              <Badge className={getStatusColor(report.status)}>
-                                {report.status}
-                              </Badge>
-                            </td>
-                            <td className="p-3">
-                              <Badge className={getPriorityColor(report.urgency)}>
-                                {report.urgency}
-                              </Badge>
-                            </td>
-                            <td className="p-3 text-sm">{report.region}</td>
-                            <td className="p-3 text-sm">
-                              {new Date(report.date).toLocaleDateString()}
-                            </td>
-                            <td className="p-3">
-                              <Button variant="outline" size="sm" onClick={() => { setSelectedReport(report); setModalOpen(true); }}><Eye className="h-4 w-4" /></Button>
-                              <Button variant="destructive" size="sm" onClick={() => handleDelete(report.id)}><Trash className="h-4 w-4" /></Button>
-                            </td>
-                          </tr>
-                        ))
+                        filteredReports.map((report) => {
+                          const userInfo = getUserInfo(report.reporterId || '');
+                          return (
+                            <tr key={report.id} className="border-b hover:bg-gray-50">
+                              <td className="p-3 text-sm font-medium">{report.caseId || report.id}</td>
+                              <td className="p-3 text-sm">{userInfo.name || 'Anonymous'}</td>
+                              <td className="p-3 text-sm">{userInfo.email || report.reporterEmail || 'N/A'}</td>
+                              <td className="p-3 text-sm">{userInfo.phone || 'N/A'}</td>
+                              <td className="p-3 text-sm">{getSector(report)}</td>
+                              <td className="p-3 text-sm">{getCategory(report)}</td>
+                              <td className="p-3">
+                                <Badge className={getStatusColor(report.status)}>
+                                  {report.status}
+                                </Badge>
+                              </td>
+                              <td className="p-3">
+                                <Badge className={getPriorityColor(getUrgency(report))}>
+                                  {getUrgency(report)}
+                                </Badge>
+                              </td>
+                              <td className="p-3 text-sm">{getRegion(report)}</td>
+                              <td className="p-3 text-sm">{formatDate(getReportDate(report))}</td>
+                              <td className="p-3">
+                                <Button variant="outline" size="sm" onClick={() => { setSelectedReport(report); setModalOpen(true); }}><Eye className="h-4 w-4" /></Button>
+                                <Button variant="destructive" size="sm" onClick={() => handleDelete(report.id)}><Trash className="h-4 w-4" /></Button>
+                              </td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
@@ -571,6 +727,80 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setPartnerHubOpen(false)}>Cancel</Button>
             <Button onClick={handlePartnerHubSubmit}>Submit</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={customExportOpen} onOpenChange={setCustomExportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Custom Export</DialogTitle>
+          </DialogHeader>
+          <div className="mb-4 space-y-4">
+            <div>
+              <label className="block mb-2 font-medium">Export Type</label>
+              <Select value={exportType} onValueChange={setExportType}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Reports</SelectItem>
+                  <SelectItem value="single">Single Report (by ID)</SelectItem>
+                  <SelectItem value="range">Range (by ID)</SelectItem>
+                  <SelectItem value="date">By Date</SelectItem>
+                  <SelectItem value="dateRange">By Date Range</SelectItem>
+                  <SelectItem value="sector">By Sector</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {exportType === 'single' && (
+              <div>
+                <label className="block mb-2 font-medium">Report ID</label>
+                <input className="border rounded px-3 py-2 w-full" value={exportId} onChange={e => setExportId(e.target.value)} placeholder="Enter Report ID" />
+              </div>
+            )}
+            {exportType === 'range' && (
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="block mb-2 font-medium">From ID</label>
+                  <input className="border rounded px-3 py-2 w-full" value={exportIdRange.from} onChange={e => setExportIdRange(r => ({ ...r, from: e.target.value }))} placeholder="Start ID" />
+                </div>
+                <div className="flex-1">
+                  <label className="block mb-2 font-medium">To ID</label>
+                  <input className="border rounded px-3 py-2 w-full" value={exportIdRange.to} onChange={e => setExportIdRange(r => ({ ...r, to: e.target.value }))} placeholder="End ID" />
+                </div>
+              </div>
+            )}
+            {exportType === 'date' && (
+              <div>
+                <label className="block mb-2 font-medium">Date</label>
+                <Calendar mode="single" selected={exportDate} onSelect={setExportDate} className="border rounded" />
+              </div>
+            )}
+            {exportType === 'dateRange' && (
+              <div>
+                <label className="block mb-2 font-medium">Date Range</label>
+                <Calendar mode="range" selected={exportDateRange} onSelect={setExportDateRange} className="border rounded" />
+              </div>
+            )}
+            {exportType === 'sector' && (
+              <div>
+                <label className="block mb-2 font-medium">Sector(s)</label>
+                <Select value={exportSector[0] || ''} onValueChange={v => setExportSector([v])}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sectorOptions.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCustomExportOpen(false)}>Cancel</Button>
+            <Button onClick={handleCustomExportCSV}>Export CSV</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

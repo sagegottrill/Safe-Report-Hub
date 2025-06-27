@@ -23,7 +23,6 @@ const Dashboard: React.FC = () => {
   const { user, reports, setCurrentView, setReports } = useAppContext();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [showReportForm, setShowReportForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedReport, setSelectedReport] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -48,8 +47,7 @@ const Dashboard: React.FC = () => {
       Description: r.description,
       Date: r.date,
       Platform: r.platform,
-      Email: r.email,
-      Phone: r.phone
+      ReporterEmail: r.reporterEmail || ''
     })));
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -68,7 +66,6 @@ const Dashboard: React.FC = () => {
       localStorage.setItem('reports', JSON.stringify(newReports));
       return newReports;
     });
-    setShowReportForm(false);
   };
 
   // Delete report
@@ -214,7 +211,7 @@ const Dashboard: React.FC = () => {
                 <p className="text-lg font-medium text-text mb-2">{t('No reports yet')}</p>
                 <p className="text-sm text-text-light mb-4">{t('Submit your first incident report to get started')}</p>
                 <Button 
-                  onClick={() => setShowReportForm(true)} 
+                  onClick={() => navigate('/report')} 
                   className="btn-official"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -274,9 +271,19 @@ const Dashboard: React.FC = () => {
                       )}
                     </div>
                     <div className="flex gap-2 mt-3">
-                      <Button variant="outline" size="sm" onClick={() => { setSelectedReport(report); setModalOpen(true); setEditMode(false); }}><Eye className="h-4 w-4" /></Button>
-                      <Button variant="outline" size="sm" onClick={() => { setSelectedReport(report); setModalOpen(true); setEditMode(true); }}><Pencil className="h-4 w-4" /></Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleDelete(report.id)}><Trash className="h-4 w-4" /></Button>
+                      <Button variant="outline" size="sm" onClick={() => {
+                        setSelectedReport({
+                          ...report,
+                          reporterName: user?.name || '',
+                          reporterEmail: user?.email || report.reporterEmail || '',
+                          reporterPhone: user?.phone || '',
+                          urgency: report.urgency || '',
+                          region: report.region || '',
+                          caseId: report.caseId || report.id || '',
+                        });
+                        setModalOpen(true);
+                        setEditMode(false);
+                      }}><Eye className="h-4 w-4" /></Button>
                     </div>
                   </div>
                 ))}

@@ -64,6 +64,17 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
             />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number</Label>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="Enter your phone number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="password">{t('password')}</Label>
             <Input
               id="password"
@@ -85,17 +96,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               minLength={6}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">{t('phoneNumber')}</Label>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder={t('enterPhoneNumber')}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
             />
           </div>
           <Button type="submit" className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-full shadow-md hover:from-emerald-600 hover:to-green-700 transition-colors duration-200" disabled={loading}>

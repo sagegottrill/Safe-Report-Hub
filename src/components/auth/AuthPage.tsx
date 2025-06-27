@@ -28,16 +28,7 @@ const AuthPage: React.FC = () => {
           </>
         ) : (
           <>
-          <RegisterForm onToggleMode={toggleMode} />
-            <div className="mt-4 text-center text-sm">
-              <span className="text-gray-600">{t('haveAccount')}</span>
-              <button
-                className="ml-1 font-semibold text-black rounded px-2 py-1 hover:bg-black/10 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-black/30"
-                onClick={toggleMode}
-              >
-                {t('signIn')}
-              </button>
-            </div>
+            <RegisterForm onToggleMode={toggleMode} />
           </>
         )}
         

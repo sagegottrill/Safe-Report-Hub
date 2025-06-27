@@ -78,6 +78,24 @@ const Sidebar: React.FC = () => {
             filteredItems.map(item => {
               const Icon = item.icon;
               const isActive = currentView === item.id;
+              if (item.id === 'report') {
+                return (
+                  <Button
+                    key={item.id}
+                    variant={isActive ? 'default' : 'ghost'}
+                    className={cn(
+                      'w-full justify-start gap-4 text-base h-12 rounded-lg font-medium transition-all',
+                      isActive && 'bg-nigerian-green text-white shadow-official',
+                      !isActive && 'text-text hover:bg-nigerian-green/10 hover:text-nigerian-green'
+                    )}
+                    onClick={() => navigate('/report')}
+                    aria-label={t(item.label)}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="truncate">{t(item.label)}</span>
+                  </Button>
+                );
+              }
               return (
                 <Button
                   key={item.id}

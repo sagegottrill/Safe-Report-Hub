@@ -41,6 +41,7 @@ interface AppContextType {
   currentView: 'dashboard' | 'report' | 'auth' | 'admin' | 'governor' | 'governor-admin';
   login: (email: string, password: string) => Promise<boolean>;
   register: (email: string, password: string, name: string, phone: string) => Promise<boolean>;
+  forgotPassword: (email: string) => Promise<boolean>;
   logout: () => void;
   submitReport: (report: Omit<Report, 'id' | 'status'>) => string;
   updateReport: (reportId: string, updates: Partial<Report>) => void;
@@ -81,25 +82,62 @@ function generatePin() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
+// Predefined admin users
+const PREDEFINED_ADMINS = [
+  {
+    id: 'admin-daniel',
+    email: 'admin.daniel@bictdareport.com',
+    password: '123456',
+    name: 'Daniel Admin',
+    phone: 'N/A',
+    role: 'admin'
+  },
+  {
+    id: 'admin-sj',
+    email: 'admin.s.j@bictdareport.com',
+    password: '123456',
+    name: 'S.J. Admin',
+    phone: 'N/A',
+    role: 'admin'
+  }
+];
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem('user');
-    return stored ? JSON.parse(stored) : null;
+    try {
+      const stored = localStorage.getItem('user');
+      return stored ? JSON.parse(stored) : null;
+    } catch (error) {
+      console.error('Error parsing stored user:', error);
+      return null;
+    }
   });
-  // Remove demo data: initialize reports from localStorage or as empty array
+  
+  // Initialize reports from localStorage or as empty array
   const [reports, setReports] = useState<Report[]>(() => {
-    const stored = localStorage.getItem('reports');
-    return stored ? JSON.parse(stored) : [];
+    try {
+      const stored = localStorage.getItem('reports');
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error('Error parsing stored reports:', error);
+      return [];
+    }
   });
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState<'dashboard' | 'report' | 'auth' | 'admin' | 'governor' | 'governor-admin'>(() => {
-    const stored = localStorage.getItem('currentView');
-    const storedUser = localStorage.getItem('user');
-    // If no user is logged in, always show auth page
-    if (!storedUser) {
+    try {
+      const stored = localStorage.getItem('currentView');
+      const storedUser = localStorage.getItem('user');
+      // If no user is logged in, always show auth page
+      if (!storedUser) {
+        return 'auth';
+      }
+      return stored ? stored as any : 'dashboard';
+    } catch (error) {
+      console.error('Error parsing stored view:', error);
       return 'auth';
     }
-    return stored ? stored as any : 'dashboard';
   });
 
   // Firebase auth state listener
@@ -147,71 +185,126 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // This is now handled by Firebase auth state listener
-    // For demo purposes, we'll keep the mock login for non-Google users
-    if (email && password.length >= 6) {
-      // Special demo account for governor panel
-      if (email.trim().toLowerCase() === 'superpanel@gmail.com') {
-        const mockUser: User = {
-          id: '1',
-          email,
-          name: 'Governor',
-          role: 'governor',
-        };
-        setUser(mockUser);
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        setCurrentView('governor');
-        localStorage.setItem('currentView', 'governor');
-        toast({ title: 'Login successful', description: 'Welcome, Governor!' });
-        return true;
+    try {
+      if (email && password.length >= 6) {
+        // First check predefined admin users
+        const predefinedAdmin = PREDEFINED_ADMINS.find(u => u.email === email && u.password === password);
+        if (predefinedAdmin) {
+          setUser(predefinedAdmin);
+          localStorage.setItem('user', JSON.stringify(predefinedAdmin));
+          setCurrentView('dashboard');
+          localStorage.setItem('currentView', 'dashboard');
+          toast({ title: 'Login successful', description: `Welcome, ${predefinedAdmin.name}!` });
+          return true;
+        }
+
+        // Then check localStorage users array for a match
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const found = users.find((u: any) => u.email === email && u.password === password);
+        if (found) {
+          setUser(found);
+          localStorage.setItem('user', JSON.stringify(found));
+          setCurrentView('dashboard');
+          localStorage.setItem('currentView', 'dashboard');
+          toast({ title: 'Login successful', description: `Welcome, ${found.name || found.email}!` });
+          return true;
+        }
+
+        toast({ title: 'Login failed', description: 'Invalid email or password' });
+        return false;
       }
-      // Demo role assignment by email prefix
-      let role: User['role'] = 'user';
-      let region = undefined;
-      let allowedCategories = undefined;
-      if (/^admin\./i.test(email.trim())) role = 'admin';
-      if (/^superadmin\./i.test(email.trim())) role = 'super_admin';
-      if (/^country\./i.test(email.trim())) { role = 'country_admin'; region = 'Nigeria'; }
-      if (/^case\./i.test(email.trim())) { role = 'case_worker'; region = 'Nigeria'; allowedCategories = ['gender_based_violence', 'child_protection']; }
-      if (/^field\./i.test(email.trim())) { role = 'field_officer'; region = 'Nigeria'; allowedCategories = ['food_insecurity', 'water_sanitation', 'shelter_issues', 'health_emergencies']; }
-      if (/^governor_admin\./i.test(email.trim())) role = 'governor_admin';
-      else if (/^governor\./i.test(email.trim())) role = 'governor';
-      const displayName = extractFirstName(email);
-      const mockUser: User = {
-        id: '1',
-        email,
-        name: displayName,
-        role,
-        region,
-        allowedCategories,
-      };
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      let view: typeof currentView = 'dashboard';
-      if (role === 'admin' || role === 'super_admin' || role === 'country_admin') view = 'admin';
-      if (role === 'governor_admin') view = 'governor-admin';
-      if (role === 'governor') view = 'governor';
-      setCurrentView(view);
-      localStorage.setItem('currentView', view);
-      toast({ title: 'Login successful', description: `Welcome, ${role.replace('_', ' ')}!` });
-      return true;
+      toast({ title: 'Login failed', description: 'Please enter valid credentials' });
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({ title: 'Login failed', description: 'An error occurred during login' });
+      return false;
     }
-    toast({ title: 'Login failed', description: 'Invalid credentials', variant: 'destructive' });
-    return false;
   };
 
   const register = async (email: string, password: string, name: string, phone: string): Promise<boolean> => {
-    if (email && password.length >= 6 && name && phone) {
-      const displayName = extractFirstName(email, name);
-      const mockUser: User = { id: '1', email, name: displayName, phone, role: 'user' };
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      setCurrentView('dashboard');
-      localStorage.setItem('currentView', 'dashboard');
-      toast({ title: 'Registration successful', description: 'Account created!' });
-      return true;
+    try {
+      if (email && password.length >= 6 && name && phone) {
+        const displayName = extractFirstName(email, name);
+        const userId = Math.random().toString(36).substr(2, 9);
+        const mockUser = { 
+          id: userId, 
+          email, 
+          name: displayName, 
+          phone, 
+          role: 'user' as const, 
+          password 
+        };
+        // Store user in users array
+        const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+        const updatedUsers = [...existingUsers, mockUser];
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
+        setUser(mockUser);
+        localStorage.setItem('user', JSON.stringify(mockUser));
+        setCurrentView('dashboard');
+        localStorage.setItem('currentView', 'dashboard');
+        toast({ title: 'Registration successful', description: 'Account created!' });
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast({ title: 'Registration failed', description: 'An error occurred during registration' });
+      return false;
     }
-    return false;
+  };
+
+  const forgotPassword = async (email: string): Promise<boolean> => {
+    try {
+      if (!email) {
+        toast({ title: 'Error', description: 'Please enter your email address' });
+        return false;
+      }
+
+      // Check predefined admin users first
+      const predefinedAdmin = PREDEFINED_ADMINS.find(u => u.email === email);
+      if (predefinedAdmin) {
+        await sendPasswordEmail(email, predefinedAdmin.password);
+        toast({ title: 'Password Recovery', description: 'Password recovery email sent!' });
+        return true;
+      }
+
+      // Check localStorage users
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const user = users.find((u: any) => u.email === email);
+      
+      if (user) {
+        await sendPasswordEmail(email, user.password);
+        toast({ title: 'Password Recovery', description: 'Password recovery email sent!' });
+        return true;
+      } else {
+        toast({ title: 'Error', description: 'Email not found in our system' });
+        return false;
+      }
+    } catch (error) {
+      console.error('Password recovery error:', error);
+      toast({ title: 'Error', description: 'Failed to send password recovery email' });
+      return false;
+    }
+  };
+
+  const sendPasswordEmail = async (email: string, password: string) => {
+    // Create email content
+    const subject = 'BICTDA REPORT password recovery';
+    const body = `Here is your password: ${password}`;
+    
+    // Use mailto link to open user's default email client
+    const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    // Open email client automatically
+    window.open(mailtoLink, '_blank');
+    
+    // Show success message without revealing the password
+    toast({ 
+      title: 'Password Recovery', 
+      description: 'Password recovery email has been sent to your email address.',
+      duration: 5000
+    });
   };
 
   const logout = async () => {
@@ -236,61 +329,122 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const submitReport = (reportData: Omit<Report, 'id' | 'status'>): string => {
-    // AI/keyword pre-screening
-    const text = `${reportData.description} ${reportData.type}`.toLowerCase();
-    const flagged = URGENT_KEYWORDS.some(word => text.includes(word));
-    const riskScore = flagged ? 10 : (reportData.riskScore ?? Math.floor(Math.random() * 10) + 1);
-    const newReport: Report = {
-      ...reportData,
-      id: Math.random().toString(36).substr(2, 9),
-      status: 'new',
-      riskScore,
-      adminNotes: flagged ? 'Auto-flagged for urgent review' : reportData.adminNotes,
-      flagged,
-      region: reportData.region || user?.region,
-      urgency: flagged ? 'urgent' : undefined,
-      caseId: generateCaseId(),
-      pin: generatePin(),
-    };
-    setReports(prev => [...prev, newReport]);
-    toast({ title: 'Report submitted', description: `Reference ID: ${newReport.caseId}` });
-    return newReport.id;
+    try {
+      // AI/keyword pre-screening
+      const text = `${reportData.description} ${reportData.type}`.toLowerCase();
+      const flagged = URGENT_KEYWORDS.some(word => text.includes(word));
+      const riskScore = flagged ? 10 : (reportData.riskScore ?? Math.floor(Math.random() * 10) + 1);
+      const newReport: Report = {
+        ...reportData,
+        id: Math.random().toString(36).substr(2, 9),
+        status: 'new',
+        riskScore,
+        adminNotes: flagged ? 'Auto-flagged for urgent review' : reportData.adminNotes,
+        flagged,
+        region: reportData.region || user?.region,
+        urgency: flagged ? 'urgent' : undefined,
+        caseId: generateCaseId(),
+        pin: generatePin(),
+        reporterId: user?.id, // Link report to user
+        reporterEmail: user?.email, // Store user email in report
+        date: new Date().toISOString(), // Ensure proper date format
+      };
+      setReports(prev => [...prev, newReport]);
+      toast({ title: 'Report submitted', description: `Reference ID: ${newReport.caseId}` });
+      return newReport.id;
+    } catch (error) {
+      console.error('Report submission error:', error);
+      toast({ title: 'Submission failed', description: 'An error occurred while submitting the report' });
+      throw error;
+    }
   };
 
   const updateReport = (reportId: string, updates: Partial<Report>) => {
-    setReports(prev => prev.map(report => 
-      report.id === reportId ? { ...report, ...updates } : report
-    ));
-    toast({ 
-      title: 'Report updated', 
-      description: `Report ${reportId.substring(0, 6)} has been updated.` 
-    });
+    try {
+      setReports(prev => prev.map(report => 
+        report.id === reportId ? { ...report, ...updates } : report
+      ));
+      toast({ 
+        title: 'Report updated', 
+        description: `Report ${reportId.substring(0, 6)} has been updated.` 
+      });
+    } catch (error) {
+      console.error('Report update error:', error);
+      toast({ title: 'Update failed', description: 'An error occurred while updating the report' });
+    }
   };
 
   const deleteReport = (reportId: string) => {
-    setReports(prev => prev.filter(report => report.id !== reportId));
-    toast({
-      title: 'Report deleted',
-      description: `Report ${reportId.substring(0, 6)} has been deleted.`
-    });
+    try {
+      setReports(prev => prev.filter(report => report.id !== reportId));
+      toast({
+        title: 'Report deleted',
+        description: `Report ${reportId.substring(0, 6)} has been deleted.`
+      });
+    } catch (error) {
+      console.error('Report deletion error:', error);
+      toast({ title: 'Deletion failed', description: 'An error occurred while deleting the report' });
+    }
   };
 
   const toggleSidebar = () => setSidebarOpen(prev => !prev);
 
   // Keep user and currentView in sync with localStorage
   useEffect(() => {
-    if (user) localStorage.setItem('user', JSON.stringify(user));
-    else localStorage.removeItem('user');
+    try {
+      if (user) localStorage.setItem('user', JSON.stringify(user));
+      else localStorage.removeItem('user');
+    } catch (error) {
+      console.error('Error saving user to localStorage:', error);
+    }
   }, [user]);
+  
   useEffect(() => {
-    if (currentView) localStorage.setItem('currentView', currentView);
-    else localStorage.removeItem('currentView');
+    try {
+      if (currentView) localStorage.setItem('currentView', currentView);
+      else localStorage.removeItem('currentView');
+    } catch (error) {
+      console.error('Error saving currentView to localStorage:', error);
+    }
   }, [currentView]);
 
   // Add effect to keep reports in sync with localStorage
   useEffect(() => {
-    localStorage.setItem('reports', JSON.stringify(reports));
+    try {
+      localStorage.setItem('reports', JSON.stringify(reports));
+    } catch (error) {
+      console.error('Error saving reports to localStorage:', error);
+    }
   }, [reports]);
+
+  // Real-time localStorage sync across tabs
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'reports') {
+        try {
+          setReports(event.newValue ? JSON.parse(event.newValue) : []);
+        } catch (error) {
+          console.error('Error parsing reports from storage event:', error);
+        }
+      }
+      if (event.key === 'user') {
+        try {
+          setUser(event.newValue ? JSON.parse(event.newValue) : null);
+        } catch (error) {
+          console.error('Error parsing user from storage event:', error);
+        }
+      }
+      if (event.key === 'currentView') {
+        try {
+          setCurrentView(event.newValue as any);
+        } catch (error) {
+          console.error('Error parsing currentView from storage event:', error);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   return (
     <AppContext.Provider value={{
@@ -300,6 +454,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       currentView,
       login,
       register,
+      forgotPassword,
       logout,
       submitReport,
       updateReport,
