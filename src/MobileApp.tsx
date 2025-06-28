@@ -78,23 +78,16 @@ function MobileAppContent() {
     <Router>
       <MobileLayout>
         <Routes>
-          {/* Public routes */}
+          {/* Home and Mobile routes always show dashboard or auth */}
           <Route path="/" element={
             user ? (
-              user.role === 'governor' ? <Navigate to="/governor" replace /> :
-              ['admin', 'super_admin', 'country_admin'].includes(user.role) ? <Navigate to="/admin" replace /> :
-              user.role === 'governor_admin' ? <Navigate to="/governor-admin" replace /> :
               <MobileWrapper><Dashboard /></MobileWrapper>
             ) : (
               <MobileWrapper><AuthPage /></MobileWrapper>
             )
           } />
-          {/* Add /mobile route for mobile dashboard */}
           <Route path="/mobile" element={
             user ? (
-              user.role === 'governor' ? <Navigate to="/governor" replace /> :
-              ['admin', 'super_admin', 'country_admin'].includes(user.role) ? <Navigate to="/admin" replace /> :
-              user.role === 'governor_admin' ? <Navigate to="/governor-admin" replace /> :
               <MobileWrapper><Dashboard /></MobileWrapper>
             ) : (
               <MobileWrapper><AuthPage /></MobileWrapper>

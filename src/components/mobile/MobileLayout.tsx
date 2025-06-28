@@ -35,11 +35,11 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen mobile-safe-area">
+    <div className="min-h-screen mobile-app-wrapper mobile-gradient-glass">
       <div className="flex flex-col min-h-screen">
         {/* Mobile Header */}
         {showHeader && (
-          <header className="mobile-header px-4 py-3">
+          <header className="mobile-header px-4 py-3 mobile-gradient-glass shadow-xl">
             <div className="flex items-center justify-between">
               {/* Left side - Logo and Menu */}
               <div className="flex items-center gap-3">
@@ -175,7 +175,7 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
         )}
 
         {/* Main content */}
-        <main className="flex-1 pb-20">
+        <main className="flex-1 pb-20 mobile-gradient-glass">
           {children}
         </main>
         

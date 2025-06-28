@@ -27,9 +27,21 @@ import {
   UserCheck,
   Globe,
   Heart,
-  Zap
+  Zap,
+  Flame,
+  Award,
+  Globe2,
+  HelpCircle
 } from 'lucide-react';
 import EnhancedReportForm from '../report/EnhancedReportForm';
+
+const COLOR_PALETTE = [
+  'from-green-600 to-green-400', // Deep green
+  'from-yellow-500 to-yellow-300', // Gold
+  'from-purple-700 to-purple-400', // Purple
+  'from-blue-700 to-blue-400', // Blue
+  'from-pink-600 to-pink-400', // Pink
+];
 
 export default function MobileDashboard() {
   const { user, reports, logout } = useAppContext();
@@ -50,89 +62,60 @@ export default function MobileDashboard() {
     }
   }, [reports]);
 
-  // Enhanced stats with real-time data
+  // Bold, beautiful stats
   const stats = [
     {
       label: 'Total Reports',
       value: reports.length,
       icon: FileText,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      trend: '+12%',
-      trendUp: true
+      gradient: COLOR_PALETTE[0],
     },
     {
-      label: 'Pending',
-      value: reports.filter(r => r.status === 'new').length,
-      icon: Clock,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-50',
-      trend: '+5%',
-      trendUp: false
+      label: 'Urgent',
+      value: reports.filter(r => r.urgency === 'high' || r.urgency === 'critical').length,
+      icon: Flame,
+      gradient: COLOR_PALETTE[1],
     },
     {
       label: 'Resolved',
       value: reports.filter(r => r.status === 'resolved').length,
       icon: CheckCircle,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      trend: '+18%',
-      trendUp: true
+      gradient: COLOR_PALETTE[2],
     },
     {
-      label: 'Urgent',
-      value: reports.filter(r => r.urgency === 'high' || r.urgency === 'critical').length,
-      icon: AlertTriangle,
-      color: 'text-red-600',
-      bgColor: 'bg-red-50',
-      trend: '-3%',
-      trendUp: false
-    }
+      label: 'Community',
+      value: 42,
+      icon: Globe2,
+      gradient: COLOR_PALETTE[3],
+    },
   ];
 
-  // Enhanced quick actions with role-based access
-  const quickActions: Array<{
-    title: string;
-    description: string;
-    icon: any;
-    path: string;
-    color: string;
-    requiresAuth?: boolean;
-    badge?: string;
-  }> = [
+  // Bold quick actions
+  const quickActions = [
     {
-      title: 'Submit Report',
-      description: 'Report an incident or issue',
+      title: 'New Report',
       icon: Plus,
-      path: '/report',
-      color: 'bg-gradient-to-r from-blue-600 to-blue-700',
-      requiresAuth: true,
-      badge: 'New'
+      color: COLOR_PALETTE[0],
+      onClick: () => setShowReportModal(true),
     },
     {
-      title: 'Track Reports',
-      description: 'Check your submitted reports',
-      icon: FileText,
-      path: '/reports',
-      color: 'bg-gradient-to-r from-green-600 to-green-700',
-      requiresAuth: true
+      title: 'Track',
+      icon: Search,
+      color: COLOR_PALETTE[1],
+      onClick: () => setActiveTab('track'),
     },
     {
-      title: 'Emergency Contacts',
-      description: 'Quick access to emergency numbers',
+      title: 'Emergency',
       icon: Phone,
-      path: '/emergency',
-      color: 'bg-gradient-to-r from-red-600 to-red-700',
-      requiresAuth: false
+      color: COLOR_PALETTE[2],
+      onClick: () => window.open('tel:112'),
     },
     {
-      title: 'Community Alerts',
-      description: 'Stay informed about local issues',
-      icon: Bell,
-      path: '/alerts',
-      color: 'bg-gradient-to-r from-purple-600 to-purple-700',
-      requiresAuth: false
-    }
+      title: 'FAQ',
+      icon: HelpCircle,
+      color: COLOR_PALETTE[3],
+      onClick: () => window.location.href = '/faq',
+    },
   ];
 
   // Role-based admin actions
@@ -221,150 +204,46 @@ export default function MobileDashboard() {
 
   return (
     <div className="mobile-container py-4">
-      {/* Enhanced Header with User Info */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-6 mb-6 text-white">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mr-3">
-              <Shield className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">Safety Support</h1>
-              <p className="text-blue-100 text-sm">Community Protection Hub</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-              <Bell className="w-5 h-5" />
-            </button>
-            {user && (
-              <button 
-                onClick={logout}
-                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            )}
-          </div>
+      {/* Beautiful App Header */}
+      <div className="mobile-card mobile-gradient-glass mb-6 p-6 flex items-center gap-4 shadow-2xl">
+        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center shadow-xl">
+          <Shield className="w-8 h-8 text-white" />
         </div>
-        
-        {user ? (
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-100 text-sm">Welcome back,</p>
-              <p className="font-semibold text-lg">{user.name}</p>
-              <p className="text-blue-200 text-sm capitalize">{user.role?.replace('_', ' ')}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-blue-100 text-sm">Reports Today</p>
-              <p className="font-bold text-2xl">{reports.filter(r => {
-                const today = new Date().toDateString();
-                return new Date(r.date).toDateString() === today;
-              }).length}</p>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center">
-            <p className="text-blue-100 mb-3">Join our community safety network</p>
-            <Link
-              to="/auth"
-              className="bg-white text-blue-600 px-6 py-2 rounded-full font-semibold inline-block"
-            >
-              Sign In / Register
-            </Link>
-          </div>
-        )}
+        <div>
+          <h1 className="text-2xl font-extrabold text-green-700 tracking-tight mb-1">SafeReport Hub</h1>
+          <div className="text-xs font-semibold text-blue-900/80">Empowering Communities</div>
+        </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <input
-          type="text"
-          placeholder="Search reports, incidents..."
-          className="w-full pl-10 pr-4 py-3 bg-white rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-        />
-        <button className="absolute right-3 top-1/2 transform -translate-y-1/2">
-          <Filter className="text-gray-400 w-5 h-5" />
-        </button>
-      </div>
-
-      {/* Stats Section */}
+      {/* Bold Stats Grid */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        {loading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="mobile-stats-card mobile-loading-skeleton h-24" />
-          ))
-        ) : (
-          stats.map((stat, i) => (
-            <div key={stat.label} className={`mobile-stats-card ${stat.bgColor} flex flex-col items-center justify-center`}>
-              <stat.icon className={`w-6 h-6 mb-2 ${stat.color}`} />
-              <div className="text-lg font-bold">{stat.value}</div>
-              <div className="text-xs text-gray-500">{stat.label}</div>
-            </div>
-          ))
-        )}
+        {stats.map((stat, i) => (
+          <div key={stat.label} className={`mobile-card p-5 bg-gradient-to-br ${stat.gradient} text-white flex flex-col items-center justify-center shadow-2xl`}>
+            <stat.icon className="w-7 h-7 mb-2 opacity-90" />
+            <div className="text-2xl font-extrabold drop-shadow-lg">{stat.value}</div>
+            <div className="text-xs font-semibold opacity-90">{stat.label}</div>
+          </div>
+        ))}
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex space-x-1 bg-gray-100 rounded-xl p-1 mb-6">
-        {['overview', 'reports', 'analytics'].map((tab) => (
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        {quickActions.map((action, i) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-              activeTab === tab
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
+            key={action.title}
+            className={`mobile-card p-4 bg-gradient-to-br ${action.color} text-white flex flex-col items-center justify-center mobile-hover-lift mobile-active-scale shadow-xl`}
+            onClick={action.onClick}
           >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            <action.icon className="w-6 h-6 mb-1" />
+            <span className="font-bold text-sm">{action.title}</span>
           </button>
         ))}
       </div>
 
-      {/* Quick Actions Grid */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Zap className="w-5 h-5 mr-2 text-blue-600" />
-          Quick Actions
-        </h2>
-        <div className="grid grid-cols-2 gap-3">
-          {[...quickActions, ...adminActions, ...governorActions].map((action) => {
-            const Icon = action.icon;
-            const isDisabled = action.requiresAuth && !user;
-            
-            return (
-              <Link
-                key={action.title}
-                to={isDisabled ? '/auth' : action.path}
-                className={`block ${action.color} text-white rounded-xl p-4 transition-all active:scale-95 shadow-lg`}
-              >
-                <div className="flex items-center mb-2">
-                  <Icon className="w-5 h-5 mr-2" />
-                  {action.badge && (
-                    <span className="bg-white/20 text-xs px-2 py-1 rounded-full ml-auto">
-                      {action.badge}
-                    </span>
-                  )}
-                </div>
-                <h3 className="font-semibold text-sm">{action.title}</h3>
-                <p className="text-xs opacity-90 mt-1">{action.description}</p>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Recent Reports Section with pull-to-refresh */}
-      <div className="mb-8"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
+      {/* Recent Reports Section (as before, but with glassy cards) */}
+      <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="mobile-subtitle">Recent Reports</h2>
-          {pulling && <span className="text-xs text-blue-600 animate-bounce">Pulling...</span>}
+          <h2 className="mobile-subtitle text-green-700">Recent Reports</h2>
         </div>
         {loading ? (
           <div className="space-y-3">

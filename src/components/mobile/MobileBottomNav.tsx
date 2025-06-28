@@ -14,6 +14,14 @@ import {
   Users
 } from 'lucide-react';
 
+const COLOR_PALETTE = [
+  'from-green-600 to-green-400',
+  'from-yellow-500 to-yellow-300',
+  'from-purple-700 to-purple-400',
+  'from-blue-700 to-blue-400',
+  'from-pink-600 to-pink-400',
+];
+
 export default function MobileBottomNav() {
   const location = useLocation();
   const { user } = useAppContext();
@@ -72,24 +80,24 @@ export default function MobileBottomNav() {
   }
 
   return (
-    <nav className="mobile-bottom-nav">
+    <nav className="mobile-bottom-nav mobile-gradient-glass shadow-2xl">
       <div className="flex justify-around items-center py-3 px-2">
-        {navItems.map((item) => {
+        {navItems.map((item, idx) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
-          
+          const color = COLOR_PALETTE[idx % COLOR_PALETTE.length];
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center py-2 px-3 rounded-2xl transition-all duration-300 ${
-                isActive 
-                  ? 'text-blue-600 bg-gradient-to-r from-blue-50 to-blue-100 shadow-lg scale-105' 
-                  : 'text-gray-600 hover:text-blue-600 hover:bg-white/50 hover:scale-105'
-              }`}
+              className={`flex flex-col items-center py-2 px-3 rounded-2xl transition-all duration-300 mobile-hover-lift mobile-active-scale
+                ${isActive
+                  ? `bg-gradient-to-br ${color} text-white shadow-2xl scale-110 border-2 border-white/60`
+                  : 'text-white/80 hover:text-white/100 hover:bg-white/10'}`}
+              style={{ minWidth: 64 }}
             >
-              <Icon size={20} className="mb-1" />
-              <span className="text-xs font-semibold">{item.label}</span>
+              <Icon size={22} className="mb-1 drop-shadow-lg" />
+              <span className="text-xs font-bold tracking-wide drop-shadow">{item.label}</span>
             </Link>
           );
         })}
