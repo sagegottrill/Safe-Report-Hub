@@ -34,6 +34,8 @@ import {
   HelpCircle
 } from 'lucide-react';
 import EnhancedReportForm from '../report/EnhancedReportForm';
+import MobileReportForm from './MobileReportForm';
+import { toast } from '@/components/ui/sonner';
 
 const COLOR_PALETTE = [
   'from-green-600 to-green-400', // Deep green
@@ -44,7 +46,7 @@ const COLOR_PALETTE = [
 ];
 
 export default function MobileDashboard() {
-  const { user, reports, logout } = useAppContext();
+  const { user, reports, logout, submitReport } = useAppContext();
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -280,7 +282,23 @@ export default function MobileDashboard() {
       {showReportModal && (
         <div className="mobile-modal" onClick={() => setShowReportModal(false)}>
           <div className="mobile-modal-content mobile-scale-in" onClick={e => e.stopPropagation()}>
-            <EnhancedReportForm onSubmit={() => {}} onClose={() => setShowReportModal(false)} />
+            <MobileReportForm
+              onSubmit={data => {
+                submitReport({
+                  type: data.sector,
+                  impact: [data.category],
+                  description: data.description,
+                  urgency: 'medium',
+                  isAnonymous: false,
+                  perpetrator: '',
+                  date: new Date().toISOString(),
+                  platform: 'mobile',
+                });
+                toast.success('Report submitted!');
+                setShowReportModal(false);
+              }}
+              onClose={() => setShowReportModal(false)}
+            />
           </div>
         </div>
       )}

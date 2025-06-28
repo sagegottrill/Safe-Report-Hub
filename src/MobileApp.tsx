@@ -143,8 +143,8 @@ function MobileAppContent() {
             } 
           />
           
-          {/* Catch all */}
-          <Route path="*" element={<MobileWrapper><NotFound /></MobileWrapper>} />
+          {/* All other routes redirect to home/dashboard */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </MobileLayout>
     </Router>

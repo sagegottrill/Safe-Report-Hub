@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
 import { ArrowLeft, FileText, AlertTriangle, CheckCircle } from 'lucide-react';
+import MobileSectorSelector from './MobileSectorSelector';
+import MobileCategorySelector from './MobileCategorySelector';
 
 const REPORT_TYPES = [
   { id: 'gender_based_violence', label: 'Gender-Based Violence', icon: AlertTriangle, color: 'text-red-600' },
@@ -20,61 +22,34 @@ const URGENCY_LEVELS = [
   { id: 'high', label: 'High', color: 'bg-red-100 text-red-800' }
 ];
 
-export default function MobileReportForm() {
+export default function MobileReportForm({ onSubmit, onClose }: { onSubmit: (data: any) => void; onClose?: () => void }) {
   const navigate = useNavigate();
   const { submitReport, user } = useAppContext();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [sector, setSector] = useState('');
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     type: '',
-    description: '',
     urgency: 'medium',
     isAnonymous: false,
     perpetrator: '',
     impact: [] as string[]
   });
 
+  const canSubmit = sector && category && description.length > 10;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
-    try {
-      const reportData = {
-        type: formData.type,
-        description: formData.description,
-        urgency: formData.urgency,
-        isAnonymous: formData.isAnonymous,
-        perpetrator: formData.perpetrator,
-        impact: formData.impact,
-        date: new Date().toISOString(),
-        platform: 'mobile',
-        status: 'new' as const
-      };
-
-      const reportId = submitReport(reportData);
-      setSuccess(true);
-      
-      // Reset form
-      setTimeout(() => {
-        setFormData({
-          type: '',
-          description: '',
-          urgency: 'medium',
-          isAnonymous: false,
-          perpetrator: '',
-          impact: []
-        });
-        setStep(1);
-        setSuccess(false);
-        navigate('/');
-      }, 3000);
-    } catch (error) {
-      console.error('Error submitting report:', error);
-    } finally {
-      setLoading(false);
-    }
+    if (!canSubmit) return;
+    setSubmitting(true);
+    await onSubmit({ sector, category, description });
+    setSubmitting(false);
+    if (onClose) onClose();
   };
 
   const updateFormData = (field: string, value: any) => {
@@ -138,31 +113,8 @@ export default function MobileReportForm() {
         {step === 1 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-gray-900">What type of incident?</h2>
-            <div className="grid grid-cols-1 gap-3">
-              {REPORT_TYPES.map((type) => {
-                const Icon = type.icon;
-                return (
-                  <button
-                    key={type.id}
-                    type="button"
-                    onClick={() => {
-                      updateFormData('type', type.id);
-                      setStep(2);
-                    }}
-                    className={`p-4 border rounded-lg text-left transition-colors ${
-                      formData.type === type.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <Icon className={`w-5 h-5 mr-3 ${type.color}`} />
-                      <span className="font-medium">{type.label}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            <MobileSectorSelector value={sector} onChange={setSector} />
+            {sector && <MobileCategorySelector sector={sector} value={category} onChange={setCategory} />}
           </div>
         )}
 
@@ -175,8 +127,8 @@ export default function MobileReportForm() {
                 Description
               </label>
               <textarea
-                value={formData.description}
-                onChange={(e) => updateFormData('description', e.target.value)}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className="mobile-input min-h-[120px] resize-none"
                 placeholder="Please provide details about what happened..."
                 required
@@ -216,7 +168,7 @@ export default function MobileReportForm() {
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                disabled={!formData.description.trim()}
+                disabled={!description.trim()}
                 className="mobile-button-primary flex-1 disabled:opacity-50"
               >
                 Next
@@ -265,10 +217,10 @@ export default function MobileReportForm() {
               </button>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !canSubmit || submitting}
                 className="mobile-button-primary flex-1 disabled:opacity-50"
               >
-                {loading ? 'Submitting...' : 'Submit Report'}
+                {submitting ? 'Submitting...' : 'Submit Report'}
               </button>
             </div>
           </div>
