@@ -104,7 +104,8 @@ export default function MobileProfile() {
 
   const handleLogout = () => {
     setShowLogoutConfirm(false);
-    window.location.href = '/logout';
+    logout();
+    window.location.href = '/auth';
   };
 
   return (

@@ -102,7 +102,6 @@ function MobileAppContent() {
           
           {/* Auth route */}
           <Route path="/auth" element={<MobileWrapper><AuthPage /></MobileWrapper>} />
-          <Route path="/logout" element={<MobileWrapper><MobileLogout /></MobileWrapper>} />
           
           {/* Protected routes */}
           <Route 

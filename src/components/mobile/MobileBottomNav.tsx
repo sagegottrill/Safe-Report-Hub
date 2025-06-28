@@ -129,7 +129,7 @@ export default function MobileBottomNav() {
         {/* Logout Button */}
         {user && (
           <button
-            onClick={() => window.location.href = '/logout'}
+            onClick={() => { logout(); window.location.href = '/auth'; }}
             className="flex flex-col items-center justify-center py-2 px-4 rounded-2xl transition-all duration-200 hover:bg-red-50 active:scale-95"
           >
             <LogOut className="w-6 h-6 mb-1 text-red-500" />

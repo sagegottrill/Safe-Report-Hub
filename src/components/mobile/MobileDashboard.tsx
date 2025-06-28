@@ -45,7 +45,7 @@ export default function MobileDashboard() {
     }
   }, [reports]);
 
-  // Enhanced Stats with better data
+  // Stats
   const stats = [
     {
       label: 'Total Reports',
@@ -53,17 +53,13 @@ export default function MobileDashboard() {
       icon: FileText,
       color: COLORS.emerald,
       bg: COLORS.mint,
-      trend: '+12%',
-      description: 'This month'
     },
     {
-      label: 'Resolved Cases',
+      label: 'Resolved',
       value: reports.filter(r => r.status === 'resolved').length,
       icon: CheckCircle,
       color: COLORS.jade,
       bg: COLORS.sage,
-      trend: '+8%',
-      description: 'Success rate'
     },
     {
       label: 'My Reports',
@@ -71,21 +67,17 @@ export default function MobileDashboard() {
       icon: User,
       color: COLORS.forest,
       bg: COLORS.mint,
-      trend: '+5%',
-      description: 'Your activity'
     },
     {
-      label: 'Urgent Cases',
+      label: 'Urgent',
       value: reports.filter(r => r.urgency === 'high' || r.urgency === 'critical').length,
       icon: AlertTriangle,
       color: '#e74c3c',
       bg: '#fdf2f2',
-      trend: '-3%',
-      description: 'Needs attention'
     },
   ];
 
-  // Quick Actions with enhanced design
+  // Quick Actions
   const quickActions = [
     {
       label: 'Submit Report',
@@ -121,42 +113,24 @@ export default function MobileDashboard() {
     },
   ];
 
-  // Recent Activity with enhanced details
-  const recentReports = reports.slice(0, 5).map(report => ({
-    ...report,
-    priority: report.urgency === 'critical' ? 'Critical' : 
-              report.urgency === 'high' ? 'High' : 
-              report.urgency === 'medium' ? 'Medium' : 'Low',
-    priorityColor: report.urgency === 'critical' ? 'text-red-600 bg-red-100' :
-                   report.urgency === 'high' ? 'text-orange-600 bg-orange-100' :
-                   report.urgency === 'medium' ? 'text-yellow-600 bg-yellow-100' :
-                   'text-green-600 bg-green-100'
-  }));
+  // Recent Activity
+  const recentReports = reports.slice(0, 5);
 
   return (
     <div className="min-h-screen bg-[#f9fafb] font-sans px-4 py-6 pb-24">
-      {/* Welcome Header */}
+      {/* Welcome Card */}
       <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-[#2ecc71] flex items-center justify-center shadow-lg">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-[#1b4332]">
-                Welcome{user ? `, ${user.name?.split(' ')[0]}` : ''}!
-              </h1>
-              <p className="text-slate-600 text-sm">Your safety is our priority</p>
-            </div>
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-14 h-14 rounded-full bg-[#2ecc71] flex items-center justify-center shadow-lg">
+            <Shield className="w-7 h-7 text-white" />
           </div>
-          <div className="text-right">
-            <p className="text-xs text-slate-500">Today</p>
-            <p className="text-sm font-semibold text-[#1b4332]">
-              {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-            </p>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold text-[#1b4332] mb-1">
+              Welcome{user ? `, ${user.name?.split(' ')[0]}` : ''}!
+            </h1>
+            <p className="text-slate-600 text-sm">Your safety is our priority</p>
           </div>
         </div>
-        
         <button
           className="w-full py-4 px-6 rounded-2xl font-semibold text-white bg-[#2ecc71] shadow-lg text-lg active:scale-95 transition-all hover:bg-[#27ae60]"
           onClick={() => setShowReportModal(true)}
@@ -168,49 +142,35 @@ export default function MobileDashboard() {
         </button>
       </div>
 
-      {/* Enhanced Stats Grid */}
-      <div className="mb-6">
+      {/* Stats Card */}
+      <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
         <h2 className="text-lg font-bold text-[#1b4332] mb-4">Community Overview</h2>
         <div className="grid grid-cols-2 gap-4">
-          {stats.map((stat, index) => (
+          {stats.map(stat => (
             <div
               key={stat.label}
-              className="bg-white rounded-2xl shadow-md border border-[#e0e0e0] p-4 hover:shadow-lg transition-all"
+              className="rounded-2xl bg-[#f9fafb] shadow flex flex-col items-center py-4 px-2 border border-[#e0e0e0] hover:bg-[#e8f5e9] transition-all"
+              style={{ border: `1.5px solid ${stat.bg}` }}
             >
-              <div className="flex items-center justify-between mb-3">
-                <div 
-                  className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm"
-                  style={{ backgroundColor: stat.bg }}
-                >
-                  <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
-                </div>
-                <div className="text-right">
-                  <span className={`text-xs font-semibold ${
-                    stat.trend.startsWith('+') ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {stat.trend}
-                  </span>
-                </div>
-              </div>
-              <div className="text-2xl font-bold text-[#1b4332] mb-1">{stat.value}</div>
-              <div className="text-sm font-semibold text-[#1b4332] mb-1">{stat.label}</div>
-              <div className="text-xs text-slate-500">{stat.description}</div>
+              <stat.icon className="w-6 h-6 mb-1" style={{ color: stat.color }} />
+              <div className="text-xl font-bold text-[#1b4332]">{stat.value}</div>
+              <div className="text-xs text-slate-500 font-medium mt-1 text-center">{stat.label}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="mb-6">
+      {/* Quick Actions Card */}
+      <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
         <h2 className="text-lg font-bold text-[#1b4332] mb-4">Quick Actions</h2>
         <div className="space-y-3">
-          {quickActions.map((action, index) => {
+          {quickActions.map(action => {
             const Icon = action.icon;
             return (
               <button
                 key={action.label}
                 onClick={action.onClick}
-                className="w-full bg-white rounded-2xl shadow-md border border-[#e0e0e0] p-4 flex items-center justify-between hover:bg-[#e8f5e9] active:scale-95 transition-all"
+                className="w-full rounded-2xl bg-[#f9fafb] shadow-md border border-[#e0e0e0] p-4 flex items-center justify-between hover:bg-[#e8f5e9] active:scale-95 transition-all"
               >
                 <div className="flex items-center gap-4">
                   <div 
@@ -231,49 +191,28 @@ export default function MobileDashboard() {
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div className="mb-6">
+      {/* Recent Activity Card */}
+      <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-[#1b4332]">Recent Activity</h2>
           <button className="text-[#2ecc71] text-sm font-semibold hover:text-[#27ae60] transition-colors">
             View All
           </button>
         </div>
-        
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl shadow-md border border-[#e0e0e0] p-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#e8f5e9] animate-pulse" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-[#e8f5e9] rounded animate-pulse" />
-                    <div className="h-3 bg-[#e8f5e9] rounded w-2/3 animate-pulse" />
-                  </div>
-                </div>
-              </div>
+              <div key={i} className="rounded-2xl bg-[#e8f5e9] h-14 animate-pulse" />
             ))}
           </div>
         ) : recentReports.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-md border border-[#e0e0e0] p-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-[#e8f5e9] flex items-center justify-center mx-auto mb-4">
-              <Activity className="w-8 h-8 text-[#2ecc71]" />
-            </div>
-            <h3 className="text-lg font-semibold text-[#1b4332] mb-2">No Recent Reports</h3>
-            <p className="text-slate-600 text-sm mb-4">Be the first to submit a report and help your community</p>
-            <button
-              onClick={() => setShowReportModal(true)}
-              className="bg-[#2ecc71] text-white px-6 py-2 rounded-xl font-semibold hover:bg-[#27ae60] transition-colors"
-            >
-              Submit First Report
-            </button>
-          </div>
+          <div className="text-center text-slate-400 py-8">No recent reports yet.</div>
         ) : (
           <div className="space-y-3">
             {recentReports.map((report, i) => (
               <button
                 key={report.id || i}
-                className="w-full bg-white rounded-2xl shadow-md border border-[#e0e0e0] p-4 flex items-center justify-between hover:bg-[#e8f5e9] active:scale-95 transition-all"
+                className="w-full rounded-2xl bg-[#f9fafb] shadow-md border border-[#e0e0e0] p-4 flex items-center justify-between hover:bg-[#e8f5e9] active:scale-95 transition-all"
                 onClick={() => setSelectedReport(report)}
               >
                 <div className="flex items-center gap-4">
@@ -291,9 +230,6 @@ export default function MobileDashboard() {
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${report.priorityColor}`}>
-                    {report.priority}
-                  </span>
                   <span className="text-xs text-slate-500 capitalize">{report.status}</span>
                 </div>
               </button>
@@ -318,7 +254,7 @@ export default function MobileDashboard() {
                   date: new Date().toISOString(),
                   platform: 'mobile',
                 });
-                toast.success('Report submitted successfully!');
+                toast.success('Report submitted!');
                 setShowReportModal(false);
               }}
               onClose={() => setShowReportModal(false)}
@@ -331,51 +267,13 @@ export default function MobileDashboard() {
       {selectedReport && (
         <div className="mobile-modal" onClick={() => setSelectedReport(null)}>
           <div className="mobile-modal-content mobile-scale-in" onClick={e => e.stopPropagation()}>
-            <div className="mb-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-[#e8f5e9] flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-[#2ecc71]" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-[#1b4332]">{selectedReport.type}</h3>
-                  <p className="text-sm text-slate-500 capitalize">{selectedReport.status}</p>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="bg-[#e8f5e9] rounded-2xl p-4">
-                  <h4 className="font-semibold text-[#1b4332] mb-2">Description</h4>
-                  <p className="text-slate-700 text-sm leading-relaxed">{selectedReport.description}</p>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white border border-[#e0e0e0] rounded-2xl p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Calendar className="w-4 h-4 text-slate-400" />
-                      <span className="text-xs text-slate-500">Date</span>
-                    </div>
-                    <p className="text-sm font-semibold text-[#1b4332]">
-                      {new Date(selectedReport.date).toLocaleDateString()}
-                    </p>
-                  </div>
-                  
-                  <div className="bg-white border border-[#e0e0e0] rounded-2xl p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <TrendingUp className="w-4 h-4 text-slate-400" />
-                      <span className="text-xs text-slate-500">Priority</span>
-                    </div>
-                    <p className="text-sm font-semibold text-[#1b4332]">{selectedReport.priority}</p>
-                  </div>
-                </div>
-              </div>
+            <div className="mb-4">
+              <h3 className="text-xl font-bold text-[#1b4332] mb-1">{selectedReport.type}</h3>
+              <div className="text-xs text-slate-500 mb-2 capitalize">{selectedReport.status}</div>
+              <div className="text-sm text-slate-700 mb-2">{selectedReport.description}</div>
+              <div className="text-xs text-slate-400">{new Date(selectedReport.date).toLocaleString()}</div>
             </div>
-            
-            <button 
-              className="w-full py-3 px-4 rounded-2xl bg-[#2ecc71] text-white font-semibold hover:bg-[#27ae60] transition-colors" 
-              onClick={() => setSelectedReport(null)}
-            >
-              Close
-            </button>
+            <button className="mobile-button mobile-button-secondary w-full" onClick={() => setSelectedReport(null)}>Close</button>
           </div>
         </div>
       )}
