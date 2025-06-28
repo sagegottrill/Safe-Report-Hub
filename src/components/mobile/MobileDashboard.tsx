@@ -31,19 +31,24 @@ import {
   Flame,
   Award,
   Globe2,
-  HelpCircle
+  HelpCircle,
+  User
 } from 'lucide-react';
 import EnhancedReportForm from '../report/EnhancedReportForm';
 import MobileReportForm from './MobileReportForm';
 import { toast } from '@/components/ui/sonner';
 
-const COLOR_PALETTE = [
-  'from-green-600 to-green-400', // Deep green
-  'from-yellow-500 to-yellow-300', // Gold
-  'from-purple-700 to-purple-400', // Purple
-  'from-blue-700 to-blue-400', // Blue
-  'from-pink-600 to-pink-400', // Pink
-];
+const COLORS = {
+  emerald: '#2ecc71',
+  mint: '#e8f5e9',
+  forest: '#1b4332',
+  sage: '#a8cbaa',
+  jade: '#00a676',
+  slate: '#2c3e50',
+  gray: '#e0e0e0',
+  white: '#fff',
+  bg: '#f9fafb',
+};
 
 export default function MobileDashboard() {
   const { user, reports, logout, submitReport } = useAppContext();
@@ -64,118 +69,61 @@ export default function MobileDashboard() {
     }
   }, [reports]);
 
-  // Bold, beautiful stats
+  // Stats
   const stats = [
     {
-      label: 'Total Reports',
+      label: 'Reports Sent',
       value: reports.length,
       icon: FileText,
-      gradient: COLOR_PALETTE[0],
-    },
-    {
-      label: 'Urgent',
-      value: reports.filter(r => r.urgency === 'high' || r.urgency === 'critical').length,
-      icon: Flame,
-      gradient: COLOR_PALETTE[1],
+      color: COLORS.emerald,
+      bg: COLORS.mint,
     },
     {
       label: 'Resolved',
       value: reports.filter(r => r.status === 'resolved').length,
       icon: CheckCircle,
-      gradient: COLOR_PALETTE[2],
+      color: COLORS.jade,
+      bg: COLORS.sage,
     },
     {
-      label: 'Community',
-      value: 42,
-      icon: Globe2,
-      gradient: COLOR_PALETTE[3],
+      label: 'My Reports',
+      value: reports.filter(r => r.reporterId === user?.id).length,
+      icon: User,
+      color: COLORS.forest,
+      bg: COLORS.mint,
     },
   ];
 
-  // Bold quick actions
+  // Quick Actions
   const quickActions = [
     {
-      title: 'New Report',
+      label: 'New Report',
       icon: Plus,
-      color: COLOR_PALETTE[0],
+      color: COLORS.emerald,
       onClick: () => setShowReportModal(true),
     },
     {
-      title: 'Track',
-      icon: Search,
-      color: COLOR_PALETTE[1],
-      onClick: () => setActiveTab('track'),
+      label: 'My Reports',
+      icon: FileText,
+      color: COLORS.sage,
+      onClick: () => toast.info('Coming soon!'),
     },
     {
-      title: 'Emergency',
-      icon: Phone,
-      color: COLOR_PALETTE[2],
-      onClick: () => window.open('tel:112'),
-    },
-    {
-      title: 'FAQ',
+      label: 'Help',
       icon: HelpCircle,
-      color: COLOR_PALETTE[3],
+      color: COLORS.jade,
       onClick: () => window.location.href = '/faq',
+    },
+    {
+      label: 'Logout',
+      icon: LogOut,
+      color: COLORS.forest,
+      onClick: logout,
     },
   ];
 
-  // Role-based admin actions
-  const adminActions: Array<{
-    title: string;
-    description: string;
-    icon: any;
-    path: string;
-    color: string;
-    requiresAuth?: boolean;
-    badge?: string;
-  }> = user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'country_admin' ? [
-    {
-      title: 'Admin Panel',
-      description: 'Manage reports and users',
-      icon: Settings,
-      path: '/admin',
-      color: 'bg-gradient-to-r from-indigo-600 to-indigo-700'
-    },
-    {
-      title: 'Analytics',
-      description: 'View detailed statistics',
-      icon: BarChart3,
-      path: '/analytics',
-      color: 'bg-gradient-to-r from-teal-600 to-teal-700'
-    }
-  ] : [];
-
-  // Governor actions
-  const governorActions: Array<{
-    title: string;
-    description: string;
-    icon: any;
-    path: string;
-    color: string;
-    requiresAuth?: boolean;
-    badge?: string;
-  }> = user?.role === 'governor' || user?.role === 'governor_admin' ? [
-    {
-      title: 'Governor Panel',
-      description: 'Multi-sectoral management',
-      icon: Shield,
-      path: '/governor',
-      color: 'bg-gradient-to-r from-orange-600 to-orange-700'
-    }
-  ] : [];
-
-  // Recent reports with enhanced details
-  const recentReports = reports.slice(0, 5).map(report => ({
-    ...report,
-    priority: report.urgency === 'critical' ? 'Critical' : 
-              report.urgency === 'high' ? 'High' : 
-              report.urgency === 'medium' ? 'Medium' : 'Low',
-    priorityColor: report.urgency === 'critical' ? 'text-red-600 bg-red-100' :
-                   report.urgency === 'high' ? 'text-orange-600 bg-orange-100' :
-                   report.urgency === 'medium' ? 'text-yellow-600 bg-yellow-100' :
-                   'text-green-600 bg-green-100'
-  }));
+  // Recent Activity
+  const recentReports = reports.slice(0, 5);
 
   // Pull-to-refresh handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -205,78 +153,82 @@ export default function MobileDashboard() {
   };
 
   return (
-    <div className="mobile-container py-4">
-      {/* Beautiful App Header */}
-      <div className="mobile-card mobile-gradient-glass mb-6 p-6 flex items-center gap-4 shadow-2xl">
-        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center shadow-xl">
-          <Shield className="w-8 h-8 text-white" />
+    <div className="min-h-screen bg-[#f9fafb] font-sans px-0 pb-24">
+      {/* Hero Panel */}
+      <div className="w-full px-5 pt-6 pb-4 bg-gradient-to-br from-[#e8f5e9] to-[#f9fafb] rounded-b-3xl shadow-md flex flex-col items-center mb-4 animate-fade-in">
+        <div className="w-14 h-14 rounded-full bg-[#2ecc71] flex items-center justify-center shadow-lg mb-2">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="12" fill="#fff"/><path d="M7 13l3 3 7-7" stroke="#2ecc71" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </div>
-        <div>
-          <h1 className="text-2xl font-extrabold text-green-700 tracking-tight mb-1">SafeReport Hub</h1>
-          <div className="text-xs font-semibold text-blue-900/80">Empowering Communities</div>
-        </div>
+        <h1 className="text-2xl font-bold text-[#1b4332] mb-1 tracking-tight">Welcome{user ? `, ${user.name}` : ''}!</h1>
+        <p className="text-slate-600 text-base mb-2">Submit reports, track status, and help your community.</p>
+        <button
+          className="w-full max-w-xs py-3 px-6 rounded-2xl font-semibold text-white bg-[#2ecc71] shadow-lg text-lg mt-2 active:scale-95 transition-all"
+          onClick={() => setShowReportModal(true)}
+        >
+          + Submit a Report
+        </button>
       </div>
 
-      {/* Bold Stats Grid */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        {stats.map((stat, i) => (
-          <div key={stat.label} className={`mobile-card p-5 bg-gradient-to-br ${stat.gradient} text-white flex flex-col items-center justify-center shadow-2xl`}>
-            <stat.icon className="w-7 h-7 mb-2 opacity-90" />
-            <div className="text-2xl font-extrabold drop-shadow-lg">{stat.value}</div>
-            <div className="text-xs font-semibold opacity-90">{stat.label}</div>
+      {/* Status Cards */}
+      <div className="grid grid-cols-3 gap-3 px-4 mb-6">
+        {stats.map(stat => (
+          <div
+            key={stat.label}
+            className="rounded-2xl bg-white shadow-md flex flex-col items-center py-4 px-2 animate-fade-in"
+            style={{ border: `1.5px solid ${stat.bg}` }}
+          >
+            <stat.icon className="w-6 h-6 mb-1" style={{ color: stat.color }} />
+            <div className="text-xl font-bold text-[#1b4332]">{stat.value}</div>
+            <div className="text-xs text-slate-500 font-medium mt-1 text-center">{stat.label}</div>
           </div>
         ))}
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        {quickActions.map((action, i) => (
+      <div className="grid grid-cols-2 gap-4 px-4 mb-8">
+        {quickActions.map(action => (
           <button
-            key={action.title}
-            className={`mobile-card p-4 bg-gradient-to-br ${action.color} text-white flex flex-col items-center justify-center mobile-hover-lift mobile-active-scale shadow-xl`}
+            key={action.label}
+            className="rounded-2xl bg-white shadow-md flex flex-col items-center justify-center py-5 active:scale-95 transition-all border border-[#e0e0e0] hover:bg-[#e8f5e9]"
+            style={{ color: action.color }}
             onClick={action.onClick}
           >
-            <action.icon className="w-6 h-6 mb-1" />
-            <span className="font-bold text-sm">{action.title}</span>
+            <action.icon className="w-7 h-7 mb-1" />
+            <span className="font-semibold text-base text-slate-700 mt-1" style={{ color: COLORS.slate }}>{action.label}</span>
           </button>
         ))}
       </div>
 
-      {/* Recent Reports Section (as before, but with glassy cards) */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="mobile-subtitle text-green-700">Recent Reports</h2>
-        </div>
+      {/* Recent Activity */}
+      <div className="px-4">
+        <h2 className="text-lg font-bold text-[#1b4332] mb-3">Recent Activity</h2>
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="mobile-list-item mobile-loading-skeleton h-16" />
+              <div key={i} className="rounded-xl bg-[#e8f5e9] h-14 animate-pulse" />
             ))}
           </div>
         ) : recentReports.length === 0 ? (
-          <div className="text-center text-gray-400 py-8">No recent reports</div>
+          <div className="text-center text-slate-400 py-8">No recent reports yet.</div>
         ) : (
-          <div className="mobile-list">
+          <div className="space-y-3">
             {recentReports.map((report, i) => (
-              <SwipeableReportCard
+              <div
                 key={report.id || i}
-                report={report}
-                onSwipe={dir => handleSwipe(report, dir)}
-                onTap={() => setSelectedReport(report)}
-              />
+                className="rounded-xl bg-white shadow flex items-center px-4 py-3 border border-[#e0e0e0] hover:bg-[#e8f5e9] active:scale-95 transition-all"
+                onClick={() => setSelectedReport(report)}
+              >
+                <Activity className="w-5 h-5 mr-3 text-[#2ecc71]" />
+                <div className="flex-1">
+                  <div className="font-semibold text-slate-700 text-sm">{report.type}</div>
+                  <div className="text-xs text-slate-400">{new Date(report.date).toLocaleDateString()}</div>
+                </div>
+                <div className="text-xs font-bold text-[#2ecc71] ml-2 capitalize">{report.status}</div>
+              </div>
             ))}
           </div>
         )}
       </div>
-
-      {/* Floating Action Button (FAB) */}
-      <button
-        className="fixed bottom-24 right-6 z-50 mobile-button mobile-button-primary mobile-bounce-in shadow-xl"
-        onClick={() => setShowReportModal(true)}
-        aria-label="Quick Report"
-      >
-        <Plus className="w-6 h-6" />
-      </button>
 
       {/* Report Modal Overlay */}
       {showReportModal && (
@@ -303,81 +255,17 @@ export default function MobileDashboard() {
         </div>
       )}
 
-      {/* Emergency Quick Access */}
-      <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-xl p-4 text-white mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold">Emergency Quick Access</h3>
-          <AlertTriangle className="w-5 h-5" />
-        </div>
-        <p className="text-red-100 text-sm mb-3">
-          Immediate assistance for urgent situations
-        </p>
-        <div className="flex space-x-2">
-          <button className="flex-1 bg-white/20 rounded-lg py-2 px-3 text-sm font-medium">
-            Call Emergency
-          </button>
-          <button className="flex-1 bg-white/20 rounded-lg py-2 px-3 text-sm font-medium">
-            Report Urgent
-          </button>
-        </div>
-      </div>
-
-      {/* Community Stats */}
-      <div className="bg-white rounded-xl p-4 border border-gray-200 mb-6">
-        <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-          <Globe className="w-5 h-5 mr-2 text-green-600" />
-          Community Impact
-        </h3>
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-2xl font-bold text-green-600">
-              {reports.filter(r => r.status === 'resolved').length}
-            </p>
-            <p className="text-xs text-gray-600">Cases Resolved</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-blue-600">
-              {reports.length}
-            </p>
-            <p className="text-xs text-gray-600">Total Reports</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-purple-600">
-              {Math.round((reports.filter(r => r.status === 'resolved').length / reports.length) * 100) || 0}%
-            </p>
-            <p className="text-xs text-gray-600">Success Rate</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Call to Action for non-authenticated users */}
-      {!user && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 text-center border border-blue-200">
-          <Heart className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-          <h3 className="font-semibold text-blue-900 mb-2">Join Our Safety Network</h3>
-          <p className="text-blue-700 mb-4 text-sm">
-            Create an account to submit reports, track your cases, and help keep our community safe
-          </p>
-          <Link
-            to="/auth"
-            className="bg-blue-600 text-white px-6 py-3 rounded-full font-semibold inline-block shadow-lg"
-          >
-            Get Started Now
-          </Link>
-        </div>
-      )}
-
       {/* Report Details Modal Overlay */}
       {selectedReport && (
         <div className="mobile-modal" onClick={() => setSelectedReport(null)}>
-          <div className="mobile-modal-content mobile-scale-in mobile-gradient-glass" onClick={e => e.stopPropagation()}>
+          <div className="mobile-modal-content mobile-scale-in" onClick={e => e.stopPropagation()}>
             <div className="mb-4">
-              <h3 className="mobile-title">{selectedReport.type}</h3>
-              <div className="text-xs text-gray-500 mb-2">{selectedReport.priority}</div>
-              <div className="text-sm text-gray-700 mb-2">{selectedReport.description}</div>
-              <div className="text-xs text-gray-400">{new Date(selectedReport.date).toLocaleString()}</div>
+              <h3 className="text-xl font-bold text-[#1b4332] mb-1">{selectedReport.type}</h3>
+              <div className="text-xs text-slate-500 mb-2 capitalize">{selectedReport.status}</div>
+              <div className="text-sm text-slate-700 mb-2">{selectedReport.description}</div>
+              <div className="text-xs text-slate-400">{new Date(selectedReport.date).toLocaleString()}</div>
             </div>
-            <button className="mobile-button mobile-button-secondary" onClick={() => setSelectedReport(null)}>Close</button>
+            <button className="mobile-button mobile-button-secondary w-full" onClick={() => setSelectedReport(null)}>Close</button>
           </div>
         </div>
       )}

@@ -14,13 +14,17 @@ import {
   Users
 } from 'lucide-react';
 
-const COLOR_PALETTE = [
-  'from-green-600 to-green-400',
-  'from-yellow-500 to-yellow-300',
-  'from-purple-700 to-purple-400',
-  'from-blue-700 to-blue-400',
-  'from-pink-600 to-pink-400',
-];
+const COLORS = {
+  emerald: '#2ecc71',
+  mint: '#e8f5e9',
+  forest: '#1b4332',
+  sage: '#a8cbaa',
+  jade: '#00a676',
+  slate: '#2c3e50',
+  gray: '#e0e0e0',
+  white: '#fff',
+  bg: '#f9fafb',
+};
 
 export default function MobileBottomNav() {
   const location = useLocation();
@@ -80,28 +84,41 @@ export default function MobileBottomNav() {
   }
 
   return (
-    <nav className="mobile-bottom-nav mobile-gradient-glass shadow-2xl">
-      <div className="flex justify-around items-center py-3 px-2">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-[#e0e0e0] shadow-lg">
+      <div className="flex items-center justify-around px-2 py-3">
         {navItems.map((item, idx) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
-          const color = COLOR_PALETTE[idx % COLOR_PALETTE.length];
+          const color = COLORS[Object.keys(COLORS)[idx % Object.keys(COLORS).length]];
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center py-2 px-3 rounded-2xl transition-all duration-300 mobile-hover-lift mobile-active-scale
-                ${isActive
-                  ? `bg-gradient-to-br ${color} text-white shadow-2xl scale-110 border-2 border-white/60`
-                  : 'text-white/80 hover:text-white/100 hover:bg-white/10'}`}
-              style={{ minWidth: 64 }}
+              className={`flex flex-col items-center justify-center py-2 px-4 rounded-2xl transition-all duration-200 ${
+                isActive 
+                  ? 'bg-[#e8f5e9] shadow-md scale-105' 
+                  : 'hover:bg-[#f9fafb] active:scale-95'
+              }`}
             >
-              <Icon size={22} className="mb-1 drop-shadow-lg" />
-              <span className="text-xs font-bold tracking-wide drop-shadow">{item.label}</span>
+              <Icon 
+                className={`w-6 h-6 mb-1 transition-colors ${
+                  isActive ? 'text-[#2ecc71]' : 'text-[#2c3e50]'
+                }`} 
+              />
+              <span 
+                className={`text-xs font-semibold transition-colors ${
+                  isActive ? 'text-[#1b4332]' : 'text-[#2c3e50]/70'
+                }`}
+              >
+                {item.label}
+              </span>
+              {isActive && (
+                <div className="w-1 h-1 rounded-full bg-[#2ecc71] mt-1 animate-pulse" />
+              )}
             </Link>
           );
         })}
       </div>
-    </nav>
+    </div>
   );
 } 
