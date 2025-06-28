@@ -135,7 +135,7 @@ export default function MobileDashboard() {
         <div className="mb-2">
           <h2 className="text-lg font-bold text-[#1b4332]">Welcome back, {user?.name || user?.email || 'User'}</h2>
           <p className="text-slate-600 text-sm">Your Personal Dashboard - Official Government Crisis Reporting Platform</p>
-          <p className="text-xs text-slate-500 mt-1">User ID: {user?.id} | Email: {user?.email}</p>
+          <p className="text-xs text-slate-500 mt-1">User ID: {user?.id}</p>
         </div>
         <button
           className="w-full py-4 px-6 rounded-2xl font-semibold text-white bg-[#2ecc71] shadow-lg text-lg active:scale-95 transition-all hover:bg-[#27ae60] mt-2"

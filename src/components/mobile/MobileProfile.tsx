@@ -70,179 +70,95 @@ const MobileProfile: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#e0f7fa] via-[#f1f8e9] to-[#e3f2fd] p-4">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="bg-nigerian-green p-2 rounded-full shadow">
-            <img src="/shield.svg" alt="BICTDA Report Logo" className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-nigerian-green">BICTDA Report</h1>
-            <p className="text-xs text-gray-500">Profile</p>
-          </div>
+    <div className="min-h-screen bg-[#f9fafb] font-sans px-4 py-6 pb-24 flex flex-col items-center">
+      {/* Header Card */}
+      <div className="bg-gradient-to-r from-nigerian-green to-emerald-500 text-white rounded-3xl shadow-lg px-6 pt-4 pb-3 mb-6 w-full max-w-md flex flex-col items-center">
+        <div className="bg-white/20 p-2 rounded-full shadow mb-2 flex items-center justify-center">
+          <User className="h-7 w-7 text-white" />
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => window.history.back()}
-          className="text-nigerian-green hover:bg-nigerian-green/10"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="text-xl font-extrabold leading-tight tracking-wide">Profile</span>
+          <span className="text-base font-normal leading-tight">Account Details</span>
+        </div>
       </div>
 
-      {/* Profile Card */}
-      <Card className="w-full bg-white rounded-2xl shadow-xl border-0 overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-nigerian-green to-emerald-500 text-white pb-6">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-bold">Profile Information</CardTitle>
-            {!isEditing && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditing(true)}
-                className="text-white hover:bg-white/20"
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                Edit
-              </Button>
-            )}
+      {/* Profile Content Card */}
+      <div className="bg-white rounded-3xl shadow-lg p-6 w-full max-w-md mb-6">
+        {/* Avatar Section */}
+        <div className="flex items-center justify-center mb-5">
+          <div className="w-20 h-20 bg-gradient-to-br from-nigerian-green to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+            <User className="h-10 w-10 text-white" />
           </div>
-        </CardHeader>
-        <CardContent className="p-6 space-y-6">
-          {/* Avatar Section */}
-          <div className="flex items-center justify-center mb-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-nigerian-green to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
-              <User className="h-10 w-10 text-white" />
-            </div>
+        </div>
+        {/* Name Section */}
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+            <User className="h-4 w-4" />
+            Full Name
           </div>
-
-          {/* Name Section */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
-              <User className="h-4 w-4" />
-              Full Name
-            </div>
-            {isEditing ? (
-              <input
-                type="text"
-                value={editedName}
-                onChange={(e) => setEditedName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green"
-              />
-            ) : (
-              <p className="text-lg font-semibold text-gray-800">{user?.name || 'Not provided'}</p>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* Email Section */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
-              <Mail className="h-4 w-4" />
-              Email Address
-            </div>
-            <p className="text-lg font-semibold text-gray-800">{user?.email}</p>
-          </div>
-
-          <Separator />
-
-          {/* Phone Section */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
-              <Phone className="h-4 w-4" />
-              Phone Number
-            </div>
-            {isEditing ? (
-              <input
-                type="tel"
-                value={editedPhone}
-                onChange={(e) => setEditedPhone(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green"
-              />
-            ) : (
-              <p className="text-lg font-semibold text-gray-800">{user?.phone || 'Not provided'}</p>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* Role Section */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
-              <Shield className="h-4 w-4" />
-              Role
-            </div>
-            <Badge className={`${getRoleColor(user?.role || 'user')} font-semibold`}>
-              {getRoleDisplay(user?.role || 'user')}
-            </Badge>
-          </div>
-
-          {/* Edit Actions */}
-          {isEditing && (
-            <div className="flex gap-3 pt-4">
-              <Button
-                onClick={handleSave}
-                className="flex-1 bg-gradient-to-r from-nigerian-green to-emerald-500 text-white font-semibold rounded-lg shadow-lg"
-              >
-                <Check className="h-4 w-4 mr-2" />
-                Save Changes
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleCancel}
-                className="flex-1 border-gray-300 text-gray-700 font-semibold rounded-lg"
-              >
-                <X className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
-            </div>
+          {isEditing ? (
+            <input
+              type="text"
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-2xl bg-white shadow focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green"
+            />
+          ) : (
+            <p className="text-lg font-semibold text-gray-800">{user?.name || 'Not provided'}</p>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Settings Card */}
-      <Card className="w-full bg-white rounded-2xl shadow-xl border-0 mt-6">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-bold text-gray-800 flex items-center gap-2">
-            <Settings className="h-5 w-5 text-nigerian-green" />
-            Account Settings
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 space-y-4">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-gray-700 hover:bg-gray-50 rounded-lg py-3"
-          >
-            <Settings className="h-4 w-4 mr-3 text-gray-500" />
-            Preferences
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-gray-700 hover:bg-gray-50 rounded-lg py-3"
-          >
-            <Shield className="h-4 w-4 mr-3 text-gray-500" />
-            Privacy & Security
-          </Button>
-          <Separator />
-          <Button
-            variant="ghost"
-            onClick={handleLogout}
-            className="w-full justify-start text-red-600 hover:bg-red-50 rounded-lg py-3"
-          >
-            <LogOut className="h-4 w-4 mr-3" />
-            Sign Out
-          </Button>
-        </CardContent>
-      </Card>
+        </div>
+        <Separator />
+        {/* Email Section */}
+        <div className="space-y-2 mb-4 mt-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+            <Shield className="h-4 w-4" />
+            User ID
+          </div>
+          <p className="text-lg font-semibold text-gray-800">{user?.id}</p>
+        </div>
+        <Separator />
+        {/* Phone Section */}
+        <div className="space-y-2 mb-4 mt-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+            <Phone className="h-4 w-4" />
+            Phone Number
+          </div>
+          {isEditing ? (
+            <input
+              type="tel"
+              value={editedPhone}
+              onChange={(e) => setEditedPhone(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-2xl bg-white shadow focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green"
+            />
+          ) : (
+            <p className="text-lg font-semibold text-gray-800">{user?.phone || 'Not provided'}</p>
+          )}
+        </div>
+        {/* Edit Actions */}
+        {isEditing && (
+          <div className="flex gap-3 pt-4">
+            <Button
+              onClick={handleSave}
+              className="flex-1 bg-gradient-to-r from-nigerian-green to-emerald-500 text-white font-semibold rounded-2xl shadow-lg"
+            >
+              <Check className="h-4 w-4 mr-2" />
+              Save Changes
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              className="flex-1 border-gray-300 text-gray-700 font-semibold rounded-2xl"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Footer */}
-      <div className="mt-8 text-center">
-        <p className="text-xs text-gray-400">
-          &copy; {new Date().getFullYear()} BICTDA Report. All rights reserved.
-        </p>
+      <div className="text-center text-xs text-gray-400 mt-8 mb-2 w-full fixed bottom-0 left-0 bg-[#f9fafb] py-3 z-40">
+        © 2025 BICTDA Report - All rights reserved.
       </div>
     </div>
   );

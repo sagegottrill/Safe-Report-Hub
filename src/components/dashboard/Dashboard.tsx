@@ -136,7 +136,7 @@ const Dashboard: React.FC = () => {
                   {t('Welcome back')}, {user?.name || user?.email}
                 </h1>
                 <p className="text-text-light">Your Personal Dashboard - Official Government Crisis Reporting Platform</p>
-                <p className="text-xs text-gray-500 mt-1">User ID: {user?.id} | Email: {user?.email}</p>
+                <p className="text-xs text-gray-500 mt-1">User ID: {user?.id}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">

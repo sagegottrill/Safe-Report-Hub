@@ -86,6 +86,19 @@ function generateCaseId() {
   return id;
 }
 
+// Utility to generate a meaningful user ID
+function generateMeaningfulUserId(name: string, role: string) {
+  const timestamp = Date.now().toString().slice(-4); // Last 4 digits of timestamp
+  const namePrefix = name ? name.substring(0, 2).toUpperCase() : 'US';
+  const rolePrefix = role === 'admin' ? 'AD' : role === 'governor' ? 'GV' : role === 'user' ? 'US' : 'OF';
+  const randomChars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let randomPart = '';
+  for (let i = 0; i < 3; i++) {
+    randomPart += randomChars[Math.floor(Math.random() * randomChars.length)];
+  }
+  return `${namePrefix}${rolePrefix}${timestamp}${randomPart}`;
+}
+
 // Utility to generate a 4-digit PIN
 function generatePin() {
   return Math.floor(1000 + Math.random() * 9000).toString();
@@ -94,7 +107,7 @@ function generatePin() {
 // Predefined admin users
 const PREDEFINED_ADMINS = [
   {
-    id: 'admin-daniel',
+    id: 'DAAADM1234XYZ',
     email: 'admin.daniel@bictdareport.com',
     password: '123456',
     name: 'Daniel Admin',
@@ -102,7 +115,7 @@ const PREDEFINED_ADMINS = [
     role: 'admin'
   },
   {
-    id: 'admin-sj',
+    id: 'SJAADM5678ABC',
     email: 'admin.s.j@bictdareport.com',
     password: '123456',
     name: 'S.J. Admin',
@@ -167,7 +180,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         else if (/^governor\./i.test(firebaseUser.email.trim())) role = 'governor';
         const displayName = extractFirstName(firebaseUser.email, firebaseUser.displayName);
         const mockUser: User = {
-          id: '1',
+          id: generateMeaningfulUserId(displayName, role),
           email: firebaseUser.email,
           name: displayName,
           role,
@@ -236,7 +249,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
         // Fallback: Create a mock user for demo purposes
         const mockUser: User = {
-          id: 'demo-user',
+          id: generateMeaningfulUserId(email.split('@')[0], 'user'),
           email: email,
           name: email.split('@')[0],
           role: 'user',
@@ -277,7 +290,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
         // Fallback: Create a mock user for demo purposes
         const mockUser: User = {
-          id: 'demo-user',
+          id: generateMeaningfulUserId(name, 'user'),
           email: email,
           name: name,
           phone: phone,
