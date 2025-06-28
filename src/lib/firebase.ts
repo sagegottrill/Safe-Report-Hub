@@ -1,6 +1,17 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signOut, 
+  onAuthStateChanged, 
+  User as FirebaseUser,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile
+} from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
 // Your Firebase configuration
 const firebaseConfig = {
@@ -162,6 +173,102 @@ export const onAuthStateChange = (callback: (user: any) => void) => {
       callback(null);
     }
   });
+};
+
+// Cloud-based user management functions
+export const createUserWithEmail = async (email: string, password: string, name: string, phone: string) => {
+  if (!auth) {
+    throw new Error('Firebase is not configured. Please set up your environment variables.');
+  }
+
+  try {
+    // Create user with Firebase Auth
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
+
+    // Update profile with display name
+    await updateProfile(firebaseUser, {
+      displayName: name
+    });
+
+    // Save additional user data to Firestore
+    const userData = {
+      email: email,
+      name: name,
+      phone: phone,
+      role: 'user',
+      createdAt: new Date().toISOString(),
+      lastLogin: new Date().toISOString(),
+    };
+
+    if (db) {
+      await setDoc(doc(db, 'users', firebaseUser.uid), userData);
+    }
+
+    return {
+      id: firebaseUser.uid,
+      email: email,
+      name: name,
+      phone: phone,
+      role: 'user' as const,
+    };
+  } catch (error: any) {
+    console.error('User creation error:', error);
+    throw new Error(error.message || 'Failed to create user');
+  }
+};
+
+export const signInWithEmail = async (email: string, password: string) => {
+  if (!auth) {
+    throw new Error('Firebase is not configured. Please set up your environment variables.');
+  }
+
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
+    
+    // Update last login time
+    if (db) {
+      await setDoc(doc(db, 'users', firebaseUser.uid), {
+        lastLogin: new Date().toISOString(),
+      }, { merge: true });
+    }
+
+    return await convertFirebaseUser(firebaseUser);
+  } catch (error: any) {
+    console.error('Email sign-in error:', error);
+    throw new Error(error.message || 'Failed to sign in');
+  }
+};
+
+export const resetPassword = async (email: string) => {
+  if (!auth) {
+    throw new Error('Firebase is not configured. Please set up your environment variables.');
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+  } catch (error: any) {
+    console.error('Password reset error:', error);
+    throw new Error(error.message || 'Failed to send password reset email');
+  }
+};
+
+// Check if user exists in cloud
+export const checkUserExists = async (email: string) => {
+  if (!db) {
+    return false;
+  }
+
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('email', '==', email));
+    const querySnapshot = await getDocs(q);
+    return !querySnapshot.empty;
+  } catch (error) {
+    console.error('Error checking user existence:', error);
+    return false;
+  }
 };
 
 // Export auth and db for other components

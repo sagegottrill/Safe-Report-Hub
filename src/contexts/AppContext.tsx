@@ -1,6 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
-import { onAuthStateChange, signOutUser } from '@/lib/firebase';
+import { 
+  onAuthStateChange, 
+  signOutUser, 
+  createUserWithEmail, 
+  signInWithEmail, 
+  resetPassword,
+  checkUserExists 
+} from '@/lib/firebase';
 
 interface User {
   id: string;
@@ -186,8 +193,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-    if (email && password.length >= 6) {
-        // First check predefined admin users
+      if (email && password.length >= 6) {
+        // First check predefined admin users (fallback)
         const predefinedAdmin = PREDEFINED_ADMINS.find(u => u.email === email && u.password === password);
         if (predefinedAdmin) {
           setUser(predefinedAdmin);
@@ -198,17 +205,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           return true;
         }
 
-        // Then check localStorage users array for a match
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        const found = users.find((u: any) => u.email === email && u.password === password);
-        if (found) {
-          setUser(found);
-          localStorage.setItem('user', JSON.stringify(found));
+        // Try cloud-based authentication
+        try {
+          const user = await signInWithEmail(email, password);
+          setUser(user);
+          localStorage.setItem('user', JSON.stringify(user));
           setCurrentView('dashboard');
           localStorage.setItem('currentView', 'dashboard');
-          toast({ title: 'Login successful', description: `Welcome, ${found.name || found.email}!` });
-      return true;
-    }
+          toast({ title: 'Login successful', description: `Welcome, ${user.name}!` });
+          return true;
+        } catch (cloudError: any) {
+          console.log('Cloud auth failed, trying local storage fallback:', cloudError.message);
+          
+          // Fallback to localStorage users
+          const users = JSON.parse(localStorage.getItem('users') || '[]');
+          const found = users.find((u: any) => u.email === email && u.password === password);
+          if (found) {
+            setUser(found);
+            localStorage.setItem('user', JSON.stringify(found));
+            setCurrentView('dashboard');
+            localStorage.setItem('currentView', 'dashboard');
+            toast({ title: 'Login successful', description: `Welcome, ${found.name || found.email}!` });
+            return true;
+          }
+        }
 
         toast({ title: 'Login failed', description: 'Invalid email or password' });
         return false;
@@ -218,35 +238,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (error) {
       console.error('Login error:', error);
       toast({ title: 'Login failed', description: 'An error occurred during login' });
-    return false;
+      return false;
     }
   };
 
   const register = async (email: string, password: string, name: string, phone: string): Promise<boolean> => {
     try {
-    if (email && password.length >= 6 && name && phone) {
-      const displayName = extractFirstName(email, name);
-        const userId = Math.random().toString(36).substr(2, 9);
-        const mockUser = { 
-          id: userId, 
-          email, 
-          name: displayName, 
-          phone, 
-          role: 'user' as const, 
-          password 
-        };
-        // Store user in users array
-        const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        const updatedUsers = [...existingUsers, mockUser];
-        localStorage.setItem('users', JSON.stringify(updatedUsers));
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      setCurrentView('dashboard');
-      localStorage.setItem('currentView', 'dashboard');
-      toast({ title: 'Registration successful', description: 'Account created!' });
-      return true;
-    }
-    return false;
+      if (email && password.length >= 6 && name && phone) {
+        // Check if user already exists in cloud
+        const userExists = await checkUserExists(email);
+        if (userExists) {
+          toast({ title: 'Registration failed', description: 'User already exists' });
+          return false;
+        }
+
+        // Try cloud-based registration
+        try {
+          const user = await createUserWithEmail(email, password, name, phone);
+          setUser(user);
+          localStorage.setItem('user', JSON.stringify(user));
+          setCurrentView('dashboard');
+          localStorage.setItem('currentView', 'dashboard');
+          toast({ title: 'Registration successful', description: 'Account created in cloud!' });
+          return true;
+        } catch (cloudError: any) {
+          console.log('Cloud registration failed, using local storage fallback:', cloudError.message);
+          
+          // Fallback to localStorage registration
+          const displayName = extractFirstName(email, name);
+          const userId = Math.random().toString(36).substr(2, 9);
+          const mockUser = { 
+            id: userId, 
+            email, 
+            name: displayName, 
+            phone, 
+            role: 'user' as const, 
+            password 
+          };
+          
+          const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+          const updatedUsers = [...existingUsers, mockUser];
+          localStorage.setItem('users', JSON.stringify(updatedUsers));
+          
+          setUser(mockUser);
+          localStorage.setItem('user', JSON.stringify(mockUser));
+          setCurrentView('dashboard');
+          localStorage.setItem('currentView', 'dashboard');
+          toast({ title: 'Registration successful', description: 'Account created locally!' });
+          return true;
+        }
+      }
+      return false;
     } catch (error) {
       console.error('Registration error:', error);
       toast({ title: 'Registration failed', description: 'An error occurred during registration' });
@@ -269,17 +311,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return true;
       }
 
-      // Check localStorage users
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = users.find((u: any) => u.email === email);
-      
-      if (user) {
-        await sendPasswordEmail(email, user.password);
-        toast({ title: 'Password Recovery', description: 'Password recovery email sent!' });
+      // Try cloud-based password reset
+      try {
+        await resetPassword(email);
+        toast({ title: 'Password Reset', description: 'Password reset email sent to your email address!' });
         return true;
-      } else {
-        toast({ title: 'Error', description: 'Email not found in our system' });
-        return false;
+      } catch (cloudError: any) {
+        console.log('Cloud password reset failed, trying local storage fallback:', cloudError.message);
+        
+        // Fallback to localStorage users
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const user = users.find((u: any) => u.email === email);
+        
+        if (user) {
+          await sendPasswordEmail(email, user.password);
+          toast({ title: 'Password Recovery', description: 'Password recovery email sent!' });
+          return true;
+        } else {
+          toast({ title: 'Error', description: 'Email not found in our system' });
+          return false;
+        }
       }
     } catch (error) {
       console.error('Password recovery error:', error);
