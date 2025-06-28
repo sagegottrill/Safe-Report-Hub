@@ -126,38 +126,79 @@ export default function MobileDashboard() {
           </div>
           <div className="flex-1">
             <h1 className="text-xl font-bold text-[#1b4332] mb-1">
-              Welcome{user ? `, ${user.name?.split(' ')[0]}` : ''}!
+              BICTDA Report
             </h1>
-            <p className="text-slate-600 text-sm">Your safety is our priority</p>
+            <p className="text-xs text-[#1b4332] font-semibold">Official Platform</p>
+            <p className="text-xs text-[#1b4332]">Secure Government</p>
           </div>
         </div>
+        <div className="mb-2">
+          <h2 className="text-lg font-bold text-[#1b4332]">Welcome back, {user?.name || user?.email || 'User'}</h2>
+          <p className="text-slate-600 text-sm">Your Personal Dashboard - Official Government Crisis Reporting Platform</p>
+          <p className="text-xs text-slate-500 mt-1">User ID: {user?.id} | Email: {user?.email}</p>
+        </div>
         <button
-          className="w-full py-4 px-6 rounded-2xl font-semibold text-white bg-[#2ecc71] shadow-lg text-lg active:scale-95 transition-all hover:bg-[#27ae60]"
+          className="w-full py-4 px-6 rounded-2xl font-semibold text-white bg-[#2ecc71] shadow-lg text-lg active:scale-95 transition-all hover:bg-[#27ae60] mt-2"
           onClick={() => setShowReportModal(true)}
         >
-          <div className="flex items-center justify-center gap-2">
-            <Plus className="w-5 h-5" />
-            Submit a New Report
+          <div className="flex flex-col items-center justify-center gap-1">
+            <span className="flex items-center gap-2"><Plus className="w-5 h-5" /> New Report</span>
+            <span className="text-xs font-medium">Secure & Encrypted • Anonymous Reporting Available • Government Verified</span>
           </div>
         </button>
       </div>
 
       {/* Stats Card */}
       <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
-        <h2 className="text-lg font-bold text-[#1b4332] mb-4">Community Overview</h2>
-        <div className="grid grid-cols-2 gap-4">
-          {stats.map(stat => (
-            <div
-              key={stat.label}
-              className="rounded-2xl bg-[#f9fafb] shadow flex flex-col items-center py-4 px-2 border border-[#e0e0e0] hover:bg-[#e8f5e9] transition-all"
-              style={{ border: `1.5px solid ${stat.bg}` }}
-            >
-              <stat.icon className="w-6 h-6 mb-1" style={{ color: stat.color }} />
-              <div className="text-xl font-bold text-[#1b4332]">{stat.value}</div>
-              <div className="text-xs text-slate-500 font-medium mt-1 text-center">{stat.label}</div>
-            </div>
-          ))}
+        <h2 className="text-lg font-bold text-[#1b4332] mb-4">Your Reports</h2>
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="rounded-2xl bg-[#f9fafb] shadow flex flex-col items-center py-4 px-2 border border-[#e0e0e0]">
+            <div className="text-xl font-bold text-[#1b4332]">{reports.length}</div>
+            <div className="text-xs text-slate-500 font-medium mt-1 text-center">Reports you've submitted</div>
+          </div>
+          <div className="rounded-2xl bg-[#f9fafb] shadow flex flex-col items-center py-4 px-2 border border-[#e0e0e0]">
+            <div className="text-xl font-bold text-[#1b4332]">{reports.filter(r => r.status === 'under-review').length}</div>
+            <div className="text-xs text-slate-500 font-medium mt-1 text-center">Under Review</div>
+          </div>
+          <div className="rounded-2xl bg-[#f9fafb] shadow flex flex-col items-center py-4 px-2 border border-[#e0e0e0]">
+            <div className="text-xl font-bold text-[#1b4332]">{reports.filter(r => r.status === 'resolved').length}</div>
+            <div className="text-xs text-slate-500 font-medium mt-1 text-center">Resolved</div>
+          </div>
         </div>
+        <div className="mt-2 text-sm text-[#1b4332] font-semibold">Track the status of your submitted incident reports</div>
+        {reports.length === 0 && (
+          <div className="mt-2 text-xs text-gray-500 font-medium">Protected<br/>You haven't submitted any reports yet<br/>This is your personal dashboard. Submit your first incident report to get started.</div>
+        )}
+        <button
+          className="w-full py-3 px-6 rounded-2xl font-semibold text-white bg-[#2ecc71] shadow-lg text-base active:scale-95 transition-all hover:bg-[#27ae60] mt-4"
+          onClick={() => setShowReportModal(true)}
+        >
+          Submit Your First Report
+        </button>
+      </div>
+
+      {/* Community Dashboard Card */}
+      <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
+        <h2 className="text-lg font-bold text-[#1b4332] mb-2">Community Dashboard</h2>
+        <p className="text-slate-600 text-sm mb-2">View community insights and impact metrics</p>
+        <button
+          className="w-full py-3 px-6 rounded-2xl font-semibold text-[#2ecc71] bg-[#e8f5e9] shadow text-base active:scale-95 transition-all hover:bg-[#d0f0e0]"
+          onClick={() => toast.info('Community Dashboard coming soon!')}
+        >
+          View Community Dashboard
+        </button>
+      </div>
+
+      {/* Multi-Sectoral Reports Card */}
+      <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
+        <h2 className="text-lg font-bold text-[#1b4332] mb-2">Multi-Sectoral Reports</h2>
+        <p className="text-slate-600 text-sm mb-2">Access enhanced reporting for all sectors</p>
+        <button
+          className="w-full py-3 px-6 rounded-2xl font-semibold text-[#2ecc71] bg-[#e8f5e9] shadow text-base active:scale-95 transition-all hover:bg-[#d0f0e0]"
+          onClick={() => toast.info('Multi-Sectoral Form coming soon!')}
+        >
+          Multi-Sectoral Form
+        </button>
       </div>
 
       {/* Quick Actions Card */}
@@ -277,6 +318,11 @@ export default function MobileDashboard() {
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <div className="text-center text-xs text-gray-400 mt-8 mb-2 w-full fixed bottom-0 left-0 bg-[#f9fafb] py-3 z-40">
+        © 2025 BICTDA Report - All rights reserved.
+      </div>
     </div>
   );
 } 

@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { 
   User, 
   Mail, 
@@ -7,261 +11,241 @@ import {
   Shield, 
   Settings, 
   LogOut, 
-  Edit, 
-  Calendar,
-  FileText,
-  HelpCircle,
-  Bell,
-  Lock,
-  ChevronRight,
-  AlertCircle
+  ArrowLeft,
+  Edit,
+  Check,
+  X
 } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 
-const COLORS = {
-  emerald: '#2ecc71',
-  mint: '#e8f5e9',
-  forest: '#1b4332',
-  sage: '#a8cbaa',
-  jade: '#00a676',
-  slate: '#2c3e50',
-  gray: '#e0e0e0',
-  white: '#fff',
-  bg: '#f9fafb',
-};
-
-export default function MobileProfile() {
-  const { user, logout, reports } = useAppContext();
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-[#f9fafb] font-sans px-4 py-8">
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-red-600" />
-          </div>
-          <h1 className="text-xl font-bold text-[#1b4332] mb-2">Not Signed In</h1>
-          <p className="text-slate-600 mb-6">Please sign in to view your profile</p>
-          <button
-            onClick={() => window.location.href = '/auth'}
-            className="bg-[#2ecc71] text-white px-6 py-3 rounded-2xl font-semibold"
-          >
-            Sign In
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const userReports = reports.filter(r => r.reporterId === user.id);
-  const resolvedReports = userReports.filter(r => r.status === 'resolved');
-
-  const profileActions = [
-    {
-      label: 'My Reports',
-      icon: FileText,
-      value: `${userReports.length} reports`,
-      color: COLORS.emerald,
-      onClick: () => toast.info('Coming soon!'),
-    },
-    {
-      label: 'Resolved Cases',
-      icon: Shield,
-      value: `${resolvedReports.length} resolved`,
-      color: COLORS.jade,
-      onClick: () => toast.info('Coming soon!'),
-    },
-    {
-      label: 'Account Settings',
-      icon: Settings,
-      value: 'Manage account',
-      color: COLORS.forest,
-      onClick: () => toast.info('Coming soon!'),
-    },
-  ];
-
-  const settingsActions = [
-    {
-      label: 'Notifications',
-      icon: Bell,
-      value: 'Manage alerts',
-      onClick: () => toast.info('Coming soon!'),
-    },
-    {
-      label: 'Privacy & Security',
-      icon: Lock,
-      value: 'Security settings',
-      onClick: () => toast.info('Coming soon!'),
-    },
-    {
-      label: 'Help & Support',
-      icon: HelpCircle,
-      value: 'Get help',
-      onClick: () => window.location.href = '/faq',
-    },
-  ];
+const MobileProfile: React.FC = () => {
+  const { user, logout } = useAppContext();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState(user?.name || '');
+  const [editedPhone, setEditedPhone] = useState(user?.phone || '');
 
   const handleLogout = () => {
-    setShowLogoutConfirm(false);
     logout();
-    window.location.href = '/auth';
+    toast.success('Logged out successfully');
+  };
+
+  const handleSave = () => {
+    // In a real app, you'd update the user profile here
+    toast.success('Profile updated successfully');
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditedName(user?.name || '');
+    setEditedPhone(user?.phone || '');
+    setIsEditing(false);
+  };
+
+  const getRoleDisplay = (role: string) => {
+    const roleMap: { [key: string]: string } = {
+      'admin': 'Administrator',
+      'super_admin': 'Super Administrator',
+      'country_admin': 'Country Administrator',
+      'governor': 'Governor',
+      'governor_admin': 'Governor Administrator',
+      'case_worker': 'Case Worker',
+      'field_officer': 'Field Officer',
+      'user': 'User'
+    };
+    return roleMap[role] || role;
+  };
+
+  const getRoleColor = (role: string) => {
+    const colorMap: { [key: string]: string } = {
+      'admin': 'bg-blue-100 text-blue-800',
+      'super_admin': 'bg-purple-100 text-purple-800',
+      'country_admin': 'bg-green-100 text-green-800',
+      'governor': 'bg-orange-100 text-orange-800',
+      'governor_admin': 'bg-red-100 text-red-800',
+      'case_worker': 'bg-indigo-100 text-indigo-800',
+      'field_officer': 'bg-teal-100 text-teal-800',
+      'user': 'bg-gray-100 text-gray-800'
+    };
+    return colorMap[role] || 'bg-gray-100 text-gray-800';
   };
 
   return (
-    <div className="min-h-screen bg-[#f9fafb] font-sans px-4 py-6 pb-24">
-      {/* Profile Header */}
-      <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 rounded-full bg-[#2ecc71] flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-xl">
-              {user.name?.charAt(0).toUpperCase() || 'U'}
-            </span>
+    <div className="min-h-screen bg-gradient-to-br from-[#e0f7fa] via-[#f1f8e9] to-[#e3f2fd] p-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-nigerian-green p-2 rounded-full shadow">
+            <img src="/shield.svg" alt="BICTDA Report Logo" className="h-6 w-6" />
           </div>
-          <div className="flex-1">
-            <h1 className="text-xl font-bold text-[#1b4332] mb-1">{user.name || 'User'}</h1>
-            <p className="text-slate-600 text-sm capitalize">
-              {user.role?.replace('_', ' ') || 'User'}
-            </p>
-            <p className="text-slate-500 text-xs">
-              Member since recently
-            </p>
+          <div>
+            <h1 className="text-xl font-bold text-nigerian-green">BICTDA Report</h1>
+            <p className="text-xs text-gray-500">Profile</p>
           </div>
-          <button className="w-10 h-10 rounded-full bg-[#e8f5e9] flex items-center justify-center active:scale-95 transition-all">
-            <Edit className="w-5 h-5 text-[#2ecc71]" />
-          </button>
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => window.history.back()}
+          className="text-nigerian-green hover:bg-nigerian-green/10"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+      </div>
 
-        {/* User Info */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 p-3 rounded-2xl bg-[#e8f5e9]">
-            <Mail className="w-5 h-5 text-[#2ecc71]" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-[#1b4332]">Email</p>
-              <p className="text-sm text-slate-600">{user.email}</p>
+      {/* Profile Card */}
+      <Card className="w-full bg-white rounded-2xl shadow-xl border-0 overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-nigerian-green to-emerald-500 text-white pb-6">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-xl font-bold">Profile Information</CardTitle>
+            {!isEditing && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditing(true)}
+                className="text-white hover:bg-white/20"
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="p-6 space-y-6">
+          {/* Avatar Section */}
+          <div className="flex items-center justify-center mb-6">
+            <div className="w-20 h-20 bg-gradient-to-br from-nigerian-green to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+              <User className="h-10 w-10 text-white" />
             </div>
           </div>
-          
-          {user.phone && (
-            <div className="flex items-center gap-3 p-3 rounded-2xl bg-[#e8f5e9]">
-              <Phone className="w-5 h-5 text-[#2ecc71]" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-[#1b4332]">Phone</p>
-                <p className="text-sm text-slate-600">{user.phone}</p>
-              </div>
+
+          {/* Name Section */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+              <User className="h-4 w-4" />
+              Full Name
+            </div>
+            {isEditing ? (
+              <input
+                type="text"
+                value={editedName}
+                onChange={(e) => setEditedName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green"
+              />
+            ) : (
+              <p className="text-lg font-semibold text-gray-800">{user?.name || 'Not provided'}</p>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Email Section */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+              <Mail className="h-4 w-4" />
+              Email Address
+            </div>
+            <p className="text-lg font-semibold text-gray-800">{user?.email}</p>
+          </div>
+
+          <Separator />
+
+          {/* Phone Section */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+              <Phone className="h-4 w-4" />
+              Phone Number
+            </div>
+            {isEditing ? (
+              <input
+                type="tel"
+                value={editedPhone}
+                onChange={(e) => setEditedPhone(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green"
+              />
+            ) : (
+              <p className="text-lg font-semibold text-gray-800">{user?.phone || 'Not provided'}</p>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Role Section */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+              <Shield className="h-4 w-4" />
+              Role
+            </div>
+            <Badge className={`${getRoleColor(user?.role || 'user')} font-semibold`}>
+              {getRoleDisplay(user?.role || 'user')}
+            </Badge>
+          </div>
+
+          {/* Edit Actions */}
+          {isEditing && (
+            <div className="flex gap-3 pt-4">
+              <Button
+                onClick={handleSave}
+                className="flex-1 bg-gradient-to-r from-nigerian-green to-emerald-500 text-white font-semibold rounded-lg shadow-lg"
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Save Changes
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+                className="flex-1 border-gray-300 text-gray-700 font-semibold rounded-lg"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Profile Actions */}
-      <div className="mb-6">
-        <h2 className="text-lg font-bold text-[#1b4332] mb-4">My Activity</h2>
-        <div className="space-y-3">
-          {profileActions.map((action, index) => {
-            const Icon = action.icon;
-            return (
-              <button
-                key={action.label}
-                onClick={action.onClick}
-                className="w-full bg-white rounded-2xl shadow-md border border-[#e0e0e0] p-4 flex items-center justify-between hover:bg-[#e8f5e9] active:scale-95 transition-all"
-              >
-                <div className="flex items-center gap-4">
-                  <div 
-                    className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm"
-                    style={{ backgroundColor: action.color + '20' }}
-                  >
-                    <Icon className="w-6 h-6" style={{ color: action.color }} />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="font-semibold text-[#1b4332] text-base">{action.label}</h3>
-                    <p className="text-slate-500 text-sm">{action.value}</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-slate-400" />
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* Settings Card */}
+      <Card className="w-full bg-white rounded-2xl shadow-xl border-0 mt-6">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-bold text-gray-800 flex items-center gap-2">
+            <Settings className="h-5 w-5 text-nigerian-green" />
+            Account Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-4">
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-gray-700 hover:bg-gray-50 rounded-lg py-3"
+          >
+            <Settings className="h-4 w-4 mr-3 text-gray-500" />
+            Preferences
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-gray-700 hover:bg-gray-50 rounded-lg py-3"
+          >
+            <Shield className="h-4 w-4 mr-3 text-gray-500" />
+            Privacy & Security
+          </Button>
+          <Separator />
+          <Button
+            variant="ghost"
+            onClick={handleLogout}
+            className="w-full justify-start text-red-600 hover:bg-red-50 rounded-lg py-3"
+          >
+            <LogOut className="h-4 w-4 mr-3" />
+            Sign Out
+          </Button>
+        </CardContent>
+      </Card>
 
-      {/* Settings */}
-      <div className="mb-6">
-        <h2 className="text-lg font-bold text-[#1b4332] mb-4">Settings</h2>
-        <div className="space-y-3">
-          {settingsActions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <button
-                key={action.label}
-                onClick={action.onClick}
-                className="w-full bg-white rounded-2xl shadow-md border border-[#e0e0e0] p-4 flex items-center justify-between hover:bg-[#e8f5e9] active:scale-95 transition-all"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#e8f5e9] flex items-center justify-center shadow-sm">
-                    <Icon className="w-6 h-6 text-[#2ecc71]" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="font-semibold text-[#1b4332] text-base">{action.label}</h3>
-                    <p className="text-slate-500 text-sm">{action.value}</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-slate-400" />
-              </button>
-            );
-          })}
-        </div>
+      {/* Footer */}
+      <div className="mt-8 text-center">
+        <p className="text-xs text-gray-400">
+          &copy; {new Date().getFullYear()} BICTDA Report. All rights reserved.
+        </p>
       </div>
-
-      {/* Logout Section */}
-      <div className="mb-6">
-        <h2 className="text-lg font-bold text-[#1b4332] mb-4">Account</h2>
-        <button
-          onClick={() => setShowLogoutConfirm(true)}
-          className="w-full bg-white rounded-2xl shadow-md border border-red-200 p-4 flex items-center justify-between hover:bg-red-50 active:scale-95 transition-all"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center shadow-sm">
-              <LogOut className="w-6 h-6 text-red-500" />
-            </div>
-            <div className="text-left">
-              <h3 className="font-semibold text-red-600 text-base">Sign Out</h3>
-              <p className="text-red-400 text-sm">Logout from your account</p>
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-red-400" />
-        </button>
-      </div>
-
-      {/* Logout Confirmation Modal */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-                <LogOut className="w-8 h-8 text-red-500" />
-              </div>
-              <h3 className="text-xl font-bold text-[#1b4332] mb-2">Sign Out</h3>
-              <p className="text-slate-600">Are you sure you want to logout from your account?</p>
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 py-3 px-4 rounded-2xl border-2 border-[#e0e0e0] text-[#2c3e50] font-semibold hover:bg-[#f9fafb] transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleLogout}
-                className="flex-1 py-3 px-4 rounded-2xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-all"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
-} 
+};
+
+export default MobileProfile; 

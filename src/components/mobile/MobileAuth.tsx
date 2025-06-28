@@ -1,289 +1,250 @@
 import React, { useState } from 'react';
+import { Shield, Mail, Lock, User, Phone } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { useAppContext } from '@/contexts/AppContext';
-import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle, Phone } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 
-const COLORS = {
-  emerald: '#2ecc71',
-  mint: '#e8f5e9',
-  forest: '#1b4332',
-  sage: '#a8cbaa',
-  jade: '#00a676',
-  slate: '#2c3e50',
-  gray: '#e0e0e0',
-  white: '#fff',
-  bg: '#f9fafb',
-};
-
-export default function MobileAuth() {
-  const { login, register, user } = useAppContext();
+const MobileAuth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const { login, register, forgotPassword } = useAppContext();
 
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    phone: '',
-  });
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors: { [key: string]: string } = {};
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    if (!isLogin) {
-      if (!formData.name.trim()) {
-        newErrors.name = 'Name is required';
-      }
-
-      if (!formData.phone.trim()) {
-        newErrors.phone = 'Phone number is required';
-      } else if (!/^\d{7,}$/.test(formData.phone.replace(/\s/g, ''))) {
-        newErrors.phone = 'Please enter a valid phone number';
-      }
-
-      if (formData.password !== formData.confirmPassword) {
-        newErrors.confirmPassword = 'Passwords do not match';
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) return;
-
     setLoading(true);
-    try {
-      if (isLogin) {
-        await login(formData.email, formData.password);
-        toast.success('Welcome back!');
-      } else {
-        await register(formData.email, formData.password, formData.name, formData.phone);
-        toast.success('Account created successfully!');
-      }
-    } catch (error: any) {
-      toast.error(error.message || 'Authentication failed');
-    } finally {
-      setLoading(false);
+    const success = await login(email, password);
+    setLoading(false);
+    if (!success) {
+      toast.error('Login failed. Please check your credentials.');
     }
   };
 
-  const InputField = ({ 
-    label, 
-    type, 
-    value, 
-    onChange, 
-    placeholder, 
-    icon: Icon, 
-    error, 
-    showToggle = false,
-    onToggle = () => {}
-  }: {
-    label: string;
-    type: string;
-    value: string;
-    onChange: (value: string) => void;
-    placeholder: string;
-    icon: any;
-    error?: string;
-    showToggle?: boolean;
-    onToggle?: () => void;
-  }) => (
-    <div className="space-y-2">
-      <label className="block text-sm font-semibold text-[#1b4332]">
-        {label}
-      </label>
-      <div className="relative">
-        <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-          <Icon className="w-5 h-5 text-[#2c3e50]/60" />
-        </div>
-        <input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className={`w-full pl-12 pr-12 py-4 rounded-2xl border-2 font-sans text-base transition-all ${
-            error 
-              ? 'border-red-300 bg-red-50 focus:border-red-400' 
-              : 'border-[#e0e0e0] bg-white focus:border-[#2ecc71] focus:ring-2 focus:ring-[#e8f5e9]'
-          }`}
-        />
-        {showToggle && (
-          <button
-            type="button"
-            onClick={onToggle}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2"
-          >
-            {type === 'password' ? (
-              <EyeOff className="w-5 h-5 text-[#2c3e50]/60" />
-            ) : (
-              <Eye className="w-5 h-5 text-[#2c3e50]/60" />
-            )}
-          </button>
-        )}
-      </div>
-      {error && (
-        <div className="flex items-center gap-2 text-red-600 text-sm">
-          <AlertCircle className="w-4 h-4" />
-          {error}
-        </div>
-      )}
-    </div>
-  );
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match.');
+      return;
+    }
+    setLoading(true);
+    const success = await register(email, password, name, phone);
+    setLoading(false);
+    if (!success) {
+      toast.error('Registration failed. Please try again.');
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) {
+      toast.error('Please enter your email address');
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const success = await forgotPassword(forgotEmail);
+      if (success) {
+        setForgotPasswordOpen(false);
+        setForgotEmail('');
+        toast.success('Password recovery email sent!');
+      }
+    } catch (error) {
+      toast.error('Failed to send password recovery email');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#f9fafb] font-sans px-4 py-8">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 rounded-full bg-[#2ecc71] flex items-center justify-center mx-auto mb-4 shadow-lg">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="12" fill="#fff"/>
-            <path d="M7 13l3 3 7-7" stroke="#2ecc71" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
-        <h1 className="text-2xl font-bold text-[#1b4332] mb-2">
-          {isLogin ? 'Welcome Back' : 'Create Account'}
-        </h1>
-        <p className="text-slate-600 text-base">
-          {isLogin ? 'Sign in to your account to continue' : 'Join our community to start reporting'}
-        </p>
-      </div>
-
-      {/* Form Card */}
-      <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {!isLogin && (
-            <>
-              <InputField
-                label="Full Name"
-                type="text"
-                value={formData.name}
-                onChange={(value) => handleInputChange('name', value)}
-                placeholder="Enter your full name"
-                icon={User}
-                error={errors.name}
-              />
-              <InputField
-                label="Phone Number"
-                type="tel"
-                value={formData.phone}
-                onChange={(value) => handleInputChange('phone', value)}
-                placeholder="Enter your phone number"
-                icon={Phone}
-                error={errors.phone}
-              />
-            </>
-          )}
-
-          <InputField
-            label="Email Address"
-            type="email"
-            value={formData.email}
-            onChange={(value) => handleInputChange('email', value)}
-            placeholder="Enter your email address"
-            icon={Mail}
-            error={errors.email}
-          />
-
-          <InputField
-            label="Password"
-            type={showPassword ? 'text' : 'password'}
-            value={formData.password}
-            onChange={(value) => handleInputChange('password', value)}
-            placeholder="Enter your password"
-            icon={Lock}
-            error={errors.password}
-            showToggle={true}
-            onToggle={() => setShowPassword(!showPassword)}
-          />
-
-          {!isLogin && (
-            <InputField
-              label="Confirm Password"
-              type={showConfirmPassword ? 'text' : 'password'}
-              value={formData.confirmPassword}
-              onChange={(value) => handleInputChange('confirmPassword', value)}
-              placeholder="Confirm your password"
-              icon={Lock}
-              error={errors.confirmPassword}
-              showToggle={true}
-              onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
-            />
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-4 px-6 rounded-2xl font-semibold text-lg transition-all ${
-              loading
-                ? 'bg-[#e0e0e0] text-[#2c3e50] cursor-not-allowed'
-                : 'bg-[#2ecc71] text-white shadow-lg active:scale-95 hover:bg-[#27ae60]'
-            }`}
-          >
-            {loading ? (
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                {isLogin ? 'Signing In...' : 'Creating Account...'}
+    <div className="min-h-screen bg-gradient-to-br from-[#e0f7fa] via-[#f1f8e9] to-[#e3f2fd] flex flex-col justify-center items-center p-4">
+      <div className="w-full max-w-md mx-auto">
+        {/* Card with gradient header, logo, and app name */}
+        <div className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border-0 overflow-hidden">
+          <div className="bg-gradient-to-r from-nigerian-green to-emerald-500 text-white px-6 pt-5 pb-4 flex flex-col items-center justify-center gap-2 rounded-2xl mb-6">
+            <div className="bg-white/20 p-2 rounded-full shadow mb-1">
+              <img src="/shield.svg" alt="BICTDA Report Logo" className="h-8 w-8" />
+            </div>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-lg font-extrabold leading-tight tracking-wide">BICTDA</span>
+              <span className="text-base font-normal leading-tight">Report</span>
+            </div>
+          </div>
+          <div className="space-y-7 flex flex-col justify-center">
+            {/* Avatar for visual balance */}
+            <div className="flex items-center justify-center mb-5">
+              <div className="w-16 h-16 bg-gradient-to-br from-nigerian-green to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+                <User className="h-8 w-8 text-white" />
               </div>
+            </div>
+            {isLogin ? (
+              <>
+                <form onSubmit={handleLogin} className="w-full space-y-4">
+                  <div>
+                    <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-2"><Mail className="h-4 w-4" /> Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-2xl bg-white shadow focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green text-base mt-1 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="password" className="text-sm font-semibold flex items-center gap-2"><Lock className="h-4 w-4" /> Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-2xl bg-white shadow focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green text-base mt-1 transition-all"
+                    />
+                  </div>
+                  <Button type="submit" className="w-full py-4 px-6 rounded-2xl font-semibold text-white bg-[#2ecc71] shadow-lg text-lg active:scale-95 transition-all hover:bg-[#27ae60] mt-2" disabled={loading}>
+                    {loading ? 'Signing In...' : 'Sign In'}
+                  </Button>
+                  <div className="flex flex-col items-center gap-1 mt-2">
+                    <Button variant="link" type="button" className="text-blue-600 font-semibold p-0 h-auto min-w-0" onClick={() => setForgotPasswordOpen(true)}>
+                      Forgot Password?
+                    </Button>
+                    <span className="text-gray-500 text-sm">Don&apos;t have an account?{' '}
+                      <Button variant="link" type="button" className="text-nigerian-green font-semibold p-0 h-auto min-w-0" onClick={() => setIsLogin(false)}>
+                        Register
+                      </Button>
+                    </span>
+                  </div>
+                </form>
+                <div className="mt-4 text-xs text-gray-500 text-center">
+                  We respect your privacy. Your login details are never shared.
+                </div>
+              </>
             ) : (
-              <div className="flex items-center justify-center gap-2">
-                <CheckCircle className="w-5 h-5" />
-                {isLogin ? 'Sign In' : 'Create Account'}
-              </div>
+              <>
+                <form onSubmit={handleRegister} className="w-full space-y-4">
+                  <div>
+                    <Label htmlFor="name" className="text-sm font-semibold flex items-center gap-2"><User className="h-4 w-4" /> Full Name</Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="Enter your full name"
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-2xl bg-white shadow focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green text-base mt-1 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-2"><Mail className="h-4 w-4" /> Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-2xl bg-white shadow focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green text-base mt-1 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone" className="text-sm font-semibold flex items-center gap-2"><Phone className="h-4 w-4" /> Phone Number</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="Enter your phone number"
+                      value={phone}
+                      onChange={e => setPhone(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-2xl bg-white shadow focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green text-base mt-1 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="password" className="text-sm font-semibold flex items-center gap-2"><Lock className="h-4 w-4" /> Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Create a password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-2xl bg-white shadow focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green text-base mt-1 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="confirmPassword" className="text-sm font-semibold flex items-center gap-2"><Lock className="h-4 w-4" /> Confirm Password</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      placeholder="Confirm your password"
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-2xl bg-white shadow focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green text-base mt-1 transition-all"
+                    />
+                  </div>
+                  <Button type="submit" className="w-full py-4 px-6 rounded-2xl font-semibold text-white bg-[#2ecc71] shadow-lg text-lg active:scale-95 transition-all hover:bg-[#27ae60] mt-2" disabled={loading}>
+                    {loading ? 'Creating Account...' : 'Create Account'}
+                  </Button>
+                  <div className="flex flex-col items-center gap-1 mt-2">
+                    <span className="text-gray-500 text-sm">Already have an account?{' '}
+                      <Button variant="link" type="button" className="text-nigerian-green font-semibold p-0 h-auto min-w-0" onClick={() => setIsLogin(true)}>
+                        Sign In
+                      </Button>
+                    </span>
+                  </div>
+                </form>
+                <div className="mt-4 text-xs text-gray-500 text-center">
+                  We respect your privacy. Your registration details are never shared.
+                </div>
+              </>
             )}
-          </button>
-        </form>
-      </div>
-
-      {/* Toggle Mode */}
-      <div className="text-center">
-        <p className="text-slate-600 text-base">
-          {isLogin ? "Don't have an account?" : 'Already have an account?'}
-        </p>
-        <button
-          onClick={() => {
-            setIsLogin(!isLogin);
-            setErrors({});
-            setFormData({ name: '', email: '', password: '', confirmPassword: '', phone: '' });
-          }}
-          className="text-[#2ecc71] font-semibold text-base mt-2 hover:text-[#27ae60] transition-colors"
-        >
-          {isLogin ? 'Create Account' : 'Sign In'}
-        </button>
-      </div>
-
-      {/* Footer */}
-      <div className="text-center mt-8">
-        <p className="text-slate-500 text-sm">
-          By continuing, you agree to our Terms of Service and Privacy Policy
-        </p>
+            <Separator />
+            <div className="text-xs text-gray-400 text-center max-w-xs mx-auto pt-2">
+              Your privacy is our priority. All reports are handled with confidentiality.
+            </div>
+          </div>
+        </div>
+        {/* Forgot Password Dialog */}
+        {forgotPasswordOpen && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-xs">
+              <h3 className="text-lg font-bold mb-2 text-nigerian-green">Password Recovery</h3>
+              <p className="text-gray-600 text-sm mb-4">Enter your email address and we'll send you a password reset link.</p>
+              <Input
+                id="forgot-email"
+                type="email"
+                placeholder="Enter your email address"
+                value={forgotEmail}
+                onChange={e => setForgotEmail(e.target.value)}
+                required
+                className="mb-4"
+              />
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setForgotPasswordOpen(false)} className="flex-1">Cancel</Button>
+                <Button onClick={handleForgotPassword} disabled={forgotLoading || !forgotEmail} className="flex-1 bg-nigerian-green text-white">
+                  {forgotLoading ? 'Sending...' : 'Send Link'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
-} 
+};
+
+export default MobileAuth; 

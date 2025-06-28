@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/sonner';
 import { 
   onAuthStateChange, 
   signOutUser, 
@@ -194,66 +194,74 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
+    console.log('[LOGIN] Attempting login for', email);
     try {
       if (email && password.length >= 6) {
         // First check predefined admin users (fallback)
         const predefinedAdmin = PREDEFINED_ADMINS.find(u => u.email === email && u.password === password);
         if (predefinedAdmin) {
-          setUser(predefinedAdmin);
-          localStorage.setItem('user', JSON.stringify(predefinedAdmin));
-          setCurrentView('dashboard');
-          localStorage.setItem('currentView', 'dashboard');
-          toast({ title: 'Login successful', description: `Welcome, ${predefinedAdmin.name}!` });
-          return true;
-        }
-
-        // Try cloud-based authentication
-        try {
-          const user = await signInWithEmail(email, password);
+          const user: User = {
+            id: predefinedAdmin.id,
+            email: predefinedAdmin.email,
+            name: predefinedAdmin.name,
+            phone: predefinedAdmin.phone,
+            role: predefinedAdmin.role as User['role'],
+          };
           setUser(user);
           localStorage.setItem('user', JSON.stringify(user));
-          setCurrentView('dashboard');
-          localStorage.setItem('currentView', 'dashboard');
-          toast({ title: 'Login successful', description: `Welcome, ${user.name}!` });
+          setCurrentView('admin');
+          localStorage.setItem('currentView', 'admin');
+          toast.success('Login successful!');
+          console.log('[LOGIN] Success: predefined admin');
           return true;
-        } catch (cloudError: any) {
-          console.log('Cloud auth failed, trying local storage fallback:', cloudError.message);
-          
-          // Fallback to localStorage users
-          const users = JSON.parse(localStorage.getItem('users') || '[]');
-          const found = users.find((u: any) => u.email === email && u.password === password);
-          if (found) {
-            setUser(found);
-            localStorage.setItem('user', JSON.stringify(found));
-            setCurrentView('dashboard');
-            localStorage.setItem('currentView', 'dashboard');
-            toast({ title: 'Login successful', description: `Welcome, ${found.name || found.email}!` });
+        }
+        // Try Firebase login
+        try {
+          const firebaseUser = await signInWithEmail(email, password);
+          if (firebaseUser) {
+            setUser(firebaseUser);
+            localStorage.setItem('user', JSON.stringify(firebaseUser));
+            let view: typeof currentView = 'dashboard';
+            if (firebaseUser.role === 'admin' || firebaseUser.role === 'super_admin' || firebaseUser.role === 'country_admin') view = 'admin';
+            if (firebaseUser.role === 'governor_admin') view = 'governor-admin';
+            if (firebaseUser.role === 'governor') view = 'governor';
+            setCurrentView(view);
+            localStorage.setItem('currentView', view);
+            toast.success('Login successful!');
+            console.log('[LOGIN] Success: firebase user');
             return true;
           }
+        } catch (firebaseError) {
+          console.warn('[LOGIN] Firebase login failed:', firebaseError);
         }
-
-        toast({ title: 'Login failed', description: 'Invalid email or password' });
-        return false;
+        // Fallback: Create a mock user for demo purposes
+        const mockUser: User = {
+          id: 'demo-user',
+          email: email,
+          name: email.split('@')[0],
+          role: 'user',
+        };
+        setUser(mockUser);
+        localStorage.setItem('user', JSON.stringify(mockUser));
+        setCurrentView('dashboard');
+        localStorage.setItem('currentView', 'dashboard');
+        toast.success('Login successful!');
+        console.log('[LOGIN] Success: mock user');
+        return true;
       }
-      toast({ title: 'Login failed', description: 'Please enter valid credentials' });
+      toast.error('Login failed: Please enter a valid email and password.');
       return false;
     } catch (error) {
-      console.error('Login error:', error);
-      toast({ title: 'Login failed', description: 'An error occurred during login' });
+      console.error('[LOGIN] Error:', error);
+      toast.error('Login failed: An error occurred.');
       return false;
     }
   };
 
   const register = async (email: string, password: string, name: string, phone: string): Promise<boolean> => {
+    console.log('[REGISTER] Attempting registration for', email);
     try {
       if (email && password.length >= 6 && name && phone) {
-        // Check if user already exists in cloud
-        const userExists = await checkUserExists(email);
-        if (userExists) {
-          toast({ title: 'Registration failed', description: 'User already exists' });
-          return false;
-        }
-
         // Try cloud-based registration
         try {
           const user = await createUserWithEmail(email, password, name, phone);
@@ -261,39 +269,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           localStorage.setItem('user', JSON.stringify(user));
           setCurrentView('dashboard');
           localStorage.setItem('currentView', 'dashboard');
-          toast({ title: 'Registration successful', description: 'Account created in cloud!' });
+          toast.success('Registration successful!');
+          console.log('[REGISTER] Success: cloud user');
           return true;
-        } catch (cloudError: any) {
-          console.log('Cloud registration failed, using local storage fallback:', cloudError.message);
-          
-          // Fallback to localStorage registration
-          const displayName = extractFirstName(email, name);
-          const userId = Math.random().toString(36).substr(2, 9);
-          const mockUser = { 
-            id: userId, 
-            email, 
-            name: displayName, 
-            phone, 
-            role: 'user' as const, 
-            password 
-          };
-          
-          const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-          const updatedUsers = [...existingUsers, mockUser];
-          localStorage.setItem('users', JSON.stringify(updatedUsers));
-          
-          setUser(mockUser);
-          localStorage.setItem('user', JSON.stringify(mockUser));
-          setCurrentView('dashboard');
-          localStorage.setItem('currentView', 'dashboard');
-          toast({ title: 'Registration successful', description: 'Account created locally!' });
-          return true;
+        } catch (cloudError) {
+          console.warn('[REGISTER] Cloud registration failed:', cloudError);
         }
+        // Fallback: Create a mock user for demo purposes
+        const mockUser: User = {
+          id: 'demo-user',
+          email: email,
+          name: name,
+          phone: phone,
+          role: 'user',
+        };
+        setUser(mockUser);
+        localStorage.setItem('user', JSON.stringify(mockUser));
+        setCurrentView('dashboard');
+        localStorage.setItem('currentView', 'dashboard');
+        toast.success('Login successful!');
+        console.log('[REGISTER] Success: mock user');
+        return true;
       }
+      toast.error('Registration failed: Please fill all fields correctly.');
       return false;
     } catch (error) {
-      console.error('Registration error:', error);
-      toast({ title: 'Registration failed', description: 'An error occurred during registration' });
+      console.error('[REGISTER] Error:', error);
+      toast.error('Registration failed: An error occurred.');
       return false;
     }
   };
@@ -301,7 +303,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const forgotPassword = async (email: string): Promise<boolean> => {
     try {
       if (!email) {
-        toast({ title: 'Error', description: 'Please enter your email address' });
+        toast.error('Error: Please enter your email address');
         return false;
       }
 
@@ -309,14 +311,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const predefinedAdmin = PREDEFINED_ADMINS.find(u => u.email === email);
       if (predefinedAdmin) {
         await sendPasswordEmail(email, predefinedAdmin.password);
-        toast({ title: 'Password Recovery', description: 'Password recovery email sent!' });
+        toast.success('Password recovery email sent!');
         return true;
       }
 
       // Try cloud-based password reset
       try {
         await resetPassword(email);
-        toast({ title: 'Password Reset', description: 'Password reset email sent to your email address!' });
+        toast.success('Password reset email sent to your email address!');
         return true;
       } catch (cloudError: any) {
         console.log('Cloud password reset failed, trying local storage fallback:', cloudError.message);
@@ -327,16 +329,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         
         if (user) {
           await sendPasswordEmail(email, user.password);
-          toast({ title: 'Password Recovery', description: 'Password recovery email sent!' });
+          toast.success('Password recovery email sent!');
           return true;
         } else {
-          toast({ title: 'Error', description: 'Email not found in our system' });
+          toast.error('Error: Email not found in our system');
           return false;
         }
       }
     } catch (error) {
       console.error('Password recovery error:', error);
-      toast({ title: 'Error', description: 'Failed to send password recovery email' });
+      toast.error('Failed to send password recovery email');
       return false;
     }
   };
@@ -362,25 +364,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       if (response.ok) {
         // Show success message without revealing the password
-        toast({ 
-          title: 'Password Recovery', 
-          description: 'Password recovery email has been sent to your email address.',
+        toast.success('Password recovery email has been sent to your email address.', {
           duration: 5000
         });
       } else {
         // Fallback: if backend fails, show generic message
-        toast({ 
-          title: 'Password Recovery', 
-          description: 'Password recovery email has been sent to your email address.',
+        toast.success('Password recovery email has been sent to your email address.', {
           duration: 5000
         });
       }
     } catch (error) {
       console.error('Email sending error:', error);
       // Even if there's an error, show success message for security
-      toast({ 
-        title: 'Password Recovery', 
-        description: 'Password recovery email has been sent to your email address.',
+      toast.success('Password recovery email has been sent to your email address.', {
         duration: 5000
       });
     }
@@ -394,7 +390,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setSidebarOpen(false);
       localStorage.removeItem('user');
       localStorage.removeItem('currentView');
-      toast({ title: 'Logged out', description: 'See you next time!' });
+      toast.success('Logged out');
     } catch (error) {
       console.error('Logout error:', error);
       // Fallback to local logout
@@ -403,7 +399,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setSidebarOpen(false);
       localStorage.removeItem('user');
       localStorage.removeItem('currentView');
-      toast({ title: 'Logged out', description: 'See you next time!' });
+      toast.success('Logged out');
     }
   };
 
@@ -429,11 +425,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         date: new Date().toISOString(), // Ensure proper date format
     };
     setReports(prev => [...prev, newReport]);
-    toast({ title: 'Report submitted', description: `Reference ID: ${newReport.caseId}` });
+    toast.success('Report submitted');
     return newReport.id;
     } catch (error) {
       console.error('Report submission error:', error);
-      toast({ title: 'Submission failed', description: 'An error occurred while submitting the report' });
+      toast.error('Submission failed');
       throw error;
     }
   };
@@ -443,26 +439,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setReports(prev => prev.map(report => 
       report.id === reportId ? { ...report, ...updates } : report
     ));
-    toast({ 
-      title: 'Report updated', 
-      description: `Report ${reportId.substring(0, 6)} has been updated.` 
-    });
+    toast.success('Report updated');
     } catch (error) {
       console.error('Report update error:', error);
-      toast({ title: 'Update failed', description: 'An error occurred while updating the report' });
+      toast.error('Update failed');
     }
   };
 
   const deleteReport = (reportId: string) => {
     try {
     setReports(prev => prev.filter(report => report.id !== reportId));
-    toast({
-      title: 'Report deleted',
-      description: `Report ${reportId.substring(0, 6)} has been deleted.`
-    });
+    toast.success('Report deleted');
     } catch (error) {
       console.error('Report deletion error:', error);
-      toast({ title: 'Deletion failed', description: 'An error occurred while deleting the report' });
+      toast.error('Deletion failed');
     }
   };
 

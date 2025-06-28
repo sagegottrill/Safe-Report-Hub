@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useAppContext } from '@/contexts/AppContext';
 import MobileBottomNav from './MobileBottomNav';
 
 const COLORS = {
@@ -28,25 +29,21 @@ export default function MobileLayout({
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useAppContext();
 
-  // Determine if we should show bottom navigation
-  const showBottomNav = showNav && !location.pathname.includes('/auth');
+  // Hide bottom nav if not authenticated
+  const showBottomNav = showNav && !!user;
 
   return (
     <div className="min-h-screen bg-[#f9fafb] font-sans">
       <div className="flex flex-col min-h-screen">
         {/* Mobile Header */}
         <header className="bg-white shadow-sm border-b border-[#e0e0e0] px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#2ecc71] flex items-center justify-center">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="12" fill="#fff"/>
-                  <path d="M7 13l3 3 7-7" stroke="#2ecc71" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <h1 className="text-lg font-bold text-[#1b4332]">SafeReport</h1>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-nigerian-green flex items-center justify-center">
+              <img src="/shield.svg" alt="BICTDA Report Logo" className="h-5 w-5" />
             </div>
+            <h1 className="text-lg font-bold text-nigerian-green">BICTDA Report</h1>
           </div>
         </header>
 

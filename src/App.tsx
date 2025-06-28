@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import Index from "./pages/Index";
-import React, { Suspense, lazy, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import FAQ from './pages/FAQ';
 import { redirectToMobile } from './utils/deviceDetection';
@@ -38,9 +38,11 @@ const AppRoutes: React.FC = () => {
   const { user } = useAppContext();
   
   // Check for mobile device and redirect if needed
-  useEffect(() => {
-    redirectToMobile();
-  }, []);
+  // useEffect(() => {
+  //   redirectToMobile();
+  // }, []);
+
+  console.log('AppRoutes: Rendering with user:', user);
 
   return (
     <BrowserRouter>
