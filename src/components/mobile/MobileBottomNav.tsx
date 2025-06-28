@@ -7,7 +7,11 @@ import {
   User, 
   HelpCircle, 
   Shield,
-  BarChart3
+  BarChart3,
+  Settings,
+  Plus,
+  Bell,
+  Users
 } from 'lucide-react';
 
 export default function MobileBottomNav() {
@@ -23,7 +27,7 @@ export default function MobileBottomNav() {
     },
     {
       path: '/report',
-      icon: FileText,
+      icon: Plus,
       label: 'Report',
       show: true
     },
@@ -37,18 +41,38 @@ export default function MobileBottomNav() {
       path: '/governor',
       icon: Shield,
       label: 'Governor',
-      show: user?.role === 'governor_admin' || user?.role === 'governor'
+      show: user?.role === 'governor' || user?.role === 'governor_admin'
     },
     {
       path: '/faq',
       icon: HelpCircle,
-      label: 'FAQ',
+      label: 'Help',
       show: true
     }
   ].filter(item => item.show);
 
+  // If user is admin, add admin analytics
+  if (user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'country_admin') {
+    navItems.splice(3, 0, {
+      path: '/admin-analytics',
+      icon: BarChart3,
+      label: 'Analytics',
+      show: true
+    });
+  }
+
+  // If user is governor admin, add governor admin panel
+  if (user?.role === 'governor_admin') {
+    navItems.splice(4, 0, {
+      path: '/governor-admin',
+      icon: Users,
+      label: 'Admin Panel',
+      show: true
+    });
+  }
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 mobile-safe-area">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 mobile-safe-area z-50">
       <div className="flex justify-around items-center py-2">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -58,10 +82,10 @@ export default function MobileBottomNav() {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
+              className={`flex flex-col items-center py-2 px-3 rounded-lg transition-all duration-200 ${
                 isActive 
-                  ? 'text-blue-600 bg-blue-50' 
-                  : 'text-gray-600 hover:text-blue-600'
+                  ? 'text-blue-600 bg-blue-50 shadow-sm' 
+                  : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
               }`}
             >
               <Icon size={20} />
