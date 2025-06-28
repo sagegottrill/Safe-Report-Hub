@@ -46,6 +46,17 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+// Mobile-optimized wrapper component
+const MobileWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <div className="mobile-app-wrapper">
+      <div className="mobile-content">
+        {children}
+      </div>
+    </div>
+  );
+};
+
 function MobileAppContent() {
   const { user } = useAppContext();
   const [isInitialized, setIsInitialized] = useState(false);
@@ -74,24 +85,24 @@ function MobileAppContent() {
               user.role === 'governor' ? <Navigate to="/governor" replace /> :
               ['admin', 'super_admin', 'country_admin'].includes(user.role) ? <Navigate to="/admin" replace /> :
               user.role === 'governor_admin' ? <Navigate to="/governor-admin" replace /> :
-              <Dashboard />
+              <MobileWrapper><Dashboard /></MobileWrapper>
             ) : (
-              <AuthPage />
+              <MobileWrapper><AuthPage /></MobileWrapper>
             )
           } />
           
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/test-multisectoral" element={<TestMultiSectoral />} />
-          <Route path="/community-dashboard" element={<CommunityDashboardPage />} />
+          <Route path="/faq" element={<MobileWrapper><FAQ /></MobileWrapper>} />
+          <Route path="/test-multisectoral" element={<MobileWrapper><TestMultiSectoral /></MobileWrapper>} />
+          <Route path="/community-dashboard" element={<MobileWrapper><CommunityDashboardPage /></MobileWrapper>} />
           
           {/* Auth route */}
-          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/auth" element={<MobileWrapper><AuthPage /></MobileWrapper>} />
           
           {/* Protected routes */}
           <Route 
             path="/report" 
             element={
-              user ? <ReportPage /> : <Navigate to="/auth" replace />
+              user ? <MobileWrapper><ReportPage /></MobileWrapper> : <Navigate to="/auth" replace />
             } 
           />
           
@@ -100,7 +111,7 @@ function MobileAppContent() {
             path="/admin" 
             element={
               user && ['admin', 'super_admin', 'country_admin'].includes(user.role) ? 
-              <AdminPage /> : <Navigate to="/" replace />
+              <MobileWrapper><AdminPage /></MobileWrapper> : <Navigate to="/" replace />
             } 
           />
           
@@ -108,7 +119,7 @@ function MobileAppContent() {
             path="/admin-analytics" 
             element={
               user && ['admin', 'super_admin', 'country_admin'].includes(user.role) ? 
-              <AdminAnalyticsPage /> : <Navigate to="/" replace />
+              <MobileWrapper><AdminAnalyticsPage /></MobileWrapper> : <Navigate to="/" replace />
             } 
           />
           
@@ -117,7 +128,7 @@ function MobileAppContent() {
             path="/governor" 
             element={
               user && user.role === 'governor' ? 
-              <GovernorPanel /> : <Navigate to="/" replace />
+              <MobileWrapper><GovernorPanel /></MobileWrapper> : <Navigate to="/" replace />
             } 
           />
           
@@ -125,12 +136,12 @@ function MobileAppContent() {
             path="/governor-admin" 
             element={
               user && user.role === 'governor_admin' ? 
-              <GovernorAdminPanel /> : <Navigate to="/" replace />
+              <MobileWrapper><GovernorAdminPanel /></MobileWrapper> : <Navigate to="/" replace />
             } 
           />
           
           {/* Catch all */}
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<MobileWrapper><NotFound /></MobileWrapper>} />
         </Routes>
       </MobileLayout>
     </Router>
