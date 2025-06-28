@@ -75,7 +75,7 @@ export default function MobileReportForm({ onSubmit, onClose }: MobileReportForm
   const canGoBack = step !== 'sector';
   const canSubmit = step === 'details' && sector && category && description.trim().length >= 10;
 
-  return (
+    return (
     <div className="mobile-modal" onClick={onClose}>
       <div className="mobile-modal-content mobile-scale-in" onClick={e => e.stopPropagation()}>
         {/* Header */}
@@ -119,13 +119,13 @@ export default function MobileReportForm({ onSubmit, onClose }: MobileReportForm
                 }`}
               >
                 {i + 1}
-              </div>
+        </div>
               {i < 2 && (
                 <div 
                   className={`w-8 h-1 mx-1 ${
                     i < ['sector', 'category', 'details'].indexOf(step) ? 'bg-[#a8cbaa]' : 'bg-[#e0e0e0]'
-                  }`}
-                />
+              }`}
+            />
               )}
             </div>
           ))}
@@ -146,7 +146,7 @@ export default function MobileReportForm({ onSubmit, onClose }: MobileReportForm
             <div className="bg-[#e8f5e9] rounded-2xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-semibold text-[#1b4332]">Selected:</span>
-                <button
+                  <button
                   onClick={() => setStep('sector')}
                   className="text-xs text-[#2ecc71] font-medium"
                 >
@@ -160,7 +160,7 @@ export default function MobileReportForm({ onSubmit, onClose }: MobileReportForm
                 <div>
                   <span className="font-medium">Category:</span> {category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ')}
                 </div>
-              </div>
+                    </div>
             </div>
 
             {/* Description Input */}
@@ -185,7 +185,7 @@ export default function MobileReportForm({ onSubmit, onClose }: MobileReportForm
                 <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
                   <AlertCircle className="w-4 h-4" />
                   {errors.description}
-                </div>
+            </div>
               )}
               <div className="text-xs text-slate-500 mt-2 text-right">
                 {description.length}/500 characters
@@ -193,7 +193,7 @@ export default function MobileReportForm({ onSubmit, onClose }: MobileReportForm
             </div>
 
             {/* Submit Button */}
-            <button
+              <button
               onClick={handleSubmit}
               disabled={!canSubmit}
               className={`w-full py-4 px-6 rounded-2xl font-semibold text-lg transition-all ${
@@ -206,10 +206,10 @@ export default function MobileReportForm({ onSubmit, onClose }: MobileReportForm
                 <Send className="w-5 h-5" />
                 Submit Report
               </div>
-            </button>
+              </button>
           </div>
         )}
-      </div>
+          </div>
     </div>
   );
 } 

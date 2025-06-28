@@ -25,6 +25,8 @@ import GovernorAdminPanel from './components/admin/GovernorAdminPanel';
 // Mobile-specific components
 import MobileLayout from './components/mobile/MobileLayout';
 import MobileLoading from './components/mobile/MobileLoading';
+import MobileProfile from './components/mobile/MobileProfile';
+import MobileLogout from './components/mobile/MobileLogout';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -100,12 +102,20 @@ function MobileAppContent() {
           
           {/* Auth route */}
           <Route path="/auth" element={<MobileWrapper><AuthPage /></MobileWrapper>} />
+          <Route path="/logout" element={<MobileWrapper><MobileLogout /></MobileWrapper>} />
           
           {/* Protected routes */}
           <Route 
             path="/report" 
             element={
               user ? <MobileWrapper><ReportPage /></MobileWrapper> : <Navigate to="/auth" replace />
+            } 
+          />
+          
+          <Route 
+            path="/profile" 
+            element={
+              user ? <MobileWrapper><MobileProfile /></MobileWrapper> : <Navigate to="/auth" replace />
             } 
           />
           

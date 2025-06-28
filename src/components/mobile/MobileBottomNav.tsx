@@ -11,7 +11,8 @@ import {
   Settings,
   Plus,
   Bell,
-  Users
+  Users,
+  LogOut
 } from 'lucide-react';
 
 const COLORS = {
@@ -28,7 +29,7 @@ const COLORS = {
 
 export default function MobileBottomNav() {
   const location = useLocation();
-  const { user } = useAppContext();
+  const { user, logout } = useAppContext();
 
   const navItems = [
     {
@@ -42,6 +43,12 @@ export default function MobileBottomNav() {
       icon: Plus,
       label: 'Report',
       show: true
+    },
+    {
+      path: '/profile',
+      icon: User,
+      label: 'Profile',
+      show: !!user
     },
     {
       path: '/admin',
@@ -65,7 +72,7 @@ export default function MobileBottomNav() {
 
   // If user is admin, add admin analytics
   if (user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'country_admin') {
-    navItems.splice(3, 0, {
+    navItems.splice(4, 0, {
       path: '/admin-analytics',
       icon: BarChart3,
       label: 'Analytics',
@@ -75,7 +82,7 @@ export default function MobileBottomNav() {
 
   // If user is governor admin, add governor admin panel
   if (user?.role === 'governor_admin') {
-    navItems.splice(4, 0, {
+    navItems.splice(5, 0, {
       path: '/governor-admin',
       icon: Users,
       label: 'Admin Panel',
@@ -118,6 +125,17 @@ export default function MobileBottomNav() {
             </Link>
           );
         })}
+        
+        {/* Logout Button */}
+        {user && (
+          <button
+            onClick={() => window.location.href = '/logout'}
+            className="flex flex-col items-center justify-center py-2 px-4 rounded-2xl transition-all duration-200 hover:bg-red-50 active:scale-95"
+          >
+            <LogOut className="w-6 h-6 mb-1 text-red-500" />
+            <span className="text-xs font-semibold text-red-500">Logout</span>
+          </button>
+        )}
       </div>
     </div>
   );
