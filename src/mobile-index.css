@@ -68,8 +68,9 @@
 @layer components {
   /* Mobile App Wrapper */
   .mobile-app-wrapper {
-    @apply min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50;
+    @apply min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-700;
     background-attachment: fixed;
+    min-height: 100vh;
   }
 
   .mobile-content {
@@ -81,9 +82,10 @@
   }
 
   /* Mobile Card Styles */
-  .mobile-card {
-    @apply bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-4;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  .mobile-card, .mobile-list-item, .mobile-modal-content {
+    @apply bg-white/30 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl;
+    box-shadow: 0 30px 60px -12px rgba(30,64,175,0.15), 0 4px 16px -2px rgba(118,75,162,0.10);
+    background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(118,75,162,0.10) 100%);
   }
 
   .mobile-glass-card {
@@ -225,6 +227,13 @@
 
   .mobile-modal-content {
     @apply bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl;
+    animation: mobile-modal-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes mobile-modal-in {
+    0% { opacity: 0; transform: scale(0.92) translateY(40px); }
+    60% { opacity: 1; transform: scale(1.04) translateY(-8px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
   }
 
   /* Mobile List Styles */
@@ -265,6 +274,154 @@
 
   .mobile-divider {
     @apply border-t border-gray-200 my-6;
+  }
+
+  /* Mobile-specific animations */
+  .mobile-slide-in-up {
+    animation: slideInUp 0.4s ease-out;
+  }
+
+  .mobile-slide-in-down {
+    animation: slideInDown 0.4s ease-out;
+  }
+
+  .mobile-fade-in {
+    animation: fadeIn 0.4s ease-out;
+  }
+
+  .mobile-scale-in {
+    animation: scaleIn 0.4s ease-out;
+  }
+
+  .mobile-bounce-in {
+    animation: bounceIn 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Mobile-specific utilities */
+  .mobile-safe-area {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Hide scrollbars on mobile */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .mobile-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Mobile-specific responsive utilities */
+  @media (max-width: 640px) {
+    .mobile-container {
+      @apply px-3;
+    }
+    
+    .mobile-card {
+      @apply p-4;
+    }
+    
+    .mobile-button {
+      @apply py-3 px-4;
+    }
+
+    .mobile-title {
+      @apply text-xl;
+    }
+
+    .mobile-subtitle {
+      @apply text-base;
+    }
+  }
+
+  /* Mobile-specific focus styles */
+  .mobile-focus-ring {
+    @apply focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:ring-offset-2;
+  }
+
+  /* Mobile-specific transitions */
+  .mobile-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Mobile-specific shadows */
+  .mobile-shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .mobile-shadow {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  .mobile-shadow-lg {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .mobile-shadow-xl {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Mobile-specific gradients */
+  .mobile-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .mobile-gradient-success {
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  }
+
+  .mobile-gradient-warning {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  }
+
+  .mobile-gradient-danger {
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  }
+
+  .mobile-gradient-glass {
+    background: linear-gradient(135deg, rgba(30,64,175,0.10) 0%, rgba(118,75,162,0.15) 100%);
+    backdrop-filter: blur(18px) saturate(1.2);
+    border: 1.5px solid rgba(255,255,255,0.25);
+  }
+
+  /* Mobile-specific hover effects */
+  .mobile-hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1 hover:scale-105 hover:shadow-2xl;
+  }
+
+  .mobile-hover-scale {
+    @apply transition-transform duration-300 hover:scale-105;
+  }
+
+  /* Mobile-specific active states */
+  .mobile-active-scale {
+    @apply active:scale-90 transition-transform duration-100;
+  }
+
+  /* Mobile-specific loading animations */
+  @keyframes shimmer {
+    0% {
+      background-position: -200px 0;
+    }
+    100% {
+      background-position: calc(200px + 100%) 0;
+    }
+  }
+
+  .mobile-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200px 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Mobile-specific button states */
+  .mobile-button, .mobile-bottom-nav a {
+    @apply mobile-active-scale;
   }
 }
 
@@ -326,26 +483,6 @@
     transform: scale(1);
     opacity: 1;
   }
-}
-
-.mobile-slide-in-up {
-  animation: slideInUp 0.4s ease-out;
-}
-
-.mobile-slide-in-down {
-  animation: slideInDown 0.4s ease-out;
-}
-
-.mobile-fade-in {
-  animation: fadeIn 0.4s ease-out;
-}
-
-.mobile-scale-in {
-  animation: scaleIn 0.4s ease-out;
-}
-
-.mobile-bounce-in {
-  animation: bounceIn 0.6s ease-out;
 }
 
 /* Mobile-specific utilities */
@@ -435,13 +572,14 @@
 }
 
 .mobile-gradient-glass {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, rgba(30,64,175,0.10) 0%, rgba(118,75,162,0.15) 100%);
+  backdrop-filter: blur(18px) saturate(1.2);
+  border: 1.5px solid rgba(255,255,255,0.25);
 }
 
 /* Mobile-specific hover effects */
 .mobile-hover-lift {
-  @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl;
+  @apply transition-transform duration-300 hover:-translate-y-1 hover:scale-105 hover:shadow-2xl;
 }
 
 .mobile-hover-scale {
@@ -450,7 +588,7 @@
 
 /* Mobile-specific active states */
 .mobile-active-scale {
-  @apply active:scale-95 transition-transform duration-150;
+  @apply active:scale-90 transition-transform duration-100;
 }
 
 /* Mobile-specific loading animations */

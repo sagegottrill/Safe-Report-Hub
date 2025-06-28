@@ -8,6 +8,8 @@ import {
   resetPassword,
   checkUserExists 
 } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
 
 interface User {
   id: string;
@@ -521,6 +523,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  // Inside AppProvider, after user state is set up:
+  useEffect(() => {
+    if (!db) return;
+    // Listen to real-time updates from Firestore reports collection
+    const unsubscribe = onSnapshot(collection(db, 'reports'), (snapshot) => {
+      const liveReports = snapshot.docs.map(doc => {
+        const data = doc.data();
+        // Map Firestore doc to Report type, with defaults for missing fields
+        return {
+          id: doc.id,
+          type: data.type || '',
+          date: data.date || new Date().toISOString(),
+          platform: data.platform || 'web',
+          description: data.description || '',
+          impact: Array.isArray(data.impact) ? data.impact : (data.impact ? [data.impact] : []),
+          perpetrator: data.perpetrator || '',
+          status: data.status || 'new',
+          isAnonymous: typeof data.isAnonymous === 'boolean' ? data.isAnonymous : false,
+          reporterId: data.reporterId || '',
+          riskScore: typeof data.riskScore === 'number' ? data.riskScore : undefined,
+          adminNotes: data.adminNotes || '',
+          reporterEmail: data.reporterEmail || '',
+          flagged: typeof data.flagged === 'boolean' ? data.flagged : false,
+          region: data.region || '',
+          urgency: data.urgency || '',
+          caseId: data.caseId || '',
+          pin: data.pin || '',
+        } as Report;
+      }).filter(r => r.id && r.type && r.date && r.platform && r.description && r.impact && r.status);
+      setReports(liveReports);
+      localStorage.setItem('reports', JSON.stringify(liveReports));
+    });
+    return () => unsubscribe();
   }, []);
 
   return (

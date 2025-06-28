@@ -22,9 +22,10 @@ type ReportStep = 'sector' | 'category' | 'details' | 'review';
 
 interface EnhancedReportFormProps {
   onSubmit: (reportData: any) => void;
+  onClose?: () => void;
 }
 
-const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => {
+const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit, onClose }) => {
   const { t } = useTranslation();
   const { setCurrentView, user } = useAppContext();
   const [currentStep, setCurrentStep] = useState<ReportStep>('sector');
@@ -1038,6 +1039,11 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit }) => 
         <CardContent className="p-6">
           {getStepIndicator()}
           {renderCurrentStep()}
+          {onClose && (
+            <button type="button" className="mobile-button mobile-button-secondary mb-4" onClick={onClose}>
+              Close
+            </button>
+          )}
         </CardContent>
       </Card>
     </div>

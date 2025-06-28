@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
 import { 
@@ -29,10 +29,26 @@ import {
   Heart,
   Zap
 } from 'lucide-react';
+import EnhancedReportForm from '../report/EnhancedReportForm';
 
 export default function MobileDashboard() {
   const { user, reports, logout } = useAppContext();
   const [activeTab, setActiveTab] = useState('overview');
+  const [loading, setLoading] = useState(true);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [pulling, setPulling] = useState(false);
+  const pullStartY = useRef(0);
+  const pullDistance = useRef(0);
+
+  useEffect(() => {
+    if (reports.length > 0) {
+      setLoading(false);
+    } else {
+      const timer = setTimeout(() => setLoading(false), 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [reports]);
 
   // Enhanced stats with real-time data
   const stats = [
@@ -176,6 +192,33 @@ export default function MobileDashboard() {
                    'text-green-600 bg-green-100'
   }));
 
+  // Pull-to-refresh handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (window.scrollY === 0) {
+      setPulling(true);
+      pullStartY.current = e.touches[0].clientY;
+    }
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!pulling) return;
+    pullDistance.current = e.touches[0].clientY - pullStartY.current;
+    if (pullDistance.current > 60) {
+      setLoading(true);
+      setTimeout(() => setLoading(false), 1000); // Simulate refresh
+      setPulling(false);
+    }
+  };
+  const handleTouchEnd = () => {
+    setPulling(false);
+    pullDistance.current = 0;
+  };
+
+  // Swipe handlers for report cards
+  const handleSwipe = (report: any, direction: 'left' | 'right') => {
+    if (direction === 'right') setSelectedReport(report);
+    // You can add more actions for left swipe if needed
+  };
+
   return (
     <div className="mobile-container py-4">
       {/* Enhanced Header with User Info */}
@@ -246,23 +289,21 @@ export default function MobileDashboard() {
         </button>
       </div>
 
-      {/* Enhanced Stats Grid */}
+      {/* Stats Section */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div key={stat.label} className={`${stat.bgColor} rounded-xl p-4 border border-gray-100`}>
-              <div className="flex items-center justify-between mb-2">
-                <Icon className={`w-6 h-6 ${stat.color}`} />
-                <span className={`text-xs font-medium ${stat.trendUp ? 'text-green-600' : 'text-red-600'}`}>
-                  {stat.trend}
-                </span>
-              </div>
-              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              <p className="text-sm text-gray-600">{stat.label}</p>
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="mobile-stats-card mobile-loading-skeleton h-24" />
+          ))
+        ) : (
+          stats.map((stat, i) => (
+            <div key={stat.label} className={`mobile-stats-card ${stat.bgColor} flex flex-col items-center justify-center`}>
+              <stat.icon className={`w-6 h-6 mb-2 ${stat.color}`} />
+              <div className="text-lg font-bold">{stat.value}</div>
+              <div className="text-xs text-gray-500">{stat.label}</div>
             </div>
-          );
-        })}
+          ))
+        )}
       </div>
 
       {/* Tab Navigation */}
@@ -315,61 +356,52 @@ export default function MobileDashboard() {
         </div>
       </div>
 
-      {/* Recent Reports */}
-      {user && recentReports.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-              <Activity className="w-5 h-5 mr-2 text-blue-600" />
-              Recent Reports
-            </h2>
-            <Link to="/reports" className="text-blue-600 text-sm font-medium">
-              View All
-            </Link>
-          </div>
+      {/* Recent Reports Section with pull-to-refresh */}
+      <div className="mb-8"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="mobile-subtitle">Recent Reports</h2>
+          {pulling && <span className="text-xs text-blue-600 animate-bounce">Pulling...</span>}
+        </div>
+        {loading ? (
           <div className="space-y-3">
-            {recentReports.map((report) => (
-              <div key={report.id} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center mb-2">
-                      <h3 className="font-semibold text-gray-900 text-sm">{report.type}</h3>
-                      <span className={`text-xs px-2 py-1 rounded-full ml-2 ${report.priorityColor}`}>
-                        {report.priority}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-2">{report.description}</p>
-                    <div className="flex items-center text-xs text-gray-500">
-                      <Calendar className="w-3 h-3 mr-1" />
-                      {new Date(report.date).toLocaleDateString()}
-                      {report.caseId && (
-                        <>
-                          <span className="mx-2">•</span>
-                          <span>ID: {report.caseId}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end space-y-2">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      report.status === 'new' ? 'bg-yellow-100 text-yellow-800' :
-                      report.status === 'resolved' ? 'bg-green-100 text-green-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {report.status}
-                    </span>
-                    <div className="flex space-x-1">
-                      <button className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                        <Eye className="w-4 h-4 text-gray-600" />
-                      </button>
-                      <button className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                        <MessageCircle className="w-4 h-4 text-gray-600" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="mobile-list-item mobile-loading-skeleton h-16" />
             ))}
+          </div>
+        ) : recentReports.length === 0 ? (
+          <div className="text-center text-gray-400 py-8">No recent reports</div>
+        ) : (
+          <div className="mobile-list">
+            {recentReports.map((report, i) => (
+              <SwipeableReportCard
+                key={report.id || i}
+                report={report}
+                onSwipe={dir => handleSwipe(report, dir)}
+                onTap={() => setSelectedReport(report)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Floating Action Button (FAB) */}
+      <button
+        className="fixed bottom-24 right-6 z-50 mobile-button mobile-button-primary mobile-bounce-in shadow-xl"
+        onClick={() => setShowReportModal(true)}
+        aria-label="Quick Report"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
+
+      {/* Report Modal Overlay */}
+      {showReportModal && (
+        <div className="mobile-modal" onClick={() => setShowReportModal(false)}>
+          <div className="mobile-modal-content mobile-scale-in" onClick={e => e.stopPropagation()}>
+            <EnhancedReportForm onSubmit={() => {}} onClose={() => setShowReportModal(false)} />
           </div>
         </div>
       )}
@@ -437,6 +469,63 @@ export default function MobileDashboard() {
           </Link>
         </div>
       )}
+
+      {/* Report Details Modal Overlay */}
+      {selectedReport && (
+        <div className="mobile-modal" onClick={() => setSelectedReport(null)}>
+          <div className="mobile-modal-content mobile-scale-in mobile-gradient-glass" onClick={e => e.stopPropagation()}>
+            <div className="mb-4">
+              <h3 className="mobile-title">{selectedReport.type}</h3>
+              <div className="text-xs text-gray-500 mb-2">{selectedReport.priority}</div>
+              <div className="text-sm text-gray-700 mb-2">{selectedReport.description}</div>
+              <div className="text-xs text-gray-400">{new Date(selectedReport.date).toLocaleString()}</div>
+            </div>
+            <button className="mobile-button mobile-button-secondary" onClick={() => setSelectedReport(null)}>Close</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// SwipeableReportCard component
+function SwipeableReportCard({ report, onSwipe, onTap }: { report: any, onSwipe: (dir: 'left' | 'right') => void, onTap: () => void }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  let startX = 0;
+  let currentX = 0;
+  let swiped = false;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startX = e.touches[0].clientX;
+    swiped = false;
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    currentX = e.touches[0].clientX;
+    const diff = currentX - startX;
+    if (Math.abs(diff) > 60 && !swiped) {
+      onSwipe(diff > 0 ? 'right' : 'left');
+      swiped = true;
+    }
+  };
+  const handleTouchEnd = () => {
+    swiped = false;
+  };
+
+  return (
+    <div
+      ref={cardRef}
+      className={`mobile-list-item flex items-center justify-between mobile-hover-lift mobile-gradient-glass`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onClick={onTap}
+      style={{ transition: 'box-shadow 0.2s, transform 0.2s' }}
+    >
+      <div>
+        <div className="font-semibold text-sm">{report.type}</div>
+        <div className="text-xs text-gray-500">{report.priority}</div>
+      </div>
+      <div className="text-xs text-gray-400">{new Date(report.date).toLocaleDateString()}</div>
     </div>
   );
 } 

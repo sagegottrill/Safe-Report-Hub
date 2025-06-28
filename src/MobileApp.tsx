@@ -81,7 +81,17 @@ function MobileAppContent() {
           {/* Public routes */}
           <Route path="/" element={
             user ? (
-              // Redirect based on user role (same logic as main app)
+              user.role === 'governor' ? <Navigate to="/governor" replace /> :
+              ['admin', 'super_admin', 'country_admin'].includes(user.role) ? <Navigate to="/admin" replace /> :
+              user.role === 'governor_admin' ? <Navigate to="/governor-admin" replace /> :
+              <MobileWrapper><Dashboard /></MobileWrapper>
+            ) : (
+              <MobileWrapper><AuthPage /></MobileWrapper>
+            )
+          } />
+          {/* Add /mobile route for mobile dashboard */}
+          <Route path="/mobile" element={
+            user ? (
               user.role === 'governor' ? <Navigate to="/governor" replace /> :
               ['admin', 'super_admin', 'country_admin'].includes(user.role) ? <Navigate to="/admin" replace /> :
               user.role === 'governor_admin' ? <Navigate to="/governor-admin" replace /> :
