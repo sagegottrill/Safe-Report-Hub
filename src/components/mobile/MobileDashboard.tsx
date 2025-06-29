@@ -197,9 +197,12 @@ export default function MobileDashboard() {
         <p className="text-slate-600 text-sm mb-2">View community insights and impact metrics</p>
         <button
           className="w-full py-3 px-6 rounded-2xl font-semibold text-[#2ecc71] bg-[#e8f5e9] shadow text-base active:scale-95 transition-all hover:bg-[#d0f0e0]"
-          onClick={() => toast.info('Community Dashboard coming soon!')}
+          onClick={() => navigate('/community-dashboard')}
         >
-          View Community Dashboard
+          <div className="flex items-center justify-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            View Community Dashboard
+          </div>
         </button>
       </div>
 
