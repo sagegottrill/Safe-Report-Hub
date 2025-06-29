@@ -481,15 +481,6 @@ const MobileCommunityDashboard: React.FC = () => {
             </Card>
           </TabsContent>
         </Tabs>
-
-        {error && (
-          <Alert className="border-yellow-200 bg-yellow-50">
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-gray-700">
-              <strong>Data Notice:</strong> {error}. Showing local data as fallback.
-            </AlertDescription>
-          </Alert>
-        )}
       </div>
     </div>
   );

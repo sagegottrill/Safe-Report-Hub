@@ -499,15 +499,6 @@ const CommunityDashboardPage: React.FC = () => {
             </Card>
           </TabsContent>
         </Tabs>
-
-        {error && (
-          <Alert className="border-warning bg-warning/10">
-            <AlertTriangle className="h-4 w-4 text-warning" />
-            <AlertDescription className="text-text">
-              <strong>Data Notice:</strong> {error}. Showing local data as fallback.
-            </AlertDescription>
-          </Alert>
-        )}
       </div>
     </div>
   );
