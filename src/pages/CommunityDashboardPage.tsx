@@ -16,7 +16,9 @@ import {
   AlertTriangle,
   Clock,
   ArrowLeft,
-  Home
+  Home,
+  FileText,
+  BarChart3
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TrustIndicator, SecurityBadge, OfficialStamp } from '@/components/ui/trust-indicators';
@@ -73,37 +75,37 @@ const CommunityDashboardPage: React.FC = () => {
         // Transform API data to match our component structure
         const transformedMetrics: CommunityMetrics = {
           totalReports: data.totalReports || 0,
-          resolvedReports: Math.floor((data.totalReports || 0) * 0.93), // Estimate 93% resolution rate
-          pendingReports: Math.floor((data.totalReports || 0) * 0.07), // Estimate 7% pending
-          communityMembers: 2847, // This would come from user analytics
-          responseRate: 92.7 // This would be calculated from actual data
+          resolvedReports: data.resolvedReports || 0,
+          pendingReports: data.pendingReports || 0,
+          communityMembers: data.communityMembers || 0,
+          responseRate: data.responseRate || 0
         };
 
         const transformedSectorStats: SectorStats[] = [
           {
             sector: 'Gender-Based Violence',
             totalReports: data.gbvReports || 0,
-            resolvedReports: Math.floor((data.gbvReports || 0) * 0.93),
-            avgResponseTime: '2.3 hours',
-            topIssues: Object.keys(data.sectorData?.gbv?.categories || {}).slice(0, 3),
+            resolvedReports: data.gbvResolved || 0,
+            avgResponseTime: data.gbvResponseTime || 'N/A',
+            topIssues: data.sectorData?.gbv?.categories ? Object.keys(data.sectorData.gbv.categories).slice(0, 3) : [],
             icon: Shield,
             color: 'text-danger bg-danger/10'
           },
           {
             sector: 'Education',
             totalReports: data.educationReports || 0,
-            resolvedReports: Math.floor((data.educationReports || 0) * 0.92),
-            avgResponseTime: '4.1 hours',
-            topIssues: Object.keys(data.sectorData?.education?.categories || {}).slice(0, 3),
+            resolvedReports: data.educationResolved || 0,
+            avgResponseTime: data.educationResponseTime || 'N/A',
+            topIssues: data.sectorData?.education?.categories ? Object.keys(data.sectorData.education.categories).slice(0, 3) : [],
             icon: GraduationCap,
             color: 'text-nigerian-blue bg-nigerian-blue/10'
           },
           {
             sector: 'Water & Infrastructure',
             totalReports: data.waterReports || 0,
-            resolvedReports: Math.floor((data.waterReports || 0) * 0.94),
-            avgResponseTime: '3.7 hours',
-            topIssues: Object.keys(data.sectorData?.water?.categories || {}).slice(0, 3),
+            resolvedReports: data.waterResolved || 0,
+            avgResponseTime: data.waterResponseTime || 'N/A',
+            topIssues: data.sectorData?.water?.categories ? Object.keys(data.sectorData.water.categories).slice(0, 3) : [],
             icon: Droplets,
             color: 'text-nigerian-green bg-nigerian-green/10'
           }
@@ -124,7 +126,7 @@ const CommunityDashboardPage: React.FC = () => {
           totalReports: reports.length,
           resolvedReports: resolvedReports,
           pendingReports: pendingReports,
-          communityMembers: 2847, // This would come from user analytics
+          communityMembers: 0, // Will be populated when user analytics are available
           responseRate: responseRate
         };
 
@@ -133,7 +135,7 @@ const CommunityDashboardPage: React.FC = () => {
             sector: 'Gender-Based Violence',
             totalReports: reports.filter(r => r.type?.includes('gender') || r.type?.includes('gbv')).length,
             resolvedReports: reports.filter(r => (r.type?.includes('gender') || r.type?.includes('gbv')) && r.status === 'resolved').length,
-            avgResponseTime: '2.3 hours',
+            avgResponseTime: 'N/A',
             topIssues: calculateTopIssues(reports.filter(r => r.type?.includes('gender') || r.type?.includes('gbv'))),
             icon: Shield,
             color: 'text-danger bg-danger/10'
@@ -142,7 +144,7 @@ const CommunityDashboardPage: React.FC = () => {
             sector: 'Education',
             totalReports: reports.filter(r => r.type?.includes('education')).length,
             resolvedReports: reports.filter(r => r.type?.includes('education') && r.status === 'resolved').length,
-            avgResponseTime: '4.1 hours',
+            avgResponseTime: 'N/A',
             topIssues: calculateTopIssues(reports.filter(r => r.type?.includes('education'))),
             icon: GraduationCap,
             color: 'text-nigerian-blue bg-nigerian-blue/10'
@@ -151,7 +153,7 @@ const CommunityDashboardPage: React.FC = () => {
             sector: 'Water & Infrastructure',
             totalReports: reports.filter(r => r.type?.includes('water')).length,
             resolvedReports: reports.filter(r => r.type?.includes('water') && r.status === 'resolved').length,
-            avgResponseTime: '3.7 hours',
+            avgResponseTime: 'N/A',
             topIssues: calculateTopIssues(reports.filter(r => r.type?.includes('water'))),
             icon: Droplets,
             color: 'text-nigerian-green bg-nigerian-green/10'
@@ -176,6 +178,20 @@ const CommunityDashboardPage: React.FC = () => {
       issues[issue] = (issues[issue] || 0) + 1;
     });
     return Object.keys(issues).sort((a, b) => issues[b] - issues[a]).slice(0, 3);
+  };
+
+  // Get recent reports for activity feed
+  const getRecentReports = () => {
+    return reports
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5)
+      .map(report => ({
+        type: report.type || 'Report',
+        time: new Date(report.date).toLocaleDateString(),
+        status: report.status || 'New',
+        color: report.status === 'resolved' ? 'text-success' : 
+               report.status === 'under-review' ? 'text-warning' : 'text-danger'
+      }));
   };
 
   if (loading) {
@@ -321,25 +337,28 @@ const CommunityDashboardPage: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {[
-                      { type: 'GBV Report', time: '2 hours ago', status: 'Under Review', color: 'text-danger' },
-                      { type: 'Education Issue', time: '4 hours ago', status: 'Resolved', color: 'text-success' },
-                      { type: 'Water Infrastructure', time: '6 hours ago', status: 'In Progress', color: 'text-warning' },
-                      { type: 'Community Safety', time: '8 hours ago', status: 'Resolved', color: 'text-success' }
-                    ].map((activity, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-3 h-3 rounded-full ${activity.color.replace('text-', 'bg-')}`} />
-                          <div>
-                            <p className="font-medium text-sm text-text">{activity.type}</p>
-                            <p className="text-xs text-text-light">{activity.time}</p>
+                    {getRecentReports().length > 0 ? (
+                      getRecentReports().map((activity, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-3 h-3 rounded-full ${activity.color.replace('text-', 'bg-')}`} />
+                            <div>
+                              <p className="font-medium text-sm text-text">{activity.type}</p>
+                              <p className="text-xs text-text-light">{activity.time}</p>
+                            </div>
                           </div>
+                          <Badge variant="outline" className="text-xs">
+                            {activity.status}
+                          </Badge>
                         </div>
-                        <Badge variant="outline" className="text-xs">
-                          {activity.status}
-                        </Badge>
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-500 text-sm">No recent activity</p>
+                        <p className="text-gray-400 text-xs">Reports will appear here as they are submitted</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -357,23 +376,31 @@ const CommunityDashboardPage: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {[
-                      { metric: 'Response Time', value: '2.3 hours', improvement: '+15%' },
-                      { metric: 'Resolution Rate', value: '92.7%', improvement: '+8%' },
-                      { metric: 'Community Satisfaction', value: '4.8/5', improvement: '+12%' },
-                      { metric: 'Emergency Response', value: '1.2 hours', improvement: '+25%' }
-                    ].map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                        <div>
-                          <p className="font-medium text-sm text-text">{item.metric}</p>
-                          <p className="text-xs text-text-light">Current performance</p>
+                    {metrics.totalReports > 0 ? (
+                      [
+                        { metric: 'Response Time', value: 'N/A', improvement: 'Data collection in progress' },
+                        { metric: 'Resolution Rate', value: `${metrics.responseRate}%`, improvement: 'Based on current data' },
+                        { metric: 'Community Satisfaction', value: 'N/A', improvement: 'Survey system pending' },
+                        { metric: 'Emergency Response', value: 'N/A', improvement: 'Tracking system pending' }
+                      ].map((item, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                          <div>
+                            <p className="font-medium text-sm text-text">{item.metric}</p>
+                            <p className="text-xs text-text-light">Current performance</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-bold text-text">{item.value}</p>
+                            <p className="text-xs text-success">{item.improvement}</p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-text">{item.value}</p>
-                          <p className="text-xs text-success">{item.improvement}</p>
-                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <BarChart3 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-500 text-sm">No metrics available</p>
+                        <p className="text-gray-400 text-xs">Metrics will appear as data is collected</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -418,11 +445,15 @@ const CommunityDashboardPage: React.FC = () => {
                     <div className="mt-4">
                       <p className="text-sm font-medium text-text mb-2">Top Issues:</p>
                       <div className="flex flex-wrap gap-2">
-                        {sector.topIssues.map((issue, issueIndex) => (
-                          <Badge key={issueIndex} variant="outline" className="text-xs">
-                            {issue}
-                          </Badge>
-                        ))}
+                        {sector.topIssues.length > 0 ? (
+                          sector.topIssues.map((issue, issueIndex) => (
+                            <Badge key={issueIndex} variant="outline" className="text-xs">
+                              {issue}
+                            </Badge>
+                          ))
+                        ) : (
+                          <p className="text-gray-500 text-sm">No issues reported yet</p>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -480,18 +511,18 @@ const CommunityDashboardPage: React.FC = () => {
                   <div className="space-y-4">
                     <h4 className="font-semibold text-text">Success Stories</h4>
                     <div className="space-y-3">
-                      <div className="p-3 border border-success/20 bg-success/5 rounded-lg">
-                        <p className="text-sm font-medium text-success">Water Infrastructure Fixed</p>
-                        <p className="text-xs text-text-light">Community reported water issues were resolved within 48 hours</p>
-                      </div>
-                      <div className="p-3 border border-success/20 bg-success/5 rounded-lg">
-                        <p className="text-sm font-medium text-success">School Safety Improved</p>
-                        <p className="text-xs text-text-light">Security measures implemented at local schools</p>
-                      </div>
-                      <div className="p-3 border border-success/20 bg-success/5 rounded-lg">
-                        <p className="text-sm font-medium text-success">Emergency Response</p>
-                        <p className="text-xs text-text-light">Quick response to urgent community safety concerns</p>
-                      </div>
+                      {metrics.totalReports > 0 ? (
+                        <div className="p-3 border border-success/20 bg-success/5 rounded-lg">
+                          <p className="text-sm font-medium text-success">Data Collection Active</p>
+                          <p className="text-xs text-text-light">Community reports are being collected and processed</p>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                          <p className="text-gray-500 text-sm">No success stories yet</p>
+                          <p className="text-gray-400 text-xs">Success stories will appear as issues are resolved</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
