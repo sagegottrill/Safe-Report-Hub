@@ -39,11 +39,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const AppRoutes: React.FC = () => {
   const { user } = useAppContext();
   
-  // Check for mobile device and redirect if needed
-  // useEffect(() => {
-  //   redirectToMobile();
-  // }, []);
-
   console.log('AppRoutes: Rendering with user:', user);
 
   return (
@@ -67,7 +62,6 @@ const AppRoutes: React.FC = () => {
         <Route path="/governor" element={
           <ProtectedRoute>
             <GovernorPanel />
-            
           </ProtectedRoute>
         } />
         <Route path="/governor-admin" element={

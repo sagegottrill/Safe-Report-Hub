@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
@@ -30,8 +30,70 @@ const MobileProfile: React.FC = () => {
   const { user, logout } = useAppContext();
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(user?.name || '');
-  const [editedPhone, setEditedPhone] = useState(user?.phone || '');
+  const [editedPhone, setEditedPhone] = useState('');
   const [showUserId, setShowUserId] = useState(false);
+  const [userPhone, setUserPhone] = useState<string>('');
+
+  // Get phone number from user object or localStorage
+  useEffect(() => {
+    const getPhoneNumber = () => {
+      // First try to get from user object
+      if (user?.phone) {
+        setUserPhone(user.phone);
+        setEditedPhone(user.phone);
+        return;
+      }
+      
+      // Try to get from localStorage user
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          if (parsedUser.phone) {
+            setUserPhone(parsedUser.phone);
+            setEditedPhone(parsedUser.phone);
+            return;
+          }
+        }
+      } catch (error) {
+        console.log('Could not retrieve phone from localStorage user');
+      }
+      
+      // Try to get from registration data
+      try {
+        const registrationData = localStorage.getItem('registrationData');
+        if (registrationData) {
+          const parsedData = JSON.parse(registrationData);
+          if (parsedData.phone) {
+            setUserPhone(parsedData.phone);
+            setEditedPhone(parsedData.phone);
+            return;
+          }
+        }
+      } catch (error) {
+        console.log('Could not retrieve phone from registration data');
+      }
+      
+      // Try to get from users array
+      try {
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const currentUser = users.find((u: any) => u.email === user?.email);
+        if (currentUser?.phone) {
+          setUserPhone(currentUser.phone);
+          setEditedPhone(currentUser.phone);
+          return;
+        }
+      } catch (error) {
+        console.log('Could not retrieve phone from users array');
+      }
+      
+      // If no phone found, set empty
+      setUserPhone('');
+      setEditedPhone('');
+    };
+
+    getPhoneNumber();
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -40,13 +102,30 @@ const MobileProfile: React.FC = () => {
 
   const handleSave = () => {
     // In a real app, you'd update the user profile here
+    // For now, just update localStorage
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        const updatedUser = {
+          ...parsedUser,
+          name: editedName,
+          phone: editedPhone
+        };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setUserPhone(editedPhone);
+      }
+    } catch (error) {
+      console.error('Error updating user data:', error);
+    }
+    
     toast.success('Profile updated successfully');
     setIsEditing(false);
   };
 
   const handleCancel = () => {
     setEditedName(user?.name || '');
-    setEditedPhone(user?.phone || '');
+    setEditedPhone(userPhone);
     setIsEditing(false);
   };
 
@@ -185,7 +264,9 @@ const MobileProfile: React.FC = () => {
                   />
                 ) : (
                   <div className="bg-[#f8fafc] border-2 border-[#e2e8f0] rounded-2xl p-4">
-                    <p className="text-base font-semibold text-[#1b4332]">{user?.phone || 'Not provided'}</p>
+                    <p className="text-base font-semibold text-[#1b4332]">
+                      {userPhone || user?.phone || 'Not provided'}
+                    </p>
                   </div>
                 )}
               </div>

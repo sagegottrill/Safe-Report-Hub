@@ -63,7 +63,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
 
   return (
     <>
-      <Card className="w-full max-w-md mx-auto">
+      <Card className="w-full rounded-2xl shadow-xl border-0 px-0 sm:px-4">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">{t('signIn')}</CardTitle>
           <CardDescription className="text-center">

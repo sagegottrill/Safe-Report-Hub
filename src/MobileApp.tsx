@@ -46,7 +46,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const { user } = useAppContext();
   
   if (!user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/auth" replace />;
   }
   
   return <>{children}</>;
@@ -83,7 +83,7 @@ function MobileAppContent() {
     // Simulate initialization delay for better UX
     const timer = setTimeout(() => {
       setIsInitialized(true);
-    }, 500); // Reduced delay since main loading is handled by LoadingScreen
+    }, 500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -125,6 +125,7 @@ function MobileAppContent() {
           )
         } />
         
+        {/* Public routes */}
         <Route path="/faq" element={<MobileWrapper><MobileFAQ /></MobileWrapper>} />
         <Route path="/test-multisectoral" element={<MobileWrapper><MobileMultiSectoral /></MobileWrapper>} />
         <Route path="/community-dashboard" element={<MobileWrapper><MobileCommunityDashboard /></MobileWrapper>} />

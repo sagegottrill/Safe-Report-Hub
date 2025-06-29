@@ -179,10 +179,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (/^governor_admin\./i.test(firebaseUser.email.trim())) role = 'governor_admin';
         else if (/^governor\./i.test(firebaseUser.email.trim())) role = 'governor';
         const displayName = extractFirstName(firebaseUser.email, firebaseUser.displayName);
+        
+        // Try to get phone number from various sources
+        let phoneNumber: string | undefined;
+        try {
+          // Check registration data first
+          const registrationData = localStorage.getItem('registrationData');
+          if (registrationData) {
+            const parsedData = JSON.parse(registrationData);
+            if (parsedData.email === firebaseUser.email && parsedData.phone) {
+              phoneNumber = parsedData.phone;
+            }
+          }
+          
+          // Check stored user data
+          if (!phoneNumber) {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+              const parsedUser = JSON.parse(storedUser);
+              if (parsedUser.email === firebaseUser.email && parsedUser.phone) {
+                phoneNumber = parsedUser.phone;
+              }
+            }
+          }
+          
+          // Check users array
+          if (!phoneNumber) {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const userData = users.find((u: any) => u.email === firebaseUser.email);
+            if (userData?.phone) {
+              phoneNumber = userData.phone;
+            }
+          }
+        } catch (error) {
+          console.log('Could not retrieve phone number for user:', error);
+        }
+        
         const mockUser: User = {
           id: generateMeaningfulUserId(displayName, role),
           email: firebaseUser.email,
           name: displayName,
+          phone: phoneNumber,
           role,
           region,
           allowedCategories,
@@ -254,6 +291,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           name: email.split('@')[0],
           role: 'user',
         };
+        
+        // Try to get phone number from various sources
+        try {
+          // Check registration data
+          const registrationData = localStorage.getItem('registrationData');
+          if (registrationData) {
+            const parsedData = JSON.parse(registrationData);
+            if (parsedData.email === email && parsedData.phone) {
+              mockUser.phone = parsedData.phone;
+            }
+          }
+          
+          // Check users array
+          if (!mockUser.phone) {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const userData = users.find((u: any) => u.email === email);
+            if (userData?.phone) {
+              mockUser.phone = userData.phone;
+            }
+          }
+        } catch (error) {
+          console.log('Could not retrieve phone number for login:', error);
+        }
+        
         setUser(mockUser);
         localStorage.setItem('user', JSON.stringify(mockUser));
         setCurrentView('dashboard');
@@ -275,6 +336,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     console.log('[REGISTER] Attempting registration for', email);
     try {
       if (email && password.length >= 6 && name && phone) {
+        // Store registration data for later retrieval
+        const registrationData = { email, name, phone };
+        localStorage.setItem('registrationData', JSON.stringify(registrationData));
+        
         // Try cloud-based registration
         try {
           const user = await createUserWithEmail(email, password, name, phone);
