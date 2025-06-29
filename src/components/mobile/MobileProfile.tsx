@@ -14,7 +14,9 @@ import {
   ArrowLeft,
   Edit,
   Check,
-  X
+  X,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 
@@ -23,6 +25,7 @@ const MobileProfile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(user?.name || '');
   const [editedPhone, setEditedPhone] = useState(user?.phone || '');
+  const [showUserId, setShowUserId] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -83,16 +86,16 @@ const MobileProfile: React.FC = () => {
       </div>
 
       {/* Profile Content Card */}
-      <div className="bg-white rounded-3xl shadow-lg p-6 w-full max-w-md mb-6">
+      <div className="bg-white rounded-2xl shadow-lg p-4 w-full max-w-md mb-4">
         {/* Avatar Section */}
-        <div className="flex items-center justify-center mb-5">
-          <div className="w-20 h-20 bg-gradient-to-br from-nigerian-green to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
-            <User className="h-10 w-10 text-white" />
+        <div className="flex items-center justify-center mb-3">
+          <div className="w-16 h-16 bg-gradient-to-br from-nigerian-green to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+            <User className="h-8 w-8 text-white" />
           </div>
         </div>
         {/* Name Section */}
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+        <div className="space-y-1 mb-2">
+          <div className="flex items-center gap-2 text-xs font-medium text-gray-600">
             <User className="h-4 w-4" />
             Full Name
           </div>
@@ -101,25 +104,37 @@ const MobileProfile: React.FC = () => {
               type="text"
               value={editedName}
               onChange={(e) => setEditedName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-2xl bg-white shadow focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green"
+              className="w-full px-2 py-1 border border-gray-300 rounded-xl bg-white shadow focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green text-sm"
             />
           ) : (
-            <p className="text-lg font-semibold text-gray-800">{user?.name || 'Not provided'}</p>
+            <p className="text-base font-semibold text-gray-800">{user?.name || 'Not provided'}</p>
           )}
         </div>
         <Separator />
-        {/* Email Section */}
-        <div className="space-y-2 mb-4 mt-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+        {/* User ID Section */}
+        <div className="space-y-1 mb-2 mt-2">
+          <div className="flex items-center gap-2 text-xs font-medium text-gray-600">
             <Shield className="h-4 w-4" />
             User ID
           </div>
-          <p className="text-lg font-semibold text-gray-800">{user?.id}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-base font-semibold text-gray-800 select-all">
+              {showUserId ? user?.id : '••••••••••••••••'}
+            </p>
+            <button
+              type="button"
+              aria-label={showUserId ? 'Hide User ID' : 'Show User ID'}
+              onClick={() => setShowUserId(v => !v)}
+              className="focus:outline-none"
+            >
+              {showUserId ? <EyeOff className="w-5 h-5 text-gray-500" /> : <Eye className="w-5 h-5 text-gray-500" />}
+            </button>
+          </div>
         </div>
         <Separator />
         {/* Phone Section */}
-        <div className="space-y-2 mb-4 mt-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+        <div className="space-y-1 mb-2 mt-2">
+          <div className="flex items-center gap-2 text-xs font-medium text-gray-600">
             <Phone className="h-4 w-4" />
             Phone Number
           </div>
@@ -128,10 +143,10 @@ const MobileProfile: React.FC = () => {
               type="tel"
               value={editedPhone}
               onChange={(e) => setEditedPhone(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-2xl bg-white shadow focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green"
+              className="w-full px-2 py-1 border border-gray-300 rounded-xl bg-white shadow focus:ring-2 focus:ring-nigerian-green focus:border-nigerian-green text-sm"
             />
           ) : (
-            <p className="text-lg font-semibold text-gray-800">{user?.phone || 'Not provided'}</p>
+            <p className="text-base font-semibold text-gray-800">{user?.phone || 'Not provided'}</p>
           )}
         </div>
         {/* Edit Actions */}

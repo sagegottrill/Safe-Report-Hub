@@ -28,6 +28,7 @@ import MobileLoading from './components/mobile/MobileLoading';
 import MobileProfile from './components/mobile/MobileProfile';
 import MobileDashboard from './components/mobile/MobileDashboard';
 import MobileAuth from './components/mobile/MobileAuth';
+import MobileFAQ from './components/mobile/MobileFAQ';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -122,7 +123,7 @@ function MobileAppContent() {
           )
         } />
         
-        <Route path="/faq" element={<MobileWrapper><FAQ /></MobileWrapper>} />
+        <Route path="/faq" element={<MobileWrapper><MobileFAQ /></MobileWrapper>} />
         <Route path="/test-multisectoral" element={<MobileWrapper><TestMultiSectoral /></MobileWrapper>} />
         <Route path="/community-dashboard" element={<MobileWrapper><CommunityDashboardPage /></MobileWrapper>} />
         

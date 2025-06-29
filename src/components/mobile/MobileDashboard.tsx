@@ -135,7 +135,6 @@ export default function MobileDashboard() {
         <div className="mb-2">
           <h2 className="text-lg font-bold text-[#1b4332]">Welcome back, {user?.name || user?.email || 'User'}</h2>
           <p className="text-slate-600 text-sm">Your Personal Dashboard - Official Government Crisis Reporting Platform</p>
-          <p className="text-xs text-slate-500 mt-1">User ID: {user?.id}</p>
         </div>
         <button
           className="w-full py-4 px-6 rounded-2xl font-semibold text-white bg-[#2ecc71] shadow-lg text-lg active:scale-95 transition-all hover:bg-[#27ae60] mt-2"
@@ -143,7 +142,7 @@ export default function MobileDashboard() {
         >
           <div className="flex flex-col items-center justify-center gap-1">
             <span className="flex items-center gap-2"><Plus className="w-5 h-5" /> New Report</span>
-            <span className="text-xs font-medium">Secure & Encrypted • Anonymous Reporting Available • Government Verified</span>
+            <span className="text-xs font-medium">Secure & Encrypted • Government Verified</span>
           </div>
         </button>
       </div>
@@ -167,14 +166,28 @@ export default function MobileDashboard() {
         </div>
         <div className="mt-2 text-sm text-[#1b4332] font-semibold">Track the status of your submitted incident reports</div>
         {reports.length === 0 && (
-          <div className="mt-2 text-xs text-gray-500 font-medium">Protected<br/>You haven't submitted any reports yet<br/>This is your personal dashboard. Submit your first incident report to get started.</div>
+          <div className="flex flex-col items-center mt-2 mb-4">
+            <div className="mb-3">
+              {/* Document icon placeholder, matching web style */}
+              <svg width="48" height="48" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <rect x="8" y="8" width="32" height="32" rx="6" fill="#e0e7ef"/>
+                <rect x="16" y="20" width="16" height="2.5" rx="1.25" fill="#b0b8c9"/>
+                <rect x="16" y="26" width="10" height="2.5" rx="1.25" fill="#b0b8c9"/>
+                <rect x="16" y="32" width="8" height="2.5" rx="1.25" fill="#b0b8c9"/>
+              </svg>
+            </div>
+            <div className="text-center">
+              <div className="text-base font-semibold text-[#1b4332] mb-1">You haven't submitted any reports yet</div>
+              <div className="text-xs text-slate-500 mb-4">This is your personal dashboard. Submit your first incident report to get started.</div>
+            </div>
+            <button
+              className="w-full py-3 px-6 rounded-2xl font-semibold text-white bg-[#2ecc71] shadow-lg text-base active:scale-95 transition-all hover:bg-[#27ae60] mt-2"
+              onClick={() => setShowReportModal(true)}
+            >
+              Submit Your First Report
+            </button>
+          </div>
         )}
-        <button
-          className="w-full py-3 px-6 rounded-2xl font-semibold text-white bg-[#2ecc71] shadow-lg text-base active:scale-95 transition-all hover:bg-[#27ae60] mt-4"
-          onClick={() => setShowReportModal(true)}
-        >
-          Submit Your First Report
-        </button>
       </div>
 
       {/* Community Dashboard Card */}
