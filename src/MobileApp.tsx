@@ -30,6 +30,7 @@ import MobileAuth from './components/mobile/MobileAuth';
 import MobileFAQ from './components/mobile/MobileFAQ';
 import MobileReportPage from './components/mobile/MobileReportPage';
 import MobileCommunityDashboard from './components/mobile/MobileCommunityDashboard';
+import MobileMultiSectoral from './components/mobile/MobileMultiSectoral';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -125,7 +126,7 @@ function MobileAppContent() {
         } />
         
         <Route path="/faq" element={<MobileWrapper><MobileFAQ /></MobileWrapper>} />
-        <Route path="/test-multisectoral" element={<MobileWrapper><TestMultiSectoral /></MobileWrapper>} />
+        <Route path="/test-multisectoral" element={<MobileWrapper><MobileMultiSectoral /></MobileWrapper>} />
         <Route path="/community-dashboard" element={<MobileWrapper><MobileCommunityDashboard /></MobileWrapper>} />
         
         {/* Auth route */}

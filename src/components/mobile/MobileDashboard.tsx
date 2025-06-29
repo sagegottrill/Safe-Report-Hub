@@ -212,9 +212,12 @@ export default function MobileDashboard() {
         <p className="text-slate-600 text-sm mb-2">Access enhanced reporting for all sectors</p>
         <button
           className="w-full py-3 px-6 rounded-2xl font-semibold text-[#2ecc71] bg-[#e8f5e9] shadow text-base active:scale-95 transition-all hover:bg-[#d0f0e0]"
-          onClick={() => toast.info('Multi-Sectoral Form coming soon!')}
+          onClick={() => navigate('/test-multisectoral')}
         >
-          Multi-Sectoral Form
+          <div className="flex items-center justify-center gap-2">
+            <Shield className="w-5 h-5" />
+            Multi-Sectoral Form
+          </div>
         </button>
       </div>
 
