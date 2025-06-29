@@ -15,7 +15,15 @@ import {
   AlertTriangle,
   ChevronRight,
   Calendar,
-  MapPin
+  MapPin,
+  X,
+  Filter,
+  Search,
+  Eye,
+  Clock as ClockIcon,
+  CheckCircle2,
+  AlertCircle,
+  MoreHorizontal
 } from 'lucide-react';
 import MobileReportForm from './MobileReportForm';
 import { toast } from '@/components/ui/sonner';
@@ -36,6 +44,9 @@ export default function MobileDashboard() {
   const { user, reports, logout, submitReport } = useAppContext();
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState(null);
+  const [showTrackReports, setShowTrackReports] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,6 +56,53 @@ export default function MobileDashboard() {
       return () => clearTimeout(timer);
     }
   }, [reports]);
+
+  // Filter reports based on status and search
+  const filteredReports = reports
+    .filter(report => {
+      // If no user ID, show all reports (for debugging)
+      if (!user?.id) return true;
+      return report.reporterId === user?.id;
+    })
+    .filter(report => {
+      if (filterStatus === 'all') return true;
+      return report.status === filterStatus;
+    })
+    .filter(report => {
+      if (!searchQuery) return true;
+      return (
+        report.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        report.type?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    })
+    .sort((a, b) => {
+      const dateA = a.date ? new Date(a.date) : new Date(0);
+      const dateB = b.date ? new Date(b.date) : new Date(0);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+  // Debug logging
+  console.log('Track Reports Debug:', {
+    showTrackReports,
+    totalReports: reports.length,
+    userReports: reports.filter(r => r.reporterId === user?.id).length,
+    filteredReports: filteredReports.length,
+    user: user?.id
+  });
+
+  // Get status color and icon
+  const getStatusInfo = (status) => {
+    switch (status) {
+      case 'new':
+        return { color: '#f59e0b', bg: '#fef3c7', icon: ClockIcon, label: 'New' };
+      case 'under-review':
+        return { color: '#3b82f6', bg: '#dbeafe', icon: Eye, label: 'Under Review' };
+      case 'resolved':
+        return { color: '#10b981', bg: '#d1fae5', icon: CheckCircle2, label: 'Resolved' };
+      default:
+        return { color: '#6b7280', bg: '#f3f4f6', icon: ClockIcon, label: 'Unknown' };
+    }
+  };
 
   // Stats
   const stats = [
@@ -94,7 +152,7 @@ export default function MobileDashboard() {
       icon: FileText,
       color: COLORS.sage,
       bg: COLORS.mint,
-      onClick: () => toast.info('Coming soon!'),
+      onClick: () => setShowTrackReports(true),
     },
     {
       label: 'Emergency',
@@ -110,7 +168,7 @@ export default function MobileDashboard() {
       icon: HelpCircle,
       color: COLORS.jade,
       bg: COLORS.sage,
-      onClick: () => window.location.href = '/faq',
+      onClick: () => navigate('/faq'),
     },
   ];
 
@@ -310,6 +368,152 @@ export default function MobileDashboard() {
               <div className="text-xs text-slate-400">{new Date(selectedReport.date).toLocaleString()}</div>
             </div>
             <button className="mobile-button mobile-button-secondary w-full" onClick={() => setSelectedReport(null)}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Track Reports Dialog */}
+      {showTrackReports && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[#1b4332] to-[#2ecc71] text-white p-6 rounded-t-3xl flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">Track Your Reports</h2>
+                  <p className="text-green-100 text-sm mt-1">Monitor your submitted reports</p>
+                </div>
+                <button 
+                  onClick={() => setShowTrackReports(false)}
+                  className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Main Scrollable Content */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              {/* Search and Filter */}
+              <div className="px-6 mb-6 space-y-4 pt-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Search reports..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {['all', 'new', 'under-review', 'resolved'].map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => setFilterStatus(status)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                        filterStatus === status
+                          ? 'bg-green-500 text-white shadow-lg'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {status === 'all' ? 'All' : 
+                        status === 'under-review' ? 'Reviewing' :
+                        status.charAt(0).toUpperCase() + status.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Reports List - Scrollable */}
+              <div className="px-6 pb-6">
+                {filteredReports.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="mx-auto text-slate-300 mb-4" size={48} />
+                    <h3 className="text-lg font-semibold text-slate-600 mb-2">No Reports Found</h3>
+                    <p className="text-slate-500 text-sm mb-6">
+                      {searchQuery || filterStatus !== 'all' 
+                        ? 'Try adjusting your search or filters'
+                        : 'Submit your first report to get started'
+                      }
+                    </p>
+                    {!searchQuery && filterStatus === 'all' && (
+                      <button
+                        onClick={() => {
+                          setShowTrackReports(false);
+                          navigate('/report');
+                        }}
+                        className="bg-green-500 text-white px-6 py-3 rounded-2xl font-medium hover:bg-green-600 transition-colors"
+                      >
+                        Submit Report
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredReports.map((report) => (
+                      <div
+                        key={report.id}
+                        onClick={() => setSelectedReport(report)}
+                        className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-full ${
+                              report.status === 'resolved' ? 'bg-green-100' :
+                              report.status === 'under-review' ? 'bg-blue-100' :
+                              'bg-orange-100'
+                            }`}>
+                              {report.status === 'resolved' ? (
+                                <CheckCircle2 className="text-green-600" size={16} />
+                              ) : report.status === 'under-review' ? (
+                                <ClockIcon className="text-blue-600" size={16} />
+                              ) : (
+                                <AlertCircle className="text-orange-600" size={16} />
+                              )}
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-slate-800 capitalize">{report.type}</h4>
+                              <p className="text-xs text-slate-500 capitalize">{report.status}</p>
+                            </div>
+                          </div>
+                          <ChevronRight className="text-slate-400" size={16} />
+                        </div>
+                        <p className="text-sm text-slate-600 mb-3 line-clamp-2">
+                          {report.description || 'No description provided'}
+                        </p>
+                        <div className="flex items-center justify-between text-xs text-slate-500">
+                          <div className="flex items-center gap-1">
+                            <Calendar size={12} />
+                            <span>{new Date(report.date).toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MapPin size={12} />
+                            <span>Case #{report.id?.slice(-6)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pt-6 border-t border-slate-200 flex-shrink-0 bg-white">
+              <div className="flex items-center justify-between text-sm text-slate-600">
+                <span>{filteredReports.length} report{filteredReports.length !== 1 ? 's' : ''} found</span>
+                <button
+                  onClick={() => {
+                    setShowTrackReports(false);
+                    navigate('/report');
+                  }}
+                  className="text-green-600 font-medium hover:text-green-700"
+                >
+                  Submit New Report
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
