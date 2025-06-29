@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
+import { useNavigate } from 'react-router-dom';
 import { 
   Plus, 
   FileText, 
@@ -33,9 +34,9 @@ const COLORS = {
 
 export default function MobileDashboard() {
   const { user, reports, logout, submitReport } = useAppContext();
-  const [showReportModal, setShowReportModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (reports.length > 0) setLoading(false);
@@ -85,7 +86,7 @@ export default function MobileDashboard() {
       icon: Plus,
       color: COLORS.emerald,
       bg: COLORS.mint,
-      onClick: () => setShowReportModal(true),
+      onClick: () => navigate('/report'),
     },
     {
       label: 'Track Reports',
@@ -138,7 +139,7 @@ export default function MobileDashboard() {
         </div>
         <button
           className="w-full py-4 px-6 rounded-2xl font-semibold text-white bg-[#2ecc71] shadow-lg text-lg active:scale-95 transition-all hover:bg-[#27ae60] mt-2"
-          onClick={() => setShowReportModal(true)}
+          onClick={() => navigate('/report')}
         >
           <div className="flex flex-col items-center justify-center gap-1">
             <span className="flex items-center gap-2"><Plus className="w-5 h-5" /> New Report</span>
@@ -182,7 +183,7 @@ export default function MobileDashboard() {
             </div>
             <button
               className="w-full py-3 px-6 rounded-2xl font-semibold text-white bg-[#2ecc71] shadow-lg text-base active:scale-95 transition-all hover:bg-[#27ae60] mt-2"
-              onClick={() => setShowReportModal(true)}
+              onClick={() => navigate('/report')}
             >
               Submit Your First Report
             </button>
@@ -291,31 +292,6 @@ export default function MobileDashboard() {
           </div>
         )}
       </div>
-
-      {/* Report Modal Overlay */}
-      {showReportModal && (
-        <div className="mobile-modal" onClick={() => setShowReportModal(false)}>
-          <div className="mobile-modal-content mobile-scale-in" onClick={e => e.stopPropagation()}>
-            <MobileReportForm
-              onSubmit={data => {
-                submitReport({
-                  type: data.sector,
-                  impact: [data.category],
-                  description: data.description,
-                  urgency: 'medium',
-                  isAnonymous: false,
-                  perpetrator: '',
-                  date: new Date().toISOString(),
-                  platform: 'mobile',
-                });
-                toast.success('Report submitted!');
-                setShowReportModal(false);
-              }}
-              onClose={() => setShowReportModal(false)}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Report Details Modal Overlay */}
       {selectedReport && (

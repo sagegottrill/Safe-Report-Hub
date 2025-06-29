@@ -29,6 +29,7 @@ import MobileProfile from './components/mobile/MobileProfile';
 import MobileDashboard from './components/mobile/MobileDashboard';
 import MobileAuth from './components/mobile/MobileAuth';
 import MobileFAQ from './components/mobile/MobileFAQ';
+import MobileReportPage from './components/mobile/MobileReportPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -134,7 +135,7 @@ function MobileAppContent() {
         <Route 
           path="/report" 
           element={
-            user ? <MobileWrapper><ReportPage /></MobileWrapper> : <Navigate to="/auth" replace />
+            user ? <MobileWrapper><MobileReportPage /></MobileWrapper> : <Navigate to="/auth" replace />
           } 
         />
         
