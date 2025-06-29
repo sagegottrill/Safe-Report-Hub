@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
+import { Toaster as Sonner } from '@/components/ui/sonner';
 import { AppContextProvider, useAppContext } from './contexts/AppContext';
-import { ThemeProvider } from './components/theme-provider';
+import { ThemeProvider } from '@/components/theme-provider';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // Import all the same components as the main app
 import AuthPage from './components/auth/AuthPage';
@@ -24,7 +24,6 @@ import GovernorAdminPanel from './components/admin/GovernorAdminPanel';
 
 // Mobile-specific components
 import MobileLayout from './components/mobile/MobileLayout';
-import MobileLoading from './components/mobile/MobileLoading';
 import MobileProfile from './components/mobile/MobileProfile';
 import MobileDashboard from './components/mobile/MobileDashboard';
 import MobileAuth from './components/mobile/MobileAuth';
@@ -62,12 +61,12 @@ const MobileWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   );
 };
 
-// Loading component for route transitions
+// Simple loading component for route transitions
 const RouteLoading: React.FC = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#e0f7fa] via-[#f1f8e9] to-[#e3f2fd]">
-    <div className="text-center">
-      <div className="w-16 h-16 border-4 border-nigerian-green border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-      <p className="text-nigerian-green font-semibold">Loading...</p>
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1b4332] via-[#2ecc71] to-[#27ae60]">
+    <div className="text-center text-white">
+      <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p className="text-white font-semibold">Loading...</p>
     </div>
   </div>
 );
@@ -82,7 +81,7 @@ function MobileAppContent() {
     // Simulate initialization delay for better UX
     const timer = setTimeout(() => {
       setIsInitialized(true);
-    }, 1000);
+    }, 500); // Reduced delay since main loading is handled by LoadingScreen
 
     return () => clearTimeout(timer);
   }, []);
@@ -102,7 +101,7 @@ function MobileAppContent() {
   }, [user, location.pathname, navigate]);
 
   if (!isInitialized) {
-    return <MobileLoading />;
+    return <RouteLoading />;
   }
 
   return (
@@ -196,7 +195,7 @@ export default function MobileApp() {
             <Router>
               <MobileAppContent />
             </Router>
-            <Toaster 
+            <Sonner 
               position="top-center"
               richColors
               closeButton

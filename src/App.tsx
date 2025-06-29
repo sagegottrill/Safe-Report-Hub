@@ -18,6 +18,8 @@ import NotFound from './pages/NotFound';
 import TestMultiSectoral from './pages/TestMultiSectoral';
 import ReportPage from './pages/ReportPage';
 import GovernorPanel from '@/pages/GovernorPanel';
+import LoadingScreen from './components/LoadingScreen';
+import MobileApp from './MobileApp';
 const GovernorAdminPanel = React.lazy(() => import('./components/admin/GovernorAdminPanel'));
 
 const queryClient = new QueryClient();
@@ -108,6 +110,28 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
+const AppContent: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  const handleDeviceDetected = (mobile: boolean) => {
+    setIsMobile(mobile);
+    setIsLoading(false);
+  };
+
+  if (isLoading) {
+    return <LoadingScreen onDeviceDetected={handleDeviceDetected} />;
+  }
+
+  if (isMobile) {
+    return <MobileApp />;
+  }
+
+  return (
+    <AppRoutes />
+  );
+};
+
 const App = () => {
   return (
     <AppProvider>
@@ -123,7 +147,7 @@ const App = () => {
                 <p className="text-text-light">Loading...</p>
               </div>
             </div>}>
-              <AppRoutes />
+              <AppContent />
             </Suspense>
             </ErrorBoundary>
             <Analytics />
