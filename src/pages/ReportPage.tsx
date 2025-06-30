@@ -4,10 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import AuthPage from '@/components/auth/AuthPage';
 
 const ReportPage: React.FC = () => {
-  const { submitReport } = useAppContext();
+  const { user, submitReport } = useAppContext();
   const navigate = useNavigate();
+
+  if (!user) return <AuthPage />;
 
   const handleReportSubmit = (data: any) => {
     submitReport(data);

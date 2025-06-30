@@ -125,17 +125,6 @@ export default function MobileBottomNav() {
             </Link>
           );
         })}
-        
-        {/* Logout Button */}
-        {user && (
-          <button
-            onClick={logout}
-            className="flex flex-col items-center justify-center py-2 px-4 rounded-2xl transition-all duration-200 hover:bg-red-50 active:scale-95"
-          >
-            <LogOut className="w-6 h-6 mb-1 text-red-500" />
-            <span className="text-xs font-semibold text-red-500">Logout</span>
-          </button>
-        )}
       </div>
     </div>
   );

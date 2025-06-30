@@ -20,6 +20,7 @@ import ReportPage from './pages/ReportPage';
 import GovernorPanel from '@/pages/GovernorPanel';
 import LoadingScreen from './components/LoadingScreen';
 import MobileApp from './MobileApp';
+import AuthPage from './components/auth/AuthPage';
 const GovernorAdminPanel = React.lazy(() => import('./components/admin/GovernorAdminPanel'));
 
 const queryClient = new QueryClient();
@@ -44,10 +45,14 @@ const AppRoutes: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={user ? <Index /> : <AuthPage />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/test-multisectoral" element={<TestMultiSectoral />} />
-        <Route path="/report" element={<ReportPage />} />
+        <Route path="/report" element={
+          <ProtectedRoute>
+            <ReportPage />
+          </ProtectedRoute>
+        } />
         <Route path="/admin" element={
           <ProtectedRoute>
             <AdminPage />
