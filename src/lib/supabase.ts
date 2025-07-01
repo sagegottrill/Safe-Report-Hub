@@ -5,20 +5,39 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-export async function saveReport(report: {
-  category: string;
-  urgency: string;
-  message: string;
-  location?: string;
-  is_anonymous?: boolean;
-  platform?: string;
-  impact?: string;
-  perpetrator?: string;
-  date?: string;
-}) {
+// Map form data to Supabase schema
+function mapReportToSupabase(report: any) {
+  return {
+    // Required fields
+    category: report.category || report.sector || '',
+    urgency: report.urgency || 'medium',
+    message: report.message || report.description || '',
+    location: report.location || '',
+    is_anonymous: report.is_anonymous ?? report.isAnonymous ?? false,
+    platform: report.platform || 'web',
+    impact: report.impact || '',
+    perpetrator: report.perpetrator || '',
+    date: report.date || report.timestamp || report.incidentDate || new Date().toISOString(),
+    // Optional: add more mappings as needed
+    email: report.email || '',
+    phone: report.phone || '',
+    reporter_id: report.reporterId || '',
+    consent_for_sharing: report.consentForSharing ?? false,
+    immediate_danger: report.immediateDanger ?? false,
+    contact_details: report.contactDetails || '',
+    // Add any other fields your Supabase table supports
+  };
+}
+
+export async function saveReport(report: any) {
+  const mapped = mapReportToSupabase(report);
   const { data, error } = await supabase
     .from('reports')
-    .insert([report]);
+    .insert([mapped]);
+  if (error) {
+    // Log detailed error for debugging
+    console.error('[Supabase] Report submission error:', error, '\nPayload:', mapped);
+  }
   return { data, error };
 }
 

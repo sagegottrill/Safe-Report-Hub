@@ -167,7 +167,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const unsubscribe = onAuthStateChange((firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
-        localStorage.setItem('user', JSON.stringify(firebaseUser));
         let role: User['role'] = 'user';
         let region = undefined;
         let allowedCategories = undefined;
@@ -225,18 +224,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           allowedCategories,
         };
         setUser(mockUser);
-        localStorage.setItem('user', JSON.stringify(mockUser));
         let view: typeof currentView = 'dashboard';
         if (role === 'admin' || role === 'super_admin' || role === 'country_admin') view = 'admin';
         if (role === 'governor_admin') view = 'governor-admin';
         if (role === 'governor') view = 'governor';
         setCurrentView(view);
-        localStorage.setItem('currentView', view);
       } else {
         setUser(null);
         setCurrentView('auth');
-        localStorage.removeItem('user');
-        localStorage.removeItem('currentView');
       }
     });
 
@@ -258,9 +253,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             role: predefinedAdmin.role as User['role'],
           };
           setUser(user);
-          localStorage.setItem('user', JSON.stringify(user));
           setCurrentView('admin');
-          localStorage.setItem('currentView', 'admin');
           toast.success('Login successful!');
           console.log('[LOGIN] Success: predefined admin');
           return true;
@@ -270,13 +263,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const firebaseUser = await signInWithEmail(email, password);
           if (firebaseUser) {
             setUser(firebaseUser);
-            localStorage.setItem('user', JSON.stringify(firebaseUser));
             let view: typeof currentView = 'dashboard';
             if (firebaseUser.role === 'admin' || firebaseUser.role === 'super_admin' || firebaseUser.role === 'country_admin') view = 'admin';
             if (firebaseUser.role === 'governor_admin') view = 'governor-admin';
             if (firebaseUser.role === 'governor') view = 'governor';
             setCurrentView(view);
-            localStorage.setItem('currentView', view);
             toast.success('Login successful!');
             console.log('[LOGIN] Success: firebase user');
             return true;
@@ -308,9 +299,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         try {
           const user = await createUserWithEmail(email, password, name, phone);
           setUser(user);
-          localStorage.setItem('user', JSON.stringify(user));
           setCurrentView('dashboard');
-          localStorage.setItem('currentView', 'dashboard');
           toast.success('Registration successful!');
           console.log('[REGISTER] Success: cloud user');
           return true;
@@ -417,18 +406,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setUser(null);
       setCurrentView('auth');
       setSidebarOpen(false);
-      localStorage.removeItem('user');
-      localStorage.removeItem('currentView');
-      toast.success('Logged out');
     } catch (error) {
       console.error('Logout error:', error);
       // Fallback to local logout
       setUser(null);
       setCurrentView('auth');
       setSidebarOpen(false);
-      localStorage.removeItem('user');
-      localStorage.removeItem('currentView');
-      toast.success('Logged out');
     }
   };
 
@@ -486,98 +469,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleSidebar = () => setSidebarOpen(prev => !prev);
-
-  // Keep user and currentView in sync with localStorage
-  useEffect(() => {
-    try {
-    if (user) localStorage.setItem('user', JSON.stringify(user));
-    else localStorage.removeItem('user');
-    } catch (error) {
-      console.error('Error saving user to localStorage:', error);
-    }
-  }, [user]);
-  
-  useEffect(() => {
-    try {
-    if (currentView) localStorage.setItem('currentView', currentView);
-    else localStorage.removeItem('currentView');
-    } catch (error) {
-      console.error('Error saving currentView to localStorage:', error);
-    }
-  }, [currentView]);
-
-  // Add effect to keep reports in sync with localStorage
-  useEffect(() => {
-    try {
-    localStorage.setItem('reports', JSON.stringify(reports));
-    } catch (error) {
-      console.error('Error saving reports to localStorage:', error);
-    }
-  }, [reports]);
-
-  // Real-time localStorage sync across tabs
-  useEffect(() => {
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === 'reports') {
-        try {
-          setReports(event.newValue ? JSON.parse(event.newValue) : []);
-        } catch (error) {
-          console.error('Error parsing reports from storage event:', error);
-        }
-      }
-      if (event.key === 'user') {
-        try {
-          setUser(event.newValue ? JSON.parse(event.newValue) : null);
-        } catch (error) {
-          console.error('Error parsing user from storage event:', error);
-        }
-      }
-      if (event.key === 'currentView') {
-        try {
-          setCurrentView(event.newValue as any);
-        } catch (error) {
-          console.error('Error parsing currentView from storage event:', error);
-        }
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, []);
-
-  // Inside AppProvider, after user state is set up:
-  useEffect(() => {
-    if (!db) return;
-    // Listen to real-time updates from Firestore reports collection
-    const unsubscribe = onSnapshot(collection(db, 'reports'), (snapshot) => {
-      const liveReports = snapshot.docs.map(doc => {
-        const data = doc.data();
-        // Map Firestore doc to Report type, with defaults for missing fields
-        return {
-          id: doc.id,
-          type: data.type || '',
-          date: data.date || new Date().toISOString(),
-          platform: data.platform || 'web',
-          description: data.description || '',
-          impact: Array.isArray(data.impact) ? data.impact : (data.impact ? [data.impact] : []),
-          perpetrator: data.perpetrator || '',
-          status: data.status || 'new',
-          isAnonymous: typeof data.isAnonymous === 'boolean' ? data.isAnonymous : false,
-          reporterId: data.reporterId || '',
-          riskScore: typeof data.riskScore === 'number' ? data.riskScore : undefined,
-          adminNotes: data.adminNotes || '',
-          reporterEmail: data.reporterEmail || '',
-          flagged: typeof data.flagged === 'boolean' ? data.flagged : false,
-          region: data.region || '',
-          urgency: data.urgency || '',
-          caseId: data.caseId || '',
-          pin: data.pin || '',
-        } as Report;
-      }).filter(r => r.id && r.type && r.date && r.platform && r.description && r.impact && r.status);
-      setReports(liveReports);
-      localStorage.setItem('reports', JSON.stringify(liveReports));
-    });
-    return () => unsubscribe();
-  }, []);
 
   return (
     <AppContext.Provider value={{
