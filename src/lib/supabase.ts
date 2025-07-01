@@ -35,9 +35,9 @@ export async function saveReport(report: any) {
     .from('reports')
     .insert([mapped]);
   if (error) {
-    // Log detailed error for debugging
-    console.error('[Supabase] Report submission error:', error.message || error, '\nPayload:', mapped);
-    alert('Supabase error: ' + (error.message || JSON.stringify(error)) + '\nPayload: ' + JSON.stringify(mapped, null, 2));
+    // Log the full error object as a string
+    console.error('[Supabase] Report submission error:', JSON.stringify(error, null, 2), '\nPayload:', mapped);
+    alert('Supabase error: ' + JSON.stringify(error, null, 2) + '\nPayload: ' + JSON.stringify(mapped, null, 2));
   }
   return { data, error };
 }
