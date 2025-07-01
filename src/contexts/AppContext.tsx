@@ -10,6 +10,7 @@ import {
 } from '@/lib/firebase';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 
 interface User {
   id: string;
@@ -147,6 +148,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
     return () => unsubscribe();
   }, []);
+
+  // Supabase reports listener
+  useEffect(() => {
+    if (user) {
+      // Fetch reports from Supabase
+      const fetchReports = async () => {
+        const { data, error } = await supabase.from('reports').select('*');
+        if (error) {
+          console.error('Failed to fetch reports:', error);
+          toast.error('Failed to load reports');
+        } else {
+          setReports(data || []);
+        }
+      };
+      fetchReports();
+    } else {
+      setReports([]); // Clear reports on logout
+    }
+  }, [user]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     console.log('[LOGIN] Attempting login for', email);
