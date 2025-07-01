@@ -4,7 +4,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import { 
   Home, FileText, Shield, LogOut, 
   Users, HelpCircle, ExternalLink, X,
-  BarChart3, Globe, TestTube, TrendingUp, Lock
+  BarChart3, Globe, TestTube, TrendingUp, Lock, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
@@ -171,6 +171,12 @@ const Sidebar: React.FC = () => {
               </div>
             </>
           )}
+          <li>
+            <a href="/profile" className="flex items-center gap-2 px-4 py-2 rounded hover:bg-gray-100 transition-colors">
+              <User className="h-5 w-5" />
+              <span>Profile</span>
+            </a>
+          </li>
         </nav>
       </div>
 
