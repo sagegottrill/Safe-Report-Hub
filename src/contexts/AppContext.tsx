@@ -155,6 +155,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Fetch reports from Supabase
       const fetchReports = async () => {
         const { data, error } = await supabase.from('reports').select('*');
+        console.log('Supabase reports:', data, 'Error:', error); // Debug log
         if (error) {
           console.error('Failed to fetch reports:', error);
           toast.error('Failed to load reports');

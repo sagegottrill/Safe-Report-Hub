@@ -36,10 +36,8 @@ const Dashboard: React.FC = () => {
     }
   }, [user, navigate]);
 
-  // Only show reports for the current user
-  const userReports = useMemo(() => {
-    return reports.filter(report => report.reporterId === user?.id || report.reporterEmail === user?.email);
-  }, [reports, user]);
+  // TEMP: Show all reports for debugging
+  const userReports = reports;
 
   // Filter reports by search term and ensure only current user's reports
   const filteredReports = useMemo(() => {
