@@ -1,3 +1,6 @@
 {
-  "regions": ["cdg"]
+  "regions": ["cdg"],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
 } 
