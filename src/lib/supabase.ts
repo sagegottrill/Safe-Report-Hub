@@ -22,7 +22,6 @@ function mapReportToSupabase(report: any) {
     email: report.email || '',
     phone: report.phone || '',
     reporter_id: report.reporterId || '',
-    consent_for_sharing: report.consentForSharing ?? false,
     immediate_danger: report.immediateDanger ?? false,
     contact_details: report.contactDetails || '',
     // Add any other fields your Supabase table supports
