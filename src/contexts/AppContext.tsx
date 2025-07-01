@@ -135,31 +135,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const unsubscribe = onAuthStateChange((firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
-        let role: User['role'] = 'user';
-        let region = undefined;
-        let allowedCategories = undefined;
-        if (/^admin\./i.test(firebaseUser.email.trim())) role = 'admin';
-        if (/^superadmin\./i.test(firebaseUser.email.trim())) role = 'super_admin';
-        if (/^country\./i.test(firebaseUser.email.trim())) { role = 'country_admin'; region = 'Nigeria'; }
-        if (/^case\./i.test(firebaseUser.email.trim())) { role = 'case_worker'; region = 'Nigeria'; allowedCategories = ['gender_based_violence', 'child_protection']; }
-        if (/^field\./i.test(firebaseUser.email.trim())) { role = 'field_officer'; region = 'Nigeria'; allowedCategories = ['food_insecurity', 'water_sanitation', 'shelter_issues', 'health_emergencies']; }
-        if (/^governor_admin\./i.test(firebaseUser.email.trim())) role = 'governor_admin';
-        else if (/^governor\./i.test(firebaseUser.email.trim())) role = 'governor';
-        const displayName = extractFirstName(firebaseUser.email, firebaseUser.displayName);
-        const mockUser: User = {
-          id: generateMeaningfulUserId(displayName, role),
-          email: firebaseUser.email,
-          name: displayName,
-          phone: firebaseUser.phoneNumber || undefined,
-          role,
-          region,
-          allowedCategories,
-        };
-        setUser(mockUser);
         let view: typeof currentView = 'dashboard';
-        if (role === 'admin' || role === 'super_admin' || role === 'country_admin') view = 'admin';
-        if (role === 'governor_admin') view = 'governor-admin';
-        if (role === 'governor') view = 'governor';
+        if (firebaseUser.role === 'admin' || firebaseUser.role === 'super_admin' || firebaseUser.role === 'country_admin') view = 'admin';
+        if (firebaseUser.role === 'governor_admin') view = 'governor-admin';
+        if (firebaseUser.role === 'governor') view = 'governor';
         setCurrentView(view);
       } else {
         setUser(null);
