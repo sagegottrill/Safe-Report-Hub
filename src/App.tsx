@@ -21,6 +21,7 @@ import GovernorPanel from '@/pages/GovernorPanel';
 import LoadingScreen from './components/LoadingScreen';
 import MobileApp from './MobileApp';
 import AuthPage from './components/auth/AuthPage';
+import { AnimatePresence, motion } from 'framer-motion';
 const GovernorAdminPanel = React.lazy(() => import('./components/admin/GovernorAdminPanel'));
 
 const queryClient = new QueryClient();
@@ -39,42 +40,73 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 const AppRoutes: React.FC = () => {
   const { user } = useAppContext();
+  const location = window.location;
   
   console.log('AppRoutes: Rendering with user:', user);
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={user ? <Index /> : <AuthPage />} />
-        <Route path="/faq" element={<FAQ />} />
-        <Route path="/test-multisectoral" element={<TestMultiSectoral />} />
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+            {user ? <Index /> : <AuthPage />}
+          </motion.div>
+        } />
+        <Route path="/faq" element={
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+            <FAQ />
+          </motion.div>
+        } />
+        <Route path="/test-multisectoral" element={
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+            <TestMultiSectoral />
+          </motion.div>
+        } />
         <Route path="/report" element={
           <ProtectedRoute>
-            <ReportPage />
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+              <ReportPage />
+            </motion.div>
           </ProtectedRoute>
         } />
         <Route path="/admin" element={
           <ProtectedRoute>
-            <AdminPage />
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+              <AdminPage />
+            </motion.div>
           </ProtectedRoute>
         } />
         <Route path="/admin-analytics" element={
           <ProtectedRoute>
-            <AdminAnalyticsPage />
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+              <AdminAnalyticsPage />
+            </motion.div>
           </ProtectedRoute>
         } />
-        <Route path="/community-dashboard" element={<CommunityDashboardPage />} />
+        <Route path="/community-dashboard" element={
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+            <CommunityDashboardPage />
+          </motion.div>
+        } />
         <Route path="/governor" element={
           <ProtectedRoute>
-            <GovernorPanel />
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+              <GovernorPanel />
+            </motion.div>
           </ProtectedRoute>
         } />
         <Route path="/governor-admin" element={
           <ProtectedRoute>
-            {user?.role === 'governor_admin' ? <GovernorAdminPanel /> : <Navigate to="/" replace />}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+              {user?.role === 'governor_admin' ? <GovernorAdminPanel /> : <Navigate to="/" replace />}
+            </motion.div>
           </ProtectedRoute>
         } />
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+            <NotFound />
+          </motion.div>
+        } />
       </Routes>
     </BrowserRouter>
   );
