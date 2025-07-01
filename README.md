@@ -104,7 +104,7 @@ The platform prioritizes **anonymity, offline access, multilingual support, geol
 git clone https://github.com/your-username/humanitarian-report-app.git
 cd humanitarian-report-app
 npm install
-````
+```
 
 ### ▶️ Run Locally
 
@@ -187,5 +187,15 @@ MIT License — free to use, modify, and adapt especially for social good and hu
 * Built to empower marginalized voices and enhance humanitarian response
 * Inspired by global NGOs, refugee-led organizations, and digital safety advocates
 * Special thanks to open-source communities and contributors
+
+---
+
+# Safety Support Report
+
+This project now includes smooth page transitions using [framer-motion](https://www.framer.com/motion/) for a modern, polished user experience.
+
+- All major routes have animated transitions.
+- Device detection is robust and responsive.
+- For more info, see the code in `src/App.tsx`.
 
 ---
