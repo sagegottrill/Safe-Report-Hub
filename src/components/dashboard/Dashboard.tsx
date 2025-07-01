@@ -38,7 +38,7 @@ const Dashboard: React.FC = () => {
 
   // Only show reports for the current user
   const userReports = useMemo(() => {
-    return reports.filter(report => report.reporterId === user?.id || report.email === user?.email);
+    return reports.filter(report => report.reporterId === user?.id || report.reporterEmail === user?.email);
   }, [reports, user]);
 
   // Filter reports by search term and ensure only current user's reports
@@ -263,7 +263,7 @@ const Dashboard: React.FC = () => {
                           }
                         }
                         const desc = decryptDescription(report.description);
-                        const isEncrypted = report.description.startsWith('U2FsdGVkX1');
+                        const isEncrypted = report.description?.startsWith('U2FsdGVkX1');
                         if (isEncrypted || !desc || !desc.trim() || desc === report.description) {
                           return report.caseId || 'ID unavailable';
                         }
