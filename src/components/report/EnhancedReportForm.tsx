@@ -17,7 +17,7 @@ import HumanitarianCategories from './HumanitarianCategories';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppContext } from '@/contexts/AppContext';
 import { TrustIndicator, SecurityBadge, PrivacyNotice, OfficialStamp } from '@/components/ui/trust-indicators';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/components/ui/sonner';
 
 type ReportStep = 'sector' | 'category' | 'details' | 'review';
 
