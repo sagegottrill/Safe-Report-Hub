@@ -128,7 +128,7 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
 
   // Export reports as CSV
   const handleExportCSV = () => {
-    const csv = Papa.unparse(filteredReports.map(r => {
+    const csv = Papa.unparse(reports.map(r => {
       const userInfo = getUserInfo(r.reporterId || '', r);
       return {
         ID: r.id,
@@ -157,7 +157,7 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
   const handleExportPDF = () => {
     const doc = new jsPDF();
     doc.text('Incident Reports', 10, 10);
-    filteredReports.forEach((r, i) => {
+    reports.forEach((r, i) => {
       doc.text(`${i + 1}. ${r.type} - ${r.impact} - ${r.status} - ${r.region} - ${r.date}`, 10, 20 + i * 10);
     });
     doc.save('all_reports.pdf');
@@ -170,7 +170,7 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
 
   const handlePartnerHubSubmit = () => {
     // Simulate sending reports to the selected office
-    console.log(`Exported ${filteredReports.length} reports to ${selectedOffice} office.`);
+    console.log(`Exported ${reports.length} reports to ${selectedOffice} office.`);
     setPartnerHubOpen(false);
     toast.success(`Reports submitted to ${selectedOffice} office!`);
   };
@@ -554,7 +554,7 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
                           <td colSpan={11} className="text-center p-3">No reports yet.</td>
                         </tr>
                       ) : (
-                        filteredReports.map((report) => {
+                        reports.map((report) => {
                           const userInfo = getUserInfo(report.reporterId || '', report);
                           return (
                             <tr key={report.id} className="border-b hover:bg-gray-50">
@@ -722,7 +722,7 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
             </select>
           </div>
           <div className="bg-black text-green-400 font-mono rounded p-3 mb-4 h-32 overflow-auto text-xs">
-            {`> Ready to export ${filteredReports.length} reports to ${selectedOffice} office...`}
+            {`> Ready to export ${reports.length} reports to ${selectedOffice} office...`}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPartnerHubOpen(false)}>Cancel</Button>
