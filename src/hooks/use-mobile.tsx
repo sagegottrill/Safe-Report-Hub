@@ -9,12 +9,16 @@ export function useIsMobile() {
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
 
     const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     };
 
     mql.addEventListener("change", onChange);
+    window.addEventListener("resize", onChange);
     setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    return () => mql.removeEventListener("change", onChange);
+    return () => {
+      mql.removeEventListener("change", onChange);
+      window.removeEventListener("resize", onChange);
+    };
   }, []);
 
   return !!isMobile;
