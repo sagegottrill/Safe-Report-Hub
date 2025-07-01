@@ -60,6 +60,7 @@
     "dotenv": "^16.5.0",
     "embla-carousel-react": "^8.3.0",
     "firebase": "^11.9.1",
+    "framer-motion": "^12.22.0",
     "googleapis": "^150.0.1",
     "i18next": "^23.16.8",
     "i18next-browser-languagedetector": "^7.2.2",
