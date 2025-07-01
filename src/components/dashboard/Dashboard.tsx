@@ -37,7 +37,9 @@ const Dashboard: React.FC = () => {
   }, [user, navigate]);
 
   // TEMP: Show all reports for debugging
-  const userReports = reports;
+  const userReports = useMemo(() => {
+    return reports.filter(report => report.reporterId === user?.id || report.reporterEmail === user?.email);
+  }, [reports, user]);
 
   // Filter reports by search term and ensure only current user's reports
   const filteredReports = useMemo(() => {
@@ -50,15 +52,6 @@ const Dashboard: React.FC = () => {
       )
     );
   }, [userReports, searchTerm]);
-
-  // Debug logging to help identify issues
-  console.log('Dashboard Debug:', {
-    totalReports: reports.length,
-    currentUserId: user?.id,
-    currentUserEmail: user?.email,
-    userReportsCount: userReports.length,
-    allReportsWithUserIds: reports.map(r => ({ id: r.id, reporterId: r.reporterId, email: r.reporterEmail }))
-  });
 
   // Export reports as CSV
   const handleExportCSV = () => {
