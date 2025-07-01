@@ -5,16 +5,23 @@ import { useAppContext } from '@/contexts/AppContext';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AuthPage from '@/components/auth/AuthPage';
+import { saveReport } from '@/lib/supabase';
+import { toast } from '@/components/ui/sonner';
 
 const ReportPage: React.FC = () => {
-  const { user, submitReport } = useAppContext();
+  const { user } = useAppContext();
   const navigate = useNavigate();
 
   if (!user) return <AuthPage />;
 
-  const handleReportSubmit = (data: any) => {
-    submitReport(data);
-    navigate('/'); // Redirect to dashboard after submit
+  const handleReportSubmit = async (data: any) => {
+    const { error } = await saveReport(data);
+    if (error) {
+      toast.error('Failed to submit report. Please try again.');
+    } else {
+      toast.success('Report submitted successfully!');
+      navigate('/'); // Redirect to dashboard after submit
+    }
   };
 
   return (

@@ -17,6 +17,7 @@ import HumanitarianCategories from './HumanitarianCategories';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppContext } from '@/contexts/AppContext';
 import { TrustIndicator, SecurityBadge, PrivacyNotice, OfficialStamp } from '@/components/ui/trust-indicators';
+import { toast } from 'react-hot-toast';
 
 type ReportStep = 'sector' | 'category' | 'details' | 'review';
 
@@ -40,6 +41,7 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit, onClo
     contactDetails: ''
   });
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSectorSelect = (sector: string) => {
     setSelectedSector(sector);
@@ -75,13 +77,28 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit, onClo
         timestamp: new Date().toISOString(),
         urgency: getUrgencyLevel(selectedCategory),
         email: user?.email || '',
-        phone: user?.phone || ''
+        phone: user?.phone || '',
+        reporterId: user?.id || '',
       };
       await onSubmit(finalReportData);
-    } catch (error) {
-      console.error('Submission error:', error);
-    } finally {
+      setReportData({
+        incidentDate: '',
+        location: '',
+        description: '',
+        immediateDanger: false,
+        consentForSharing: false,
+        contactDetails: '',
+        email: '',
+        phone: ''
+      });
+      setCurrentStep('sector');
+      setSelectedSector('');
+      setSelectedCategory('');
       setLoading(false);
+      setShowSuccess(true);
+    } catch (error) {
+      setLoading(false);
+      toast.error('Failed to submit report. Please try again.');
     }
   };
 

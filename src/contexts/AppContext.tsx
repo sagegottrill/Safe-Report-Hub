@@ -284,44 +284,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } catch (firebaseError) {
           console.warn('[LOGIN] Firebase login failed:', firebaseError);
         }
-        // Fallback: Create a mock user for demo purposes
-        const mockUser: User = {
-          id: generateMeaningfulUserId(email.split('@')[0], 'user'),
-          email: email,
-          name: email.split('@')[0],
-          role: 'user',
-        };
-        
-        // Try to get phone number from various sources
-        try {
-          // Check registration data
-          const registrationData = localStorage.getItem('registrationData');
-          if (registrationData) {
-            const parsedData = JSON.parse(registrationData);
-            if (parsedData.email === email && parsedData.phone) {
-              mockUser.phone = parsedData.phone;
-            }
-          }
-          
-          // Check users array
-          if (!mockUser.phone) {
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
-            const userData = users.find((u: any) => u.email === email);
-            if (userData?.phone) {
-              mockUser.phone = userData.phone;
-            }
-          }
-        } catch (error) {
-          console.log('Could not retrieve phone number for login:', error);
-        }
-        
-        setUser(mockUser);
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        setCurrentView('dashboard');
-        localStorage.setItem('currentView', 'dashboard');
-        toast.success('Login successful!');
-        console.log('[LOGIN] Success: mock user');
-        return true;
+        // If not predefined admin or Firebase, do not log in
+        toast.error('Login failed: Invalid email or password.');
+        return false;
       }
       toast.error('Login failed: Please enter a valid email and password.');
       return false;
@@ -339,7 +304,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // Store registration data for later retrieval
         const registrationData = { email, name, phone };
         localStorage.setItem('registrationData', JSON.stringify(registrationData));
-        
         // Try cloud-based registration
         try {
           const user = await createUserWithEmail(email, password, name, phone);
@@ -352,22 +316,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           return true;
         } catch (cloudError) {
           console.warn('[REGISTER] Cloud registration failed:', cloudError);
+          toast.error('Registration failed: Could not register user.');
+          return false;
         }
-        // Fallback: Create a mock user for demo purposes
-        const mockUser: User = {
-          id: generateMeaningfulUserId(name, 'user'),
-          email: email,
-          name: name,
-          phone: phone,
-          role: 'user',
-        };
-        setUser(mockUser);
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        setCurrentView('dashboard');
-        localStorage.setItem('currentView', 'dashboard');
-        toast.success('Login successful!');
-        console.log('[REGISTER] Success: mock user');
-        return true;
       }
       toast.error('Registration failed: Please fill all fields correctly.');
       return false;

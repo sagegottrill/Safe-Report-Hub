@@ -13,9 +13,10 @@ interface GBVReportFormProps {
   category: string;
   onBack: () => void;
   onSubmit: (data: any) => void;
+  user?: { id: string; email: string };
 }
 
-const GBVReportForm: React.FC<GBVReportFormProps> = ({ category, onBack, onSubmit }) => {
+const GBVReportForm: React.FC<GBVReportFormProps> = ({ category, onBack, onSubmit, user }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
     incidentDate: '',
@@ -42,13 +43,15 @@ const GBVReportForm: React.FC<GBVReportFormProps> = ({ category, onBack, onSubmi
         sector: 'gbv',
         category: category,
         timestamp: new Date().toISOString(),
-        urgency: getUrgencyLevel(category)
+        urgency: getUrgencyLevel(category),
+        reporterId: user?.id || '',
+        email: user?.email || '',
       };
       await onSubmit(reportData);
-    } catch (error) {
-      console.error('Submission error:', error);
-    } finally {
       setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.error('Submission error:', error);
     }
   };
 

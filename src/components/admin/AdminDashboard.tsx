@@ -35,6 +35,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/sonner';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { getReports } from '@/lib/supabase';
 
 interface ReportData {
   id: string;
@@ -73,7 +74,7 @@ const PREDEFINED_ADMINS = [
 
 const AdminDashboard: React.FC<{ user: any }> = () => {
   const navigate = useNavigate();
-  const { reports, setReports } = useAppContext();
+  const [reports, setReports] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedReport, setSelectedReport] = useState(null);
@@ -96,6 +97,12 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
     { value: 'Humanitarian', label: 'Humanitarian' },
   ];
 
+  useEffect(() => {
+    getReports().then(({ data, error }) => {
+      if (!error) setReports(data || []);
+    });
+  }, []);
+
   // Filter reports by search term
   const filteredReports = useMemo(() => reports.filter(report =>
     report.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -105,23 +112,24 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
   ), [reports, searchTerm]);
 
   // Helper function to get user info by reporterId
-  const getUserInfo = (reporterId: string) => {
+  const getUserInfo = (reporterId: string, report: any) => {
     // Check predefined admins first
     const predefinedAdmin = PREDEFINED_ADMINS.find(u => u.id === reporterId);
     if (predefinedAdmin) {
       return predefinedAdmin;
     }
-    
-    // Then check localStorage users array
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const user = users.find((u: any) => u.id === reporterId);
-    return user || { name: 'Unknown', email: 'N/A', phone: 'N/A' };
+    // Otherwise, use info from the report itself
+    return {
+      name: report.name || 'Unknown',
+      email: report.email || report.reporterEmail || 'N/A',
+      phone: report.phone || 'N/A'
+    };
   };
 
   // Export reports as CSV
   const handleExportCSV = () => {
     const csv = Papa.unparse(filteredReports.map(r => {
-      const userInfo = getUserInfo(r.reporterId || '');
+      const userInfo = getUserInfo(r.reporterId || '', r);
       return {
         ID: r.id,
         Name: userInfo.name || '',
@@ -169,20 +177,12 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
 
   // Delete report
   const handleDelete = (id: string) => {
-    setReports(prev => {
-      const newReports = prev.filter(r => r.id !== id);
-      localStorage.setItem('reports', JSON.stringify(newReports));
-      return newReports;
-    });
+    setReports(prev => prev.filter(r => r.id !== id));
   };
 
   // Update report handler
   const handleUpdateReport = (reportId, updates) => {
-    setReports(prev => {
-      const newReports = prev.map(r => r.id === reportId ? { ...r, ...updates } : r);
-      localStorage.setItem('reports', JSON.stringify(newReports));
-      return newReports;
-    });
+    setReports(prev => prev.map(r => r.id === reportId ? { ...r, ...updates } : r));
   };
 
   // Calculate stats from real data
@@ -346,7 +346,7 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
       filtered = reports.filter(r => exportSector.includes(r.type));
     }
     const csv = Papa.unparse(filtered.map(r => {
-      const userInfo = getUserInfo(r.reporterId || '');
+      const userInfo = getUserInfo(r.reporterId || '', r);
       return {
         ID: r.id,
         Name: userInfo.name || '',
@@ -555,7 +555,7 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
                         </tr>
                       ) : (
                         filteredReports.map((report) => {
-                          const userInfo = getUserInfo(report.reporterId || '');
+                          const userInfo = getUserInfo(report.reporterId || '', report);
                           return (
                             <tr key={report.id} className="border-b hover:bg-gray-50">
                               <td className="p-3 text-sm font-medium">{report.caseId || report.id}</td>

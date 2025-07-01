@@ -36,23 +36,22 @@ const Dashboard: React.FC = () => {
     }
   }, [user, navigate]);
 
-  // Filter reports by search term and ensure only current user's reports
+  // Only show reports for the current user
   const userReports = useMemo(() => {
-    // First, filter by current user ID to ensure user isolation
-    const currentUserReports = reports.filter(report => {
-      // Only show reports that belong to the current user
-      return report.reporterId === user?.id;
-    });
+    return reports.filter(report => report.reporterId === user?.id || report.email === user?.email);
+  }, [reports, user]);
 
+  // Filter reports by search term and ensure only current user's reports
+  const filteredReports = useMemo(() => {
     // Then apply search filter
-    return currentUserReports.filter(report => 
+    return userReports.filter(report => 
       !report.isAnonymous && (
         report.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         report.caseId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         report.description?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
-  }, [reports, user?.id, searchTerm]);
+  }, [userReports, searchTerm]);
 
   // Debug logging to help identify issues
   console.log('Dashboard Debug:', {
@@ -65,7 +64,7 @@ const Dashboard: React.FC = () => {
 
   // Export reports as CSV
   const handleExportCSV = () => {
-    const csv = Papa.unparse(userReports.map(r => ({
+    const csv = Papa.unparse(filteredReports.map(r => ({
       ID: r.id,
       Type: r.type,
       CaseID: r.caseId,

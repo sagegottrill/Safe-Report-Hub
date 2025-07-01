@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { useNavigate } from 'react-router-dom';
+import { getReports } from '@/lib/supabase';
 import { 
   Plus, 
   FileText, 
@@ -41,7 +42,8 @@ const COLORS = {
 };
 
 export default function MobileDashboard() {
-  const { user, reports, logout, submitReport } = useAppContext();
+  const { user, logout } = useAppContext();
+  const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState(null);
   const [showTrackReports, setShowTrackReports] = useState(false);
@@ -50,12 +52,20 @@ export default function MobileDashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (reports.length > 0) setLoading(false);
-    else {
-      const timer = setTimeout(() => setLoading(false), 1000);
-      return () => clearTimeout(timer);
+    if (!user) {
+      setReports([]);
+      setLoading(false);
+      return;
     }
-  }, [reports]);
+    getReports().then(({ data, error }) => {
+      if (!error && data) {
+        setReports(data.filter(r => r.reporterId === user.id || r.email === user.email));
+      } else {
+        setReports([]);
+      }
+      setLoading(false);
+    });
+  }, [user]);
 
   // Filter reports based on status and search
   const filteredReports = reports
