@@ -125,42 +125,10 @@ const PREDEFINED_ADMINS = [
 ];
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    try {
-    const stored = localStorage.getItem('user');
-    return stored ? JSON.parse(stored) : null;
-    } catch (error) {
-      console.error('Error parsing stored user:', error);
-      return null;
-    }
-  });
-  
-  // Initialize reports from localStorage or as empty array
-  const [reports, setReports] = useState<Report[]>(() => {
-    try {
-      const stored = localStorage.getItem('reports');
-      return stored ? JSON.parse(stored) : [];
-    } catch (error) {
-      console.error('Error parsing stored reports:', error);
-      return [];
-    }
-  });
-  
+  const [user, setUser] = useState<User | null>(null);
+  const [reports, setReports] = useState<Report[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'report' | 'auth' | 'admin' | 'governor' | 'governor-admin'>(() => {
-    try {
-    const stored = localStorage.getItem('currentView');
-    const storedUser = localStorage.getItem('user');
-    // If no user is logged in, always show auth page
-    if (!storedUser) {
-      return 'auth';
-    }
-    return stored ? stored as any : 'dashboard';
-    } catch (error) {
-      console.error('Error parsing stored view:', error);
-      return 'auth';
-    }
-  });
+  const [currentView, setCurrentView] = useState<'dashboard' | 'report' | 'auth' | 'admin' | 'governor' | 'governor-admin'>('auth');
 
   // Firebase auth state listener
   useEffect(() => {
@@ -178,47 +146,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (/^governor_admin\./i.test(firebaseUser.email.trim())) role = 'governor_admin';
         else if (/^governor\./i.test(firebaseUser.email.trim())) role = 'governor';
         const displayName = extractFirstName(firebaseUser.email, firebaseUser.displayName);
-        
-        // Try to get phone number from various sources
-        let phoneNumber: string | undefined;
-        try {
-          // Check registration data first
-          const registrationData = localStorage.getItem('registrationData');
-          if (registrationData) {
-            const parsedData = JSON.parse(registrationData);
-            if (parsedData.email === firebaseUser.email && parsedData.phone) {
-              phoneNumber = parsedData.phone;
-            }
-          }
-          
-          // Check stored user data
-          if (!phoneNumber) {
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-              const parsedUser = JSON.parse(storedUser);
-              if (parsedUser.email === firebaseUser.email && parsedUser.phone) {
-                phoneNumber = parsedUser.phone;
-              }
-            }
-          }
-          
-          // Check users array
-          if (!phoneNumber) {
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
-            const userData = users.find((u: any) => u.email === firebaseUser.email);
-            if (userData?.phone) {
-              phoneNumber = userData.phone;
-            }
-          }
-        } catch (error) {
-          console.log('Could not retrieve phone number for user:', error);
-        }
-        
         const mockUser: User = {
           id: generateMeaningfulUserId(displayName, role),
           email: firebaseUser.email,
           name: displayName,
-          phone: phoneNumber,
+          phone: firebaseUser.phoneNumber || undefined,
           role,
           region,
           allowedCategories,
@@ -234,7 +166,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCurrentView('auth');
       }
     });
-
     return () => unsubscribe();
   }, []);
 
