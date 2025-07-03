@@ -199,3 +199,9 @@ This project now includes smooth page transitions using [framer-motion](https://
 - For more info, see the code in `src/App.tsx`.
 
 ---
+
+Last updated: Soft delete, sector label, and real-time UI improvements committed.
+
+Mobile dashboard sector/category/status logic and responsiveness updated.
+
+---
