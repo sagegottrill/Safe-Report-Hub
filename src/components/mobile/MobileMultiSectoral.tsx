@@ -8,6 +8,7 @@ import { Shield, CheckCircle, BarChart3, Users, ChevronLeft, Home, Plus } from '
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TrustIndicator, SecurityBadge, OfficialStamp } from '@/components/ui/trust-indicators';
 import MobileReportPage from './MobileReportPage';
+import { saveReport } from '@/lib/supabase';
 
 const MobileMultiSectoral: React.FC = () => {
   const navigate = useNavigate();
@@ -35,26 +36,15 @@ const MobileMultiSectoral: React.FC = () => {
         ...reportData
       };
 
-      // Submit to the API
-      const response = await fetch('/api/report', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(apiData),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Submit to Supabase
+      const { data, error } = await saveReport(apiData);
+      if (error) {
+        throw new Error(error.message);
       }
-
-      const result = await response.json();
-      
       toast.success('Report submitted successfully!', {
         description: `Sector: ${reportData.sector} | Category: ${reportData.category} | Urgency: ${reportData.urgency}`
       });
-      
-      console.log('API Response:', result);
+      console.log('Supabase Response:', data);
       
     } catch (error) {
       console.error('Submission error:', error);

@@ -94,4 +94,11 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({ onSectorSelect, onBack 
   );
 };
 
-export default SectorSelector; 
+export default SectorSelector;
+
+export const sectorLabels: Record<string, string> = {
+  gbv: 'Gender-Based Violence',
+  education: 'Education',
+  water: 'Water & Infrastructure',
+  humanitarian: 'Humanitarian Crisis',
+}; 

@@ -6,7 +6,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Map form data to Supabase schema
-function mapReportToSupabase(report: any) {
+function mapReportToSupabase(report: any, user?: any) {
   return {
     // Required fields
     category: report.category || report.sector || '',
@@ -19,17 +19,17 @@ function mapReportToSupabase(report: any) {
     perpetrator: report.perpetrator || '',
     date: report.date || report.timestamp || report.incidentDate || new Date().toISOString(),
     // Optional: add more mappings as needed
-    email: report.email || '',
+    email: user?.email || report.email || '',
     phone: report.phone || '',
-    reporter_id: report.reporterId || '',
+    reporter_id: user?.id || report.reporterId || '',
     immediate_danger: report.immediateDanger ?? false,
     contact_details: report.contactDetails || '',
     // Add any other fields your Supabase table supports
   };
 }
 
-export async function saveReport(report: any) {
-  const mapped = mapReportToSupabase(report);
+export async function saveReport(report: any, user?: any) {
+  const mapped = mapReportToSupabase(report, user);
   const { data, error } = await supabase
     .from('reports')
     .insert([mapped]);

@@ -36,6 +36,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { toast } from '@/components/ui/sonner';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { getReports } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 interface ReportData {
   id: string;
@@ -72,9 +73,16 @@ const PREDEFINED_ADMINS = [
   }
 ];
 
+const sectorLabels: Record<string, string> = {
+  gbv: 'Gender-Based Violence',
+  education: 'Education',
+  water: 'Water & Infrastructure',
+  humanitarian: 'Humanitarian Crisis',
+};
+
 const AdminDashboard: React.FC<{ user: any }> = () => {
   const navigate = useNavigate();
-  const [reports, setReports] = useState([]);
+  const { reports } = useAppContext();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedReport, setSelectedReport] = useState(null);
@@ -96,12 +104,6 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
     { value: 'Water', label: 'Water' },
     { value: 'Humanitarian', label: 'Humanitarian' },
   ];
-
-  useEffect(() => {
-    getReports().then(({ data, error }) => {
-      if (!error) setReports(data || []);
-    });
-  }, []);
 
   // Filter reports by search term
   const filteredReports = useMemo(() => reports.filter(report =>
@@ -176,13 +178,19 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
   };
 
   // Delete report
-  const handleDelete = (id: string) => {
-    setReports(prev => prev.filter(r => r.id !== id));
+  const handleDelete = async (id: string) => {
+    // Soft delete: set hidden=true in Supabase
+    const { error } = await supabase.from('reports').update({ hidden: true }).eq('id', id);
+    if (error) {
+      toast.error('Failed to delete report');
+    } else {
+      toast.success('Report deleted');
+    }
   };
 
   // Update report handler
   const handleUpdateReport = (reportId, updates) => {
-    setReports(prev => prev.map(r => r.id === reportId ? { ...r, ...updates } : r));
+    // Implement update logic
   };
 
   // Calculate stats from real data
@@ -219,7 +227,10 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
   }).length;
 
   // Helper to get the best available sector/type
-  const getSector = (report: any) => report.type || report.sector || 'N/A';
+  const getSector = (report: any) => {
+    const raw = report.type || report.sector || 'N/A';
+    return sectorLabels[String(raw).toLowerCase()] || raw || 'N/A';
+  };
   // Helper to get the best available category/impact
   const getCategory = (report: any) => Array.isArray(report.impact) ? report.impact.join(', ') : report.impact || report.category || 'N/A';
   // Helper to get the best available urgency/priority
@@ -241,12 +252,15 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
     const sector = getSector(r);
     sectorCounts[sector] = (sectorCounts[sector] || 0) + 1;
   });
-  const sectorStats = Object.entries(sectorCounts).map(([sector, count]) => ({
-    sector,
-    count,
-    percentage: totalReports > 0 ? Math.round((count / totalReports) * 100) : 0,
-    color: sector === 'GBV' ? 'bg-red-500' : sector === 'Education' ? 'bg-blue-500' : sector === 'Water' ? 'bg-cyan-500' : 'bg-green-500',
-  }));
+  const sectorStats = Object.entries(sectorCounts).map(([sector, count]) => {
+    const label = sectorLabels[String(sector).toLowerCase()] || sector;
+    return {
+      sector: label,
+      count,
+      percentage: totalReports > 0 ? Math.round((count / totalReports) * 100) : 0,
+      color: label === 'Gender-Based Violence' ? 'bg-red-500' : label === 'Education' ? 'bg-blue-500' : label === 'Water & Infrastructure' ? 'bg-cyan-500' : 'bg-green-500',
+    };
+  });
 
   // Calculate geographic distribution
   const regionCounts: Record<string, number> = {};

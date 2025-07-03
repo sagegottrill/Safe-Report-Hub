@@ -184,7 +184,7 @@ const ReportReviewModal: React.FC<ReportReviewModalProps> = ({
                 Current Status
               </Label>
               <Badge className={`${getStatusColor(report.status)} text-sm font-medium px-3 py-1`}>
-                {t(report.status.replace('-', ''))}
+                {t(typeof report.status === 'string' ? report.status.replace('-', '') : 'unknown')}
               </Badge>
             </div>
 

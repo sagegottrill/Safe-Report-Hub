@@ -23,6 +23,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { TrustIndicator, SecurityBadge, OfficialStamp } from '@/components/ui/trust-indicators';
 import { useAppContext } from '@/contexts/AppContext';
+import { sectorLabels } from '@/components/report/SectorSelector';
 
 interface CommunityMetrics {
   totalReports: number;
@@ -83,7 +84,7 @@ const CommunityDashboardPage: React.FC = () => {
 
         const transformedSectorStats: SectorStats[] = [
           {
-            sector: 'Gender-Based Violence',
+            sector: sectorLabels['gbv'],
             totalReports: data.gbvReports || 0,
             resolvedReports: data.gbvResolved || 0,
             avgResponseTime: data.gbvResponseTime || 'N/A',
@@ -92,7 +93,7 @@ const CommunityDashboardPage: React.FC = () => {
             color: 'text-danger bg-danger/10'
           },
           {
-            sector: 'Education',
+            sector: sectorLabels['education'],
             totalReports: data.educationReports || 0,
             resolvedReports: data.educationResolved || 0,
             avgResponseTime: data.educationResponseTime || 'N/A',
@@ -101,7 +102,7 @@ const CommunityDashboardPage: React.FC = () => {
             color: 'text-nigerian-blue bg-nigerian-blue/10'
           },
           {
-            sector: 'Water & Infrastructure',
+            sector: sectorLabels['water'],
             totalReports: data.waterReports || 0,
             resolvedReports: data.waterResolved || 0,
             avgResponseTime: data.waterResponseTime || 'N/A',

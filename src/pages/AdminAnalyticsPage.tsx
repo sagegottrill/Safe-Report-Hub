@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TrustIndicator, SecurityBadge, OfficialStamp } from '@/components/ui/trust-indicators';
+import { sectorLabels } from '@/components/report/SectorSelector';
 
 const AdminAnalyticsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -98,7 +99,7 @@ const AdminAnalyticsPage: React.FC = () => {
   // Calculate sector performance
   const sectorPerformance = [
     {
-      sector: 'GBV',
+      sector: sectorLabels['gbv'],
       reports: reports.filter(r => r.type?.includes('gender') || r.type?.includes('gbv')).length,
       urgent: reports.filter(r => (r.type?.includes('gender') || r.type?.includes('gbv')) && (r.urgency === 'high' || r.urgency === 'critical')).length,
       responseTime: '2.3h',
@@ -106,7 +107,7 @@ const AdminAnalyticsPage: React.FC = () => {
       color: 'text-danger'
     },
     {
-      sector: 'Education',
+      sector: sectorLabels['education'],
       reports: reports.filter(r => r.type?.includes('education')).length,
       urgent: reports.filter(r => r.type?.includes('education') && (r.urgency === 'high' || r.urgency === 'critical')).length,
       responseTime: '4.1h',
@@ -114,7 +115,7 @@ const AdminAnalyticsPage: React.FC = () => {
       color: 'text-nigerian-blue'
     },
     {
-      sector: 'Water',
+      sector: sectorLabels['water'],
       reports: reports.filter(r => r.type?.includes('water')).length,
       urgent: reports.filter(r => r.type?.includes('water') && (r.urgency === 'high' || r.urgency === 'critical')).length,
       responseTime: '3.7h',

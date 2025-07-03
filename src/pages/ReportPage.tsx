@@ -15,7 +15,7 @@ const ReportPage: React.FC = () => {
   if (!user) return <AuthPage />;
 
   const handleReportSubmit = async (data: any) => {
-    const { error } = await saveReport(data);
+    const { error } = await saveReport(data, user);
     if (error) {
       toast.error('Failed to submit report. Please try again.');
     } else {

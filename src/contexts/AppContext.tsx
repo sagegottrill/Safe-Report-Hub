@@ -10,7 +10,7 @@ import {
 } from '@/lib/firebase';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { supabase } from '@/lib/supabase';
+import { supabase, saveReport } from '@/lib/supabase';
 
 interface User {
   id: string;
@@ -31,7 +31,7 @@ interface Report {
   description: string;
   impact: string[];
   perpetrator?: string;
-  status: 'new' | 'under-review' | 'resolved';
+  status: 'new' | 'under-review' | 'resolved' | 'pending';
   isAnonymous: boolean;
   reporterId?: string;
   riskScore?: number;
@@ -42,6 +42,7 @@ interface Report {
   urgency?: string;
   caseId?: string;
   pin?: string;
+  hidden?: boolean;
 }
 
 interface AppContextType {
@@ -53,7 +54,7 @@ interface AppContextType {
   register: (email: string, password: string, name: string, phone: string) => Promise<boolean>;
   forgotPassword: (email: string) => Promise<boolean>;
   logout: () => void;
-  submitReport: (report: Omit<Report, 'id' | 'status'>) => string;
+  submitReport: (report: Omit<Report, 'id' | 'status'>) => Promise<string>;
   updateReport: (reportId: string, updates: Partial<Report>) => void;
   deleteReport: (reportId: string) => void;
   toggleSidebar: () => void;
@@ -155,18 +156,73 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Fetch reports from Supabase
       const fetchReports = async () => {
         const { data, error } = await supabase.from('reports').select('*');
-        console.log('Supabase reports:', data, 'Error:', error); // Debug log
         if (error) {
           console.error('Failed to fetch reports:', error);
           toast.error('Failed to load reports');
         } else {
-          setReports(data || []);
+          setReports((data || []).filter(r => !r.hidden));
         }
       };
       fetchReports();
     } else {
       setReports([]); // Clear reports on logout
     }
+  }, [user]);
+
+  // Supabase real-time subscription for reports
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('public:reports')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'reports' },
+        (payload) => {
+          setReports(prev => {
+            // If this is a confirmation for a temp report, replace it
+            if (payload.new.clientTempId) {
+              const idx = prev.findIndex(r => (r as any).clientTempId && (r as any).clientTempId === payload.new.clientTempId);
+              if (idx !== -1) {
+                // Replace temp report with confirmed one, only if not hidden
+                if (!payload.new.hidden) {
+                  const updated = [...prev];
+                  updated[idx] = { ...payload.new, status: 'new' } as Report;
+                  return updated.filter(r => !r.hidden);
+                } else {
+                  // If hidden, just remove the temp
+                  return prev.filter(r => (r as any).clientTempId !== payload.new.clientTempId);
+                }
+              }
+            }
+            // Avoid duplicates by id
+            if (prev.some(r => r.id === payload.new.id)) return prev;
+            // Only add if not hidden
+            if (!payload.new.hidden) {
+              return [payload.new as Report, ...prev.filter(r => !r.hidden)];
+            } else {
+              return prev.filter(r => !r.hidden);
+            }
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'reports' },
+        (payload) => {
+          setReports(prev => {
+            // If updated to hidden, remove from UI
+            if (payload.new.hidden) {
+              return prev.filter(r => r.id !== payload.new.id);
+            }
+            // Otherwise, update the report
+            return prev.map(r => r.id === payload.new.id ? { ...r, ...payload.new } : r);
+          });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -346,32 +402,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const submitReport = (reportData: Omit<Report, 'id' | 'status'>): string => {
+  const submitReport = async (reportData: Omit<Report, 'id' | 'status'>): Promise<string> => {
+    // Generate a temporary client-side ID
+    const clientTempId = 'temp-' + Math.random().toString(36).substr(2, 9);
     try {
-    // AI/keyword pre-screening
-    const text = `${reportData.description} ${reportData.type}`.toLowerCase();
-    const flagged = URGENT_KEYWORDS.some(word => text.includes(word));
-    const riskScore = flagged ? 10 : (reportData.riskScore ?? Math.floor(Math.random() * 10) + 1);
-    const newReport: Report = {
-      ...reportData,
-      id: Math.random().toString(36).substr(2, 9),
-      status: 'new',
-      riskScore,
-      adminNotes: flagged ? 'Auto-flagged for urgent review' : reportData.adminNotes,
-      flagged,
-      region: reportData.region || user?.region,
-      urgency: flagged ? 'urgent' : undefined,
-      caseId: generateCaseId(),
-      pin: generatePin(),
-        reporterId: user?.id, // Link report to user
-        reporterEmail: user?.email, // Store user email in report
-        date: new Date().toISOString(), // Ensure proper date format
-    };
-    setReports(prev => [...prev, newReport]);
-    toast.success('Report submitted');
-    return newReport.id;
+      // AI/keyword pre-screening
+      const text = `${reportData.description} ${reportData.type}`.toLowerCase();
+      const flagged = URGENT_KEYWORDS.some(word => text.includes(word));
+      const riskScore = flagged ? 10 : (reportData.riskScore ?? Math.floor(Math.random() * 10) + 1);
+      const newReport: Report & { clientTempId?: string; status: string } = {
+        ...reportData,
+        id: clientTempId,
+        clientTempId,
+        status: 'pending',
+        riskScore,
+        adminNotes: flagged ? 'Auto-flagged for urgent review' : reportData.adminNotes,
+        flagged,
+        region: reportData.region || user?.region,
+        urgency: flagged ? 'urgent' : undefined,
+        caseId: generateCaseId(),
+        pin: generatePin(),
+        reporterId: user?.id,
+        reporterEmail: user?.email,
+        date: new Date().toISOString(),
+      };
+      setReports(prev => [newReport, ...prev]);
+      // Submit to Supabase
+      const { data, error } = await saveReport({ ...reportData, clientTempId }, user);
+      if (error) {
+        // Remove the optimistic report
+        setReports(prev => prev.filter(r => r.id !== clientTempId));
+        toast.error('Submission failed');
+        throw error;
+      }
+      // Success: real-time will replace the temp report
+      toast.success('Report submitted');
+      return clientTempId;
     } catch (error) {
-      console.error('Report submission error:', error);
+      setReports(prev => prev.filter(r => r.id !== clientTempId));
       toast.error('Submission failed');
       throw error;
     }
