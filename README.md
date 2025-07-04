@@ -204,4 +204,6 @@ Last updated: Soft delete, sector label, and real-time UI improvements committed
 
 Mobile dashboard sector/category/status logic and responsiveness updated.
 
+Reporter name and phone now included in all new reports. Admin dashboard and eye view updated.
+
 ---
