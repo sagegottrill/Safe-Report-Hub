@@ -277,30 +277,69 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const register = async (email: string, password: string, name: string, phone: string): Promise<boolean> => {
     console.log('[REGISTER] Attempting registration for', email);
+    console.log('[REGISTER] Firebase config check:', {
+      apiKey: !!import.meta.env.VITE_FIREBASE_API_KEY,
+      authDomain: !!import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+      projectId: !!import.meta.env.VITE_FIREBASE_PROJECT_ID,
+      appId: !!import.meta.env.VITE_FIREBASE_APP_ID
+    });
+    
     try {
-      if (email && password.length >= 6 && name && phone) {
-        // Store registration data for later retrieval
-        const registrationData = { email, name, phone };
-        localStorage.setItem('registrationData', JSON.stringify(registrationData));
-        // Try cloud-based registration
-        try {
-          const user = await createUserWithEmail(email, password, name, phone);
-          setUser(user);
-          setCurrentView('dashboard');
-          toast.success('Registration successful!');
-          console.log('[REGISTER] Success: cloud user');
-          return true;
-        } catch (cloudError) {
-          console.warn('[REGISTER] Cloud registration failed:', cloudError);
-          toast.error('Registration failed: Could not register user.');
-          return false;
-        }
+      if (!email || !password || !name || !phone) {
+        console.error('[REGISTER] Validation failed:', { email: !!email, password: !!password, name: !!name, phone: !!phone });
+        toast.error('Registration failed: Please fill all fields correctly.');
+        return false;
       }
-      toast.error('Registration failed: Please fill all fields correctly.');
-      return false;
-    } catch (error) {
-      console.error('[REGISTER] Error:', error);
-      toast.error('Registration failed: An error occurred.');
+      
+      if (password.length < 6) {
+        console.error('[REGISTER] Password too short:', password.length);
+        toast.error('Registration failed: Password must be at least 6 characters.');
+        return false;
+      }
+
+      // Store registration data for later retrieval
+      const registrationData = { email, name, phone };
+      localStorage.setItem('registrationData', JSON.stringify(registrationData));
+      
+      // Try cloud-based registration
+      try {
+        console.log('[REGISTER] Attempting Firebase registration...');
+        const user = await createUserWithEmail(email, password, name, phone);
+        console.log('[REGISTER] Firebase registration successful:', user);
+        setUser(user);
+        setCurrentView('dashboard');
+        toast.success('Registration successful!');
+        return true;
+      } catch (cloudError: any) {
+        console.error('[REGISTER] Cloud registration failed:', cloudError);
+        console.error('[REGISTER] Error details:', {
+          code: cloudError.code,
+          message: cloudError.message,
+          stack: cloudError.stack
+        });
+        
+        // Provide specific error messages based on Firebase error codes
+        let errorMessage = 'Registration failed: Could not register user.';
+        if (cloudError.code === 'auth/email-already-in-use') {
+          errorMessage = 'Registration failed: Email is already registered.';
+        } else if (cloudError.code === 'auth/invalid-email') {
+          errorMessage = 'Registration failed: Invalid email address.';
+        } else if (cloudError.code === 'auth/weak-password') {
+          errorMessage = 'Registration failed: Password is too weak.';
+        } else if (cloudError.code === 'auth/network-request-failed') {
+          errorMessage = 'Registration failed: Network error. Please check your connection.';
+        }
+        
+        toast.error(errorMessage);
+        return false;
+      }
+    } catch (error: any) {
+      console.error('[REGISTER] Unexpected error:', error);
+      console.error('[REGISTER] Error details:', {
+        message: error.message,
+        stack: error.stack
+      });
+      toast.error('Registration failed: An unexpected error occurred.');
       return false;
     }
   };

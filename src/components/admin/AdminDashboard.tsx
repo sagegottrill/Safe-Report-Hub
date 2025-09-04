@@ -37,6 +37,7 @@ import { toast } from '@/components/ui/sonner';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { getReports } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
+import { getVisibleReports } from '@/utils/visibleReports';
 
 interface ReportData {
   id: string;
@@ -104,6 +105,8 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
     { value: 'Water', label: 'Water' },
     { value: 'Humanitarian', label: 'Humanitarian' },
   ];
+
+  const visibleReports = getVisibleReports(reports);
 
   // Filter reports by search term
   const filteredReports = useMemo(() => reports.filter(report =>
@@ -195,10 +198,13 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
 
   // Calculate stats from real data
   const totalReports = reports.length;
-  const activeCases = reports.filter(r => r.status === 'new' || r.status === 'under-review').length;
+  const activeCases = reports.filter(r => (r.status === 'new' || r.status === 'under-review')).length;
   const resolvedCases = reports.filter(r => r.status === 'resolved').length;
-  // For now, response time is not tracked, so set as 'N/A'
-  const responseTime = 'N/A';
+  // Calculate average response time for resolved cases
+  const resolvedReports = reports.filter(r => r.status === 'resolved' && r.date && r.resolvedAt);
+  const responseTime = resolvedReports.length > 0
+    ? `${Math.round(resolvedReports.reduce((sum, r) => sum + (new Date(r.resolvedAt).getTime() - new Date(r.date).getTime()), 0) / resolvedReports.length / 3600000)}h`
+    : 'N/A';
 
   // Calculate date ranges for change indicators
   const now = new Date();
@@ -226,11 +232,23 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
     return reportDate >= lastMonth && r.status === 'resolved';
   }).length;
 
-  // Helper to get the best available sector/type
-  const getSector = (report: any) => {
-    const raw = report.type || report.sector || 'N/A';
-    return sectorLabels[String(raw).toLowerCase()] || raw || 'N/A';
+  // Helper to infer sector from category/impact
+  const inferSector = (report: any) => {
+    const text = `${report.category || ''} ${report.impact || ''} ${report.description || ''}`.toLowerCase();
+    if (text.match(/violence|rape|sexual|gbv|abuse|harassment|traffick/)) return 'gbv';
+    if (text.match(/school|teacher|education|learning/)) return 'education';
+    if (text.match(/water|sanitation|hygiene|infrastructure/)) return 'water';
+    if (text.match(/humanitarian|crisis|aid|relief/)) return 'humanitarian';
+    return undefined;
   };
+
+  const getSector = (report: any) => {
+    let raw = report.sector || report.type;
+    if (!raw) raw = inferSector(report);
+    if (!raw) return 'Unknown Sector';
+    return sectorLabels[String(raw).toLowerCase()] || 'Unknown Sector';
+  };
+
   // Helper to get the best available category/impact
   const getCategory = (report: any) => Array.isArray(report.impact) ? report.impact.join(', ') : report.impact || report.category || 'N/A';
   // Helper to get the best available urgency/priority
@@ -252,15 +270,12 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
     const sector = getSector(r);
     sectorCounts[sector] = (sectorCounts[sector] || 0) + 1;
   });
-  const sectorStats = Object.entries(sectorCounts).map(([sector, count]) => {
-    const label = sectorLabels[String(sector).toLowerCase()] || sector;
-    return {
-      sector: label,
-      count,
-      percentage: totalReports > 0 ? Math.round((count / totalReports) * 100) : 0,
-      color: label === 'Gender-Based Violence' ? 'bg-red-500' : label === 'Education' ? 'bg-blue-500' : label === 'Water & Infrastructure' ? 'bg-cyan-500' : 'bg-green-500',
-    };
-  });
+  const sectorStats = Object.entries(sectorCounts).map(([sector, count]) => ({
+    sector,
+    count,
+    percentage: totalReports > 0 ? Math.round((count / totalReports) * 100) : 0,
+    color: sector === 'Gender-Based Violence' ? 'bg-red-500' : sector === 'Education' ? 'bg-blue-500' : sector === 'Water & Infrastructure' ? 'bg-cyan-500' : 'bg-green-500',
+  }));
 
   // Calculate geographic distribution
   const regionCounts: Record<string, number> = {};
@@ -385,6 +400,15 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
     setCustomExportOpen(false);
   };
 
+  // Recent Activity: show sector, category, and status
+  const recentActivity = reports.slice(0, 10).map(r => ({
+    sector: getSector(r),
+    category: r.category || r.impact || 'Unknown',
+    status: r.status,
+    reporter: r.reporterEmail || r.reporterId || 'Unknown',
+    date: r.date,
+  }));
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -502,17 +526,17 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
                     {reports.length === 0 ? (
                       <div className="text-center text-gray-400 py-8">No reports yet.</div>
                     ) : (
-                      reports.slice(0, 5).map((report) => (
-                        <div key={report.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      recentActivity.map((activity, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                           <div className="flex items-center gap-3">
-                            {getSectorIcon(getSector(report))}
+                            {getSectorIcon(activity.sector)}
                             <div>
-                              <p className="font-medium text-sm">{getSector(report)} - {getCategory(report)}</p>
-                              <p className="text-xs text-gray-600">{getRegion(report)}</p>
+                              <p className="font-medium text-sm">{activity.sector} - {activity.category}</p>
+                              <p className="text-xs text-gray-600">{activity.reporter}</p>
                             </div>
                           </div>
-                          <Badge className={getStatusColor(report.status)}>
-                            {report.status}
+                          <Badge className={getStatusColor(activity.status)}>
+                            {activity.status}
                           </Badge>
                         </div>
                       ))
@@ -545,62 +569,36 @@ const AdminDashboard: React.FC<{ user: any }> = () => {
                 </div>
           </CardHeader>
           <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-3 font-medium">ID</th>
-                        <th className="text-left p-3 font-medium">Reporter Name</th>
-                        <th className="text-left p-3 font-medium">Email</th>
-                        <th className="text-left p-3 font-medium">Phone</th>
-                        <th className="text-left p-3 font-medium">Sector</th>
-                        <th className="text-left p-3 font-medium">Category</th>
-                        <th className="text-left p-3 font-medium">Status</th>
-                        <th className="text-left p-3 font-medium">Priority</th>
-                        <th className="text-left p-3 font-medium">Location</th>
-                        <th className="text-left p-3 font-medium">Date</th>
-                        <th className="text-left p-3 font-medium">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {reports.length === 0 ? (
+                {visibleReports.length === 0 ? (
+                  <div className="text-center text-gray-400 py-8">No reports yet.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead>
                         <tr>
-                          <td colSpan={11} className="text-center p-3">No reports yet.</td>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sector</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reporter</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                         </tr>
-                      ) : (
-                        reports.map((report) => {
-                          const userInfo = getUserInfo(report.reporterId || '', report);
-                          return (
-                            <tr key={report.id} className="border-b hover:bg-gray-50">
-                              <td className="p-3 text-sm font-medium">{report.caseId || report.id}</td>
-                              <td className="p-3 text-sm">{userInfo.name || 'Anonymous'}</td>
-                              <td className="p-3 text-sm">{userInfo.email || report.reporterEmail || 'N/A'}</td>
-                              <td className="p-3 text-sm">{userInfo.phone || 'N/A'}</td>
-                              <td className="p-3 text-sm">{getSector(report)}</td>
-                              <td className="p-3 text-sm">{getCategory(report)}</td>
-                              <td className="p-3">
-                                <Badge className={getStatusColor(report.status)}>
-                                  {report.status}
-                                </Badge>
-                              </td>
-                              <td className="p-3">
-                                <Badge className={getPriorityColor(getUrgency(report))}>
-                                  {getUrgency(report)}
-                                </Badge>
-                              </td>
-                              <td className="p-3 text-sm">{getRegion(report)}</td>
-                              <td className="p-3 text-sm">{formatDate(getReportDate(report))}</td>
-                              <td className="p-3">
-                                <Button variant="outline" size="sm" onClick={() => { setSelectedReport(report); setModalOpen(true); }}><Eye className="h-4 w-4" /></Button>
-                                <Button variant="destructive" size="sm" onClick={() => handleDelete(report.id)}><Trash className="h-4 w-4" /></Button>
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-            </div>
+                      </thead>
+                      <tbody>
+                        {visibleReports.map((report, idx) => (
+                          <tr key={report.id || idx} className="bg-white even:bg-gray-50">
+                            <td className="px-4 py-2 whitespace-nowrap">{getSector(report)}</td>
+                            <td className="px-4 py-2 whitespace-nowrap">{report.category || report.impact || 'Unknown'}</td>
+                            <td className="px-4 py-2 whitespace-nowrap">{report.status}</td>
+                            <td className="px-4 py-2 whitespace-nowrap">{report.reporterName || report.reporterEmail || report.email || 'Unknown'}</td>
+                            <td className="px-4 py-2 whitespace-nowrap">{report.phone || 'Unknown'}</td>
+                            <td className="px-4 py-2 whitespace-nowrap">{report.date ? new Date(report.date).toLocaleDateString() : ''}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
           </CardContent>
         </Card>
           </TabsContent>

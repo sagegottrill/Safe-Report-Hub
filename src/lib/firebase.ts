@@ -30,8 +30,15 @@ const isFirebaseConfigured = firebaseConfig.apiKey &&
   firebaseConfig.appId;
 
 if (!isFirebaseConfigured) {
-  console.warn('Firebase configuration is incomplete. Please set up your environment variables.');
-  console.warn('Check env.example for required variables.');
+  console.error('❌ Firebase configuration is incomplete!');
+  console.error('Missing environment variables:');
+  console.error('VITE_FIREBASE_API_KEY:', !!firebaseConfig.apiKey);
+  console.error('VITE_FIREBASE_AUTH_DOMAIN:', !!firebaseConfig.authDomain);
+  console.error('VITE_FIREBASE_PROJECT_ID:', !!firebaseConfig.projectId);
+  console.error('VITE_FIREBASE_APP_ID:', !!firebaseConfig.appId);
+  console.error('Please check env.example for required variables and create a .env file.');
+} else {
+  console.log('✅ Firebase configuration is complete');
 }
 
 // Initialize Firebase

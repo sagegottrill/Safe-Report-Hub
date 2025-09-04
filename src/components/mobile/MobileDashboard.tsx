@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import MobileReportForm from './MobileReportForm';
 import { toast } from '@/components/ui/sonner';
+import { sectorLabels } from '@/components/report/SectorSelector';
+import { getVisibleReports } from '@/utils/visibleReports';
 
 const COLORS = {
   emerald: '#2ecc71',
@@ -184,6 +186,26 @@ export default function MobileDashboard() {
 
   // Recent Activity
   const recentReports = reports.slice(0, 5);
+
+  // Helper to infer sector from category/impact
+  const inferSector = (report: any) => {
+    const text = `${report.category || ''} ${report.impact || ''} ${report.description || ''}`.toLowerCase();
+    if (text.match(/violence|rape|sexual|gbv|abuse|harassment|traffick/)) return 'gbv';
+    if (text.match(/school|teacher|education|learning/)) return 'education';
+    if (text.match(/water|sanitation|hygiene|infrastructure/)) return 'water';
+    if (text.match(/humanitarian|crisis|aid|relief/)) return 'humanitarian';
+    return undefined;
+  };
+
+  const getSector = (report: any) => {
+    let raw = report.sector;
+    if (!raw) raw = inferSector(report);
+    if (!raw) return 'Unknown Sector';
+    return sectorLabels[String(raw).toLowerCase()] || 'Unknown Sector';
+  };
+
+  // Filter out hidden reports
+  const visibleReports = getVisibleReports(reports);
 
   return (
     <div className="min-h-screen bg-[#f9fafb] font-sans px-4 py-6 pb-24">
@@ -437,7 +459,7 @@ export default function MobileDashboard() {
 
               {/* Reports List - Scrollable */}
               <div className="px-6 pb-6">
-                {filteredReports.length === 0 ? (
+                {visibleReports.length === 0 ? (
                   <div className="text-center py-12">
                     <FileText className="mx-auto text-slate-300 mb-4" size={48} />
                     <h3 className="text-lg font-semibold text-slate-600 mb-2">No Reports Found</h3>
@@ -461,9 +483,9 @@ export default function MobileDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {filteredReports.map((report) => (
+                    {visibleReports.slice(0, 10).map((report, idx) => (
                       <div
-                        key={report.id}
+                        key={report.id || idx}
                         onClick={() => setSelectedReport(report)}
                         className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer"
                       >
@@ -512,7 +534,7 @@ export default function MobileDashboard() {
             {/* Footer */}
             <div className="px-6 pt-6 border-t border-slate-200 flex-shrink-0 bg-white">
               <div className="flex items-center justify-between text-sm text-slate-600">
-                <span>{filteredReports.length} report{filteredReports.length !== 1 ? 's' : ''} found</span>
+                <span>{visibleReports.length} report{visibleReports.length !== 1 ? 's' : ''} found</span>
                 <button
                   onClick={() => {
                     setShowTrackReports(false);

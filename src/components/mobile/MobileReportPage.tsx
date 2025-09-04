@@ -154,6 +154,8 @@ const MobileReportPage: React.FC = () => {
         urgency: getUrgencyLevel(selectedCategory),
         reporterId: user?.id || '',
         email: user?.email || '',
+        phone: user?.phone || '',
+        reporterName: user?.name || '',
       };
       await submitReport(finalReportData);
       toast.success('Report submitted successfully!');

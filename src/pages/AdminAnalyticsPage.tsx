@@ -67,17 +67,24 @@ const AdminAnalyticsPage: React.FC = () => {
     fetchAnalytics();
   }, [reports]);
 
-  // Calculate real-time metrics
-  const totalReports = analyticsData?.totalReports || reports.length;
-  const urgentCases = analyticsData?.urgentReports || reports.filter(r => r.urgency === 'high' || r.urgency === 'critical').length;
-  const recentReports = analyticsData?.recentReports || reports.filter(r => {
-    const reportDate = new Date(r.date);
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    return reportDate > oneDayAgo;
-  }).length;
-  const resolvedReports = reports.filter(r => r.status === 'resolved').length;
-  const responseRate = totalReports > 0 ? Math.round((resolvedReports / totalReports) * 100) : 0;
-  const activeUsers = user ? 1 : 0; // This would be calculated from actual user data
+  // Calculate stats from real data
+  const totalReports = reports.length;
+  const activeCases = reports.filter(r => (r.status === 'new' || r.status === 'under-review')).length;
+  const resolvedCases = reports.filter(r => r.status === 'resolved').length;
+  // Calculate average response time for resolved cases
+  const resolvedReports = reports.filter(r => r.status === 'resolved' && r.date && r.resolvedAt);
+  const responseTime = resolvedReports.length > 0
+    ? `${Math.round(resolvedReports.reduce((sum, r) => sum + (new Date(r.resolvedAt).getTime() - new Date(r.date).getTime()), 0) / resolvedReports.length / 3600000)}h`
+    : 'N/A';
+
+  // Recent Activity: show sector, category, and status
+  const recentActivity = reports.slice(0, 10).map(r => ({
+    sector: getSector(r),
+    category: r.category || r.impact || 'Unknown',
+    status: r.status,
+    reporter: r.reporterEmail || r.reporterId || 'Unknown',
+    date: r.date,
+  }));
 
   // Calculate percentage changes (mock for now, would be real in production)
   const totalReportsChange = '+12%';
@@ -90,7 +97,7 @@ const AdminAnalyticsPage: React.FC = () => {
     .slice(0, 5)
     .map((report, index) => ({
       id: index + 1,
-      sector: report.type?.split('_')[0]?.toUpperCase() || 'OTHER',
+      sector: getSector(report),
       category: report.type?.replace(/_/g, ' ') || 'Unknown',
       urgency: report.urgency || 'medium',
       time: new Date(report.date).toLocaleString()
@@ -99,7 +106,7 @@ const AdminAnalyticsPage: React.FC = () => {
   // Calculate sector performance
   const sectorPerformance = [
     {
-      sector: sectorLabels['gbv'],
+      sector: getSector(reports[0]),
       reports: reports.filter(r => r.type?.includes('gender') || r.type?.includes('gbv')).length,
       urgent: reports.filter(r => (r.type?.includes('gender') || r.type?.includes('gbv')) && (r.urgency === 'high' || r.urgency === 'critical')).length,
       responseTime: '2.3h',
@@ -107,7 +114,7 @@ const AdminAnalyticsPage: React.FC = () => {
       color: 'text-danger'
     },
     {
-      sector: sectorLabels['education'],
+      sector: getSector(reports[0]),
       reports: reports.filter(r => r.type?.includes('education')).length,
       urgent: reports.filter(r => r.type?.includes('education') && (r.urgency === 'high' || r.urgency === 'critical')).length,
       responseTime: '4.1h',
@@ -115,7 +122,7 @@ const AdminAnalyticsPage: React.FC = () => {
       color: 'text-nigerian-blue'
     },
     {
-      sector: sectorLabels['water'],
+      sector: getSector(reports[0]),
       reports: reports.filter(r => r.type?.includes('water')).length,
       urgent: reports.filter(r => r.type?.includes('water') && (r.urgency === 'high' || r.urgency === 'critical')).length,
       responseTime: '3.7h',
@@ -123,6 +130,23 @@ const AdminAnalyticsPage: React.FC = () => {
       color: 'text-nigerian-green'
     }
   ];
+
+  // Helper to infer sector from category/impact
+  const inferSector = (report: any) => {
+    const text = `${report.category || ''} ${report.impact || ''} ${report.description || ''}`.toLowerCase();
+    if (text.match(/violence|rape|sexual|gbv|abuse|harassment|traffick/)) return 'gbv';
+    if (text.match(/school|teacher|education|learning/)) return 'education';
+    if (text.match(/water|sanitation|hygiene|infrastructure/)) return 'water';
+    if (text.match(/humanitarian|crisis|aid|relief/)) return 'humanitarian';
+    return undefined;
+  };
+
+  const getSector = (report: any) => {
+    let raw = report.sector;
+    if (!raw) raw = inferSector(report);
+    if (!raw) return 'Unknown Sector';
+    return sectorLabels[String(raw).toLowerCase()] || 'Unknown Sector';
+  };
 
   if (loading) {
     return (
@@ -198,7 +222,7 @@ const AdminAnalyticsPage: React.FC = () => {
               <Users className="h-4 w-4 text-nigerian-blue" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-nigerian-blue">{activeUsers.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-nigerian-blue">{activeCases.toLocaleString()}</div>
               <p className="text-xs text-text-light">
                 <span className="text-success">{activeUsersChange}</span> from last month
               </p>
@@ -211,7 +235,7 @@ const AdminAnalyticsPage: React.FC = () => {
               <AlertTriangle className="h-4 w-4 text-warning" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-warning">{urgentCases}</div>
+              <div className="text-2xl font-bold text-warning">{reports.filter(r => r.urgency === 'high' || r.urgency === 'critical').length}</div>
               <p className="text-xs text-text-light">
                 Require immediate attention
               </p>
@@ -224,7 +248,7 @@ const AdminAnalyticsPage: React.FC = () => {
               <TrendingUp className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-success">{responseRate}%</div>
+              <div className="text-2xl font-bold text-success">{Math.round((resolvedCases / totalReports) * 100)}%</div>
               <p className="text-xs text-text-light">
                 <span className="text-success">{responseRateChange}</span> from last month
               </p>

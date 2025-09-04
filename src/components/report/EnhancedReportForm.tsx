@@ -79,6 +79,7 @@ const EnhancedReportForm: React.FC<EnhancedReportFormProps> = ({ onSubmit, onClo
         email: user?.email || '',
         phone: user?.phone || '',
         reporterId: user?.id || '',
+        reporterName: user?.name || '',
       };
       await onSubmit(finalReportData);
       setReportData({

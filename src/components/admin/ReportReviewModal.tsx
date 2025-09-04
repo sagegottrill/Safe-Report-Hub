@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { AlertTriangle, Calendar, User, Shield, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppContext } from '@/contexts/AppContext';
+import { supabase } from '@/lib/supabase';
+import { toast } from '@/components/ui/sonner';
 
 interface Report {
   id: string;
@@ -56,6 +58,20 @@ const ReportReviewModal: React.FC<ReportReviewModalProps> = ({
       adminNotes
     });
     onClose();
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    let updates: any = { status: newStatus };
+    if (newStatus === 'resolved') {
+      updates.resolvedAt = new Date().toISOString();
+    }
+    const { error } = await supabase.from('reports').update(updates).eq('id', report.id);
+    if (error) {
+      toast.error('Failed to update report status');
+    } else {
+      toast.success('Report status updated');
+      onUpdateReport(report.id, updates);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -237,7 +253,7 @@ const ReportReviewModal: React.FC<ReportReviewModalProps> = ({
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="status" className="text-sm font-semibold text-gray-700">Update Status</Label>
-                  <Select value={status} onValueChange={setStatus}>
+                  <Select value={status} onValueChange={handleStatusChange}>
                     <SelectTrigger className="border-gray-300">
                       <SelectValue />
                     </SelectTrigger>

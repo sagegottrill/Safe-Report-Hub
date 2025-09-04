@@ -24,6 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import { TrustIndicator, SecurityBadge, OfficialStamp } from '@/components/ui/trust-indicators';
 import { useAppContext } from '@/contexts/AppContext';
 import { sectorLabels } from '@/components/report/SectorSelector';
+import { getVisibleReports } from '@/utils/visibleReports';
 
 interface CommunityMetrics {
   totalReports: number;
@@ -58,6 +59,8 @@ const CommunityDashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const visibleReports = getVisibleReports(reports);
+
   useEffect(() => {
     const loadCommunityData = async () => {
       setLoading(true);
@@ -82,9 +85,26 @@ const CommunityDashboardPage: React.FC = () => {
           responseRate: data.responseRate || 0
         };
 
+        // Helper to infer sector from category/impact
+        const inferSector = (report: any) => {
+          const text = `${report.category || ''} ${report.impact || ''} ${report.description || ''}`.toLowerCase();
+          if (text.match(/violence|rape|sexual|gbv|abuse|harassment|traffick/)) return 'gbv';
+          if (text.match(/school|teacher|education|learning/)) return 'education';
+          if (text.match(/water|sanitation|hygiene|infrastructure/)) return 'water';
+          if (text.match(/humanitarian|crisis|aid|relief/)) return 'humanitarian';
+          return undefined;
+        };
+
+        const getSector = (report: any) => {
+          let raw = report.sector;
+          if (!raw) raw = inferSector(report);
+          if (!raw) return 'Unknown Sector';
+          return sectorLabels[String(raw).toLowerCase()] || 'Unknown Sector';
+        };
+
         const transformedSectorStats: SectorStats[] = [
           {
-            sector: sectorLabels['gbv'],
+            sector: getSector({ type: 'gbv' }),
             totalReports: data.gbvReports || 0,
             resolvedReports: data.gbvResolved || 0,
             avgResponseTime: data.gbvResponseTime || 'N/A',
@@ -93,7 +113,7 @@ const CommunityDashboardPage: React.FC = () => {
             color: 'text-danger bg-danger/10'
           },
           {
-            sector: sectorLabels['education'],
+            sector: getSector({ type: 'education' }),
             totalReports: data.educationReports || 0,
             resolvedReports: data.educationResolved || 0,
             avgResponseTime: data.educationResponseTime || 'N/A',
@@ -102,7 +122,7 @@ const CommunityDashboardPage: React.FC = () => {
             color: 'text-nigerian-blue bg-nigerian-blue/10'
           },
           {
-            sector: sectorLabels['water'],
+            sector: getSector({ type: 'water' }),
             totalReports: data.waterReports || 0,
             resolvedReports: data.waterResolved || 0,
             avgResponseTime: data.waterResponseTime || 'N/A',
@@ -119,16 +139,30 @@ const CommunityDashboardPage: React.FC = () => {
         setError('Failed to load analytics data from server');
         
         // Use real data from AppContext as fallback
-        const resolvedReports = reports.filter(r => r.status === 'resolved').length;
-        const pendingReports = reports.filter(r => r.status === 'new' || r.status === 'under-review').length;
-        const responseRate = reports.length > 0 ? Math.round((resolvedReports / reports.length) * 100) : 0;
+        const totalReports = reports.length;
+        const activeCases = reports.filter(r => (r.status === 'new' || r.status === 'under-review')).length;
+        const resolvedCases = reports.filter(r => r.status === 'resolved').length;
+        // Calculate average response time for resolved cases
+        const resolvedReports = reports.filter(r => r.status === 'resolved' && r.date && r.resolvedAt);
+        const responseTime = resolvedReports.length > 0
+          ? `${Math.round(resolvedReports.reduce((sum, r) => sum + (new Date(r.resolvedAt).getTime() - new Date(r.date).getTime()), 0) / resolvedReports.length / 3600000)}h`
+          : 'N/A';
+
+        // Recent Activity: show sector, category, and status
+        const recentActivity = reports.slice(0, 10).map(r => ({
+          sector: getSector(r),
+          category: r.category || r.impact || 'Unknown',
+          status: r.status,
+          reporter: r.reporterEmail || r.reporterId || 'Unknown',
+          date: r.date,
+        }));
         
         const realMetrics: CommunityMetrics = {
-          totalReports: reports.length,
-          resolvedReports: resolvedReports,
-          pendingReports: pendingReports,
+          totalReports: totalReports,
+          resolvedReports: resolvedCases,
+          pendingReports: activeCases,
           communityMembers: 0, // Will be populated when user analytics are available
-          responseRate: responseRate
+          responseRate: Math.round((resolvedCases / totalReports) * 100)
         };
 
         const realSectorStats: SectorStats[] = [
@@ -136,7 +170,7 @@ const CommunityDashboardPage: React.FC = () => {
             sector: 'Gender-Based Violence',
             totalReports: reports.filter(r => r.type?.includes('gender') || r.type?.includes('gbv')).length,
             resolvedReports: reports.filter(r => (r.type?.includes('gender') || r.type?.includes('gbv')) && r.status === 'resolved').length,
-            avgResponseTime: 'N/A',
+            avgResponseTime: responseTime,
             topIssues: calculateTopIssues(reports.filter(r => r.type?.includes('gender') || r.type?.includes('gbv'))),
             icon: Shield,
             color: 'text-danger bg-danger/10'
@@ -145,7 +179,7 @@ const CommunityDashboardPage: React.FC = () => {
             sector: 'Education',
             totalReports: reports.filter(r => r.type?.includes('education')).length,
             resolvedReports: reports.filter(r => r.type?.includes('education') && r.status === 'resolved').length,
-            avgResponseTime: 'N/A',
+            avgResponseTime: responseTime,
             topIssues: calculateTopIssues(reports.filter(r => r.type?.includes('education'))),
             icon: GraduationCap,
             color: 'text-nigerian-blue bg-nigerian-blue/10'
@@ -154,7 +188,7 @@ const CommunityDashboardPage: React.FC = () => {
             sector: 'Water & Infrastructure',
             totalReports: reports.filter(r => r.type?.includes('water')).length,
             resolvedReports: reports.filter(r => r.type?.includes('water') && r.status === 'resolved').length,
-            avgResponseTime: 'N/A',
+            avgResponseTime: responseTime,
             topIssues: calculateTopIssues(reports.filter(r => r.type?.includes('water'))),
             icon: Droplets,
             color: 'text-nigerian-green bg-nigerian-green/10'

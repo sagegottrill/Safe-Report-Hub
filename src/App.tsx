@@ -22,6 +22,7 @@ import LoadingScreen from './components/LoadingScreen';
 import MobileApp from './MobileApp';
 import AuthPage from './components/auth/AuthPage';
 import { AnimatePresence, motion } from 'framer-motion';
+import DebugPanel from './components/DebugPanel';
 const GovernorAdminPanel = React.lazy(() => import('./components/admin/GovernorAdminPanel'));
 
 const queryClient = new QueryClient();
@@ -159,7 +160,10 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <AppRoutes />
+    <>
+      <AppRoutes />
+      <DebugPanel />
+    </>
   );
 };
 
